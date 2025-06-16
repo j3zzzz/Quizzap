@@ -36,7 +36,6 @@ if ($result->num_rows === 0) {
 
 $conn->close();
 ?>
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -259,6 +258,10 @@ $conn->close();
 
         .hidden-input {
             display: none;
+        }
+
+        button{
+
         }
 
         .question-container {
@@ -498,22 +501,21 @@ $conn->close();
                         <div class="question-container">
                         <label>Question: </label>
                         <input type="text" name="questions[]" required>
-                        <input type="hidden" name="correct_option[]" value="">
-                            <input type="radio" name="correct[${questionCounter - 1}]" value="0" required>
-                            <label for="answer-${questionCounter}-1">Answer 1 : </label>
-                            <input type="text" id="answer-${questionCounter}-1" name="answers[${questionCounter - 1}][]" required>
+                            <input type="radio" name="correct[${index}]" value="0" required>
+                            <label for="answer-${index}-1">Answer 1 : </label>
+                            <input type="text" id="answer-${index}-1" name="answers[${index}][]" required>
                             
-                            <input type="radio" name="correct[${questionCounter - 1}]" value="1">
-                            <label for="answer-${questionCounter}-2">Answer 2 : </label>
-                            <input type="text" id="answer-${questionCounter}-2" name="answers[${questionCounter - 1}][]" required>
+                            <input type="radio" name="correct[${index}]" value="1">
+                            <label for="answer-${index}-2">Answer 2 : </label>
+                            <input type="text" id="answer-${index}-2" name="answers[${index}][]" required>
                             
-                            <input type="radio" name="correct[${questionCounter - 1}]" value="2">
-                            <label for="answer-${questionCounter}-3">Answer 3 : </label>
-                            <input type="text" id="answer-${questionCounter}-3" name="answers[${questionCounter - 1}][]" required>
+                            <input type="radio" name="correct[${index}]" value="2">
+                            <label for="answer-${index}-3">Answer 3 : </label>
+                            <input type="text" id="answer-${index}-3" name="answers[${index}][]" required>
                             
-                            <input type="radio" name="correct[${questionCounter - 1}]" value="3">
-                            <label for="answer-${questionCounter}-4">Answer 4 : </label>
-                            <input type="text" id="answer-${questionCounter}-4  " name="answers[${questionCounter - 1}][]" required>
+                            <input type="radio" name="correct[${index}]" value="3">
+                            <label for="answer-${index}-4">Answer 4 : </label>
+                            <input type="text" id="answer-${index}-4" name="answers[${index}][]" required>
                         </div>`;
                 case "true_or_false":
                     return `
@@ -521,7 +523,7 @@ $conn->close();
                         <label>Question: </label>
                         <input type="text" name="questions[]" required>
                         <label>Correct Answer: </label>
-                        <select name="correct_option[]">
+                        <select name="correct_option[${index}]">
                             <option value="True">True</option>
                             <option value="False">False</option>
                         </select>`;
@@ -531,21 +533,21 @@ $conn->close();
                         <label>Question: </label>
                         <input type="text" name="questions[]" required>
                         <label>Correct Answers (comma separated): </label>
-                        <input type="text" name="correct_option[]" placeholder="e.g. answer1, answer2, answer3">`;
+                        <input type="text" name="correct_option[${index}]" placeholder="e.g. answer1, answer2, answer3" required>`;
                 case "identification":
                     return `
                         <h4>Identification</h4>
                         <label>Question: </label>
                         <input type="text" name="questions[]" required>
                         <label>Correct Answer: </label>
-                        <input type="text" name="correct_option[]">`;
+                        <input type="text" name="correct_option[${index}]" required>`;
                 case "fill_in_the_blanks":
                     return `
                         <h4>Fill in the Blanks</h4>
                         <label>Question (use '_____' for the blank): </label>
                         <input type="text" name="questions[]" required>
                         <label>Correct Answer: </label>
-                        <input type="text" name="correct_option[]">`;
+                        <input type="text" name="correct_option[${index}]" required>`;
                 case "drag_and_drop":
                     return `
                         <h4>Drag and Drop</h4>
@@ -596,7 +598,7 @@ $conn->close();
                                 default:
                                     return '';
                             }
-                        }
+        }
 
         function addAnswer(questionIndex) {
             const answersContainer = document.getElementById(`answers-container-${questionIndex}`);
@@ -779,52 +781,70 @@ $conn->close();
             }
         }
 
-        // Validate form
-        function validateForm() {
-    // Get the quiz title input value and trim whitespace
-    const title = document.querySelector('input[name="title"]').value.trim();
+    // Validate form
+    function validateForm() {
+        // Get the quiz title input value and trim whitespace
+        const title = document.querySelector('input[name="title"]').value.trim();
 
-    // Get the timer input value
-    const timer = document.querySelector('input[name="timer"]').value;
+        // Get the timer input value
+        const timer = document.querySelector('input[name="timer"]').value;
 
-    // Select all elements with the class 'question'
-    const questions = document.querySelectorAll('.question');
-    
-    // Validate title - must not be empty
-    if (!title) {
-        alert('Please enter a quiz title');
-        return;
+        // Select all elements with the class 'question'
+        const questions = document.querySelectorAll('.question');
+        
+        // Validate title - must not be empty
+        if (!title) {
+            alert('Please enter a quiz title');
+            return;
+        }
+
+        // Validate timer - must be a positive number
+        if (!timer || timer < 1) {
+            alert('Please enter a valid timer value');
+            return;
+        }
+
+        // Check if there are any questions
+        if (questions.length === 0) {
+            alert('Please add at least one question');
+            return;
+        }
+
+        // Check if all questions are completely filled out
+        const allQuestionsFilled = Array.from(questions).every(questionDiv => {
+            const inputs = questionDiv.querySelectorAll('input[type="text"]');
+            return Array.from(inputs).every(input => input.value.trim() !== '');
+        });
+
+        // If not all questions are filled, show an alert
+        if (!allQuestionsFilled) {
+            alert('Please fill all questions and answers');
+            return;
+        }
+        const allQuestionsValid = Array.from(questions).every((questionDiv, index) => {
+            const questionType = questionDiv.querySelector('input[name="question_type[]"]').value;
+            
+            if (questionType === 'multiple_choice') {
+                const checkedRadio = questionDiv.querySelector('input[type="radio"]:checked');
+                if (!checkedRadio) {
+                    alert(`Please select a correct answer for multiple choice question ${index + 1}`);
+                    return false;
+                }
+            }
+            // Other question type validations...
+            
+            return true;
+        });
+
+        if (!allQuestionsValid) {
+            return false;
+        }
+
+        // If all validations pass, return true
+        return true;
     }
 
-    // Validate timer - must be a positive number
-    if (!timer || timer < 1) {
-        alert('Please enter a valid timer value');
-        return;
-    }
-
-    // Check if there are any questions
-    if (questions.length === 0) {
-        alert('Please add at least one question');
-        return;
-    }
-
-    // Check if all questions are completely filled out
-    const allQuestionsFilled = Array.from(questions).every(questionDiv => {
-        const inputs = questionDiv.querySelectorAll('input[type="text"]');
-        return Array.from(inputs).every(input => input.value.trim() !== '');
-    });
-
-    // If not all questions are filled, show an alert
-    if (!allQuestionsFilled) {
-        alert('Please fill all questions and answers');
-        return;
-    }
-
-    // If all validations pass, return true
-    return true;
-}
-
-        document.getElementById('quiz-form').addEventListener('submit', function(e) {
+document.getElementById('quiz-form').addEventListener('submit', function(e) {
     e.preventDefault();    
 
     if (!validateForm()) {
@@ -840,7 +860,9 @@ $conn->close();
     })
     .then(response => {
         if (!response.ok) {
-            throw new Error('Network response was not ok');
+            return response.text().then(text => {
+                throw new Error('Network response was not ok');
+            }); 
         }
         return response.json();
     })

@@ -315,20 +315,30 @@
         // Render answers based on the specific question type
         switch(questionType) {
             case 'true_or_false':
-                ['True', 'False'].forEach((answerText, i) => {
-                    const answerButton = document.createElement('button');
-                    answerButton.innerText = answerText;
-                    answerButton.className = 'answer-button';
-                    answerButton.onclick = function() {
-                        // Ensure data exists and has the expected structure
-                        const answerId = data && data[i] ? data[i].answer_id : null;
-                        saveAnswer(question.question_id, answerId);
-                        answersDiv.querySelectorAll('.answer-button').forEach(btn => btn.classList.remove('selected'));
-                        answerButton.classList.add('selected');
-                    };
-                    answersDiv.appendChild(answerButton);
-                });
-                break;
+            // For True/False questions, create both options
+            ['True', 'False'].forEach((answerText) => {
+                const answerButton = document.createElement('button');
+                answerButton.innerText = answerText;
+                answerButton.className = 'answer-button';
+                answerButton.onclick = function() {
+                    // Save both the text and the answer_id if available
+                    const answerObj = data.find(item => 
+                        item.answer_text && item.answer_text.trim().toLowerCase() === answerText.toLowerCase()
+                    );
+                    
+                    if (answerObj) {
+                        saveAnswer(question.question_id, answerObj.answer_id);
+                    } else {
+                        // Fallback to using the text if answer_id not found
+                        saveAnswer(question.question_id, answerText);
+                    }
+                    
+                    answersDiv.querySelectorAll('.answer-button').forEach(btn => btn.classList.remove('selected'));
+                    answerButton.classList.add('selected');
+                };
+                answersDiv.appendChild(answerButton);
+            });
+            break;
 
             case 'identification':
             case 'enumeration':
@@ -600,20 +610,28 @@
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ answers: userAnswers, quiz_id: <?php echo $quiz_id; ?> })
+                body: JSON.stringify({ 
+                    answers: userAnswers, 
+                    quiz_id: <?php echo $quiz_id; ?>,
+                    subject_id: <?php echo $subject_id; ?>
+                })
             })
             .then(response => response.json())    
             .then(data => {
                 if (data.success) {
-                    const queryParams = new URLSearchParams({
+                    // Store the result data in sessionStorage temporarily
+                    sessionStorage.setItem('quizResult', JSON.stringify({
                         score: data.score,
                         total: data.total,
                         quiz_id: <?php echo $quiz_id; ?>,
-                        wrong_answers: JSON.stringify(data.wrong_answers)
-                    });
-                    window.location.href = `quiz_result.php?${queryParams.toString()}`;
+                        wrong_answers: data.wrong_answers,
+                        subject_id: <?php echo $subject_id; ?>
+                    }));
+                    
+                    // Redirect to a processing page that will set the PHP session
+                    window.location.href = 'process_quiz_result.php';
                 } else {
-                    alert('Error submitting quiz.' + data.error);
+                    alert('Error submitting quiz: ' + (data.error || 'Unknown error'));
                     window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
                 }
             })

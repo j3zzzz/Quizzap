@@ -1,4 +1,8 @@
 <?php
+
+header('Content-Type: application/json');
+ob_start();
+
 session_start();
 if (strpos($_SESSION['account_number'], 'T') !== 0) {
     header("Location: login.php");
@@ -21,6 +25,9 @@ if ($conn->connect_error) {
 
 $response = ["success" => false, "message" => "", "subject_id" => ""];
 
+error_log("POST data: " . print_r($_POST, true));
+error_log("FILES data: " . print_r($_FILES, true));
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $conn->begin_transaction();
     
@@ -31,11 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $timer = $_POST['timer'];
         $quiz_type = $_POST['quiz_type'];
 
-        // Validate required fields
-        if (empty($title) || empty($timer) || empty($subject_id)) {
-            throw new Exception("Missing required quiz details");
-        }
-
         // Insert quiz
         $stmt = $conn->prepare("INSERT INTO quizzes (title, subject_id, timer, quiz_type) VALUES (?, ?, ?, ?)");
         $stmt->bind_param("siis", $title, $subject_id, $timer, $quiz_type);
@@ -45,15 +47,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         
         $quiz_id = $conn->insert_id;
-
-        $question_types = $_POST['question_type'];
         
         // Process each question
         for ($i = 0; $i < count($_POST['questions']); $i++) {
-            $question_type = $question_types[$i];
+            $question_type = $_POST['question_type'][$i];
             $question_text = $_POST['questions'][$i];
-
-            error_log("Processing question $i of type: $question_type");
             
             // Insert question
             $stmt = $conn->prepare("INSERT INTO questions (quiz_id, question_type, question_text) VALUES (?, ?, ?)");
@@ -65,112 +63,102 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $question_id = $conn->insert_id;
             
+            error_log("Processing question $i: type = $question_type");
+            error_log("Available data for question $i: " . print_r([
+                'correct' => $_POST['correct'][$i] ?? 'NOT SET',
+                'correct_option' => $_POST['correct_option'][$i] ?? 'NOT SET',
+                'answers' => $_POST['answers'][$i] ?? 'NOT SET'
+            ], true));
             // Handle question options based on type
             switch ($question_type) {
                 case 'multiple_choice':
-                    if (!isset($_POST['answers'][$i]) || !is_array($_POST['answers'][$i])) {
-                        throw new Exception("Missing answers for multiple choice question: " . $question_text);
+                    if (isset($_POST['answers'][$i]) && is_array($_POST['answers'][$i])) {
+                        $answers = $_POST['answers'][$i];
+                        
+                        // Default to first answer if correct answer not specified
+                        $correct_answer_index = isset($_POST['correct'][$i]) ? 
+                            intval($_POST['correct'][$i]) : 0;
+
+                        // Validate that the selected correct answer index exists
+                        if ($correct_answer_index < 0 || $correct_answer_index >= count($answers)) {
+                            $correct_answer_index = 0; // Default to first answer if invalid
+                        }
+
+                        foreach ($answers as $answer_index => $answer_text) {
+                            $is_correct = ($answer_index === $correct_answer_index) ? 1 : 0;
+                            
+                            $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, ?)");
+                            $stmt->bind_param("isi", $question_id, $answer_text, $is_correct);
+                            
+                            if (!$stmt->execute()) {
+                                throw new Exception("Error creating multiple choice answer: " . $stmt->error);
+                            }
+                        }
+                    } else {
+                        throw new Exception("Missing answers for multiple choice question " . ($i + 1));
+                    }
+                break;
+                case 'true_or_false':
+                     // These question types should have answers in correct_option
+                    if (!isset($_POST['correct_option'][$i])) {
+                        throw new Exception("Missing correct answer for true/false question " . ($i + 1));
                     }
                     
-                    if (!isset($_POST['correct'][$i])) {
-                        throw new Exception("Missing correct answer selection for question: " . $question_text);
-                    }
-
-                    $answers = $_POST['answers'][$i];
-                    $correct_answer_index = isset($_POST['correct'][$i]) ? 
-                        intval($_POST['correct'][$i]) : 0;
-
-                    if ($correct_answer_index === -1) {
-                        throw new Exception("No correct answer selected for multiple choice question $i");
-                    }
-
-                    foreach ($answers as $answer_index => $answer_text) {
-                        $is_correct = ($answer_index === $correct_answer_index) ? 1 : 0;
-                        
-                        $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, ?)");
-                        $stmt->bind_param("isi", $question_id, $answer_text, $is_correct);
-                        
-                        if (!$stmt->execute()) {
-                            throw new Exception("Error creating multiple choice answer: " . $stmt->error);
-                        }
-                    }
+                    // Save both True and False options with correct flag
+                    $correct_answer = $_POST['correct_option'][$i];
+                    
+                    // Insert True option
+                    $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, ?)");
+                    $is_correct = ($correct_answer === 'True') ? 1 : 0;
+                    $answer_text = 'True';
+                    $stmt->bind_param("isi", $question_id, $answer_text, $is_correct);
+                    $stmt->execute();
+                    
+                    // Insert False option
+                    $is_correct = ($correct_answer === 'False') ? 1 : 0;
+                    $answer_text = 'False';
+                    $stmt->bind_param("isi", $question_id, $answer_text, $is_correct);
+                    $stmt->execute();
                     break;
-                case 'true_or_false':
                 case 'fill_in_the_blanks':
                 case 'identification':
-                    if (!isset($_POST['questions'][$i])) {
-                        throw new Exception("Missing question at index: " . $i);
+                    // These question types should have answers in correct_option
+                    if (!isset($_POST['correct_option'][$i]) || empty(trim($_POST['correct_option'][$i]))) {
+                        throw new Exception("Missing correct answer for " . $question_type . " question " . ($i + 1));
                     }
-
-                    if (!isset($_POST['correct_option'][$i])) {
-                        throw new Exception("Missing answer for question: " . $_POST['questions'][$i]);
-                    }
-
-                    // Store correct answer
+                    
                     $answer_text = $_POST['correct_option'][$i];
-
-                    // For other question types, save as before
                     $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
                     $stmt->bind_param("is", $question_id, $answer_text);
-                        
+                    
                     if (!$stmt->execute()) {
                         throw new Exception("Error saving answer: " . $stmt->error);
                     }
-    
                     break;
-                
                 case 'enumeration':
-
-                    // Log the submitted data for debugging
-                    error_log("Processing enumeration question with POST data: " . print_r($_POST, true));
-                    
-                    if (!isset($_POST['correct_option'][$i]) || empty(trim($_POST['correct_option'][$i]))) {
-                        throw new Exception("Invalid data for enumeration answers. Ensure the correct_option[$i] field is properly submitted.");
-                    }
-                    // Store the entire list of expected answers as a single JSON-encoded string
-                    $answers_list = explode(',', $_POST['correct_option'][$i]);
-                    
-                    // Validate and ensure answers are not empty
-                    $filtered_answers = array_map('trim', array_filter($answers_list, function($answer) {
-                        return !empty(trim($answer));
-                    }));
-
-                    if (empty($filtered_answers)) {
-                        throw new Exception("At least one answer is required for an enumeration question.");
-                    }
-                    
-                    // Encode the filtered answers
-                    $answer_text = implode(',', $filtered_answers);
-                    
-                    // Store the total expected answers count
-                    $total_expected_answers = count($filtered_answers);
-                    
-                    // Update the question with the expected answers count
-                    $stmt = $conn->prepare("UPDATE questions SET enumeration_expected_count = ? WHERE question_id = ?");
-                    $stmt->bind_param("ii", $total_expected_answers, $question_id);
-                    
-                    if (!$stmt->execute()) {
-                        throw new Exception("Error updating enumeration expected count: " . $stmt->error);
-                    }
-
-                    $stmt->close();
-                    
-                    // Store the answers
-                    $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
-                    $stmt->bind_param("is", $question_id, $answer_text);
-                    
-                    if (!$stmt->execute()) {
-                        throw new Exception("Error saving enumeration answer: " . $stmt->error);
-                    }
-
-                    $stmt->close();
-                    break;
+                        // Handle enumeration separately with better error handling
+                        if (!isset($_POST['correct_option'][$i]) || empty(trim($_POST['correct_option'][$i]))) {
+                            throw new Exception("Missing correct answer for enumeration question " . ($i + 1));
+                        }
+                        
+                        $answer_text = $_POST['correct_option'][$i];
+                        $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
+                        $stmt->bind_param("is", $question_id, $answer_text);
+                        
+                        if (!$stmt->execute()) {
+                            throw new Exception("Error saving enumeration answer: " . $stmt->error);
+                        }
+                        break;
 
                 case 'drag_and_drop':
                     if (isset($_POST['answers'][$i]) && is_array($_POST['answers'][$i])) {
                         $answers = $_POST['answers'][$i];
                         $correct_answer_index = isset($_POST['correct_answer'][$i]) ? 
-                            intval($_POST['correct_answer'][$i]) : 0;
+                            intval($_POST['correct_answer'][$i]) : -1;
+                        
+                        if ($correct_answer_index === -1) {
+                            throw new Exception("Missing correct answer for question " . ($i + 1));
+                        }
 
                         foreach ($answers as $answer_index => $answer_text) {
                             if (!empty($answer_text)) {

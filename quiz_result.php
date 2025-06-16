@@ -1,4 +1,27 @@
 <?php
+session_start();
+
+// Check if we have quiz result data in session
+if (!isset($_SESSION['quiz_result'])) {
+    // No quiz data found, redirect to select quiz
+    header("Location: select_quiz.php");
+    exit();
+}
+
+// Get data from session
+$result_data = $_SESSION['quiz_result'];
+
+error_log("Quiz result data: " . print_r($result_data, true));
+
+$quiz_id = $result_data['quiz_id'];
+$score = $result_data['score'];
+$total = $result_data['total'];
+$wrong_answers = $result_data['wrong_answers'];
+$subject_id = $result_data['subject_id'];
+
+// Clear the session data after use
+unset($_SESSION['quiz_result']);
+
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -10,11 +33,44 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-$quiz_id = $_GET['quiz_id'];
-$score = $_GET['score'];
-$total_correct_answers = isset($_GET['total_correct_answers']) ? $_GET['total_correct_answers'] : null;
-$wrong_answers = json_decode($_GET['wrong_answers'], true);
-$subject_id = isset($_GET['subject_id']) ? $_GET['subject_id'] : null;
+if (strpos($_SESSION['account_number'], 'S') !== 0) {
+    header("Location: login.php");
+    exit();
+}
+
+// Extract student_id from session (assuming account_number format is like "S001", "S002", etc.)
+$account_number = $_SESSION['account_number'];
+$sql = "SELECT student_id FROM students WHERE account_number = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $account_number);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $student_id = $row['student_id'];
+} else {
+    die("Student not found for account number: $account_number");
+}
+$stmt->close();
+
+error_log("Current session - account_number: $account_number, student_id: $student_id");
+error_log("Looking for answers for quiz_id: $quiz_id");
+
+// Function to get user answer from database
+function getUserAnswerFromDatabase($conn, $student_id, $question_id) {
+    $sql = "SELECT answer FROM student_answers WHERE student_id = ? AND question_id = ? ORDER BY answered_at DESC LIMIT 1";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ii", $student_id, $question_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        return $row['answer'];
+    }
+    return null;
+}
 
 // Fetch quiz type galing sa quizzes table
 $quiz_type_sql = "SELECT quiz_type FROM quizzes WHERE quiz_id = ?";
@@ -111,15 +167,21 @@ while ($row = $result->fetch_assoc()) {
 
     $answers = [];
     while ($answer_row = $answers_result->fetch_assoc()) {
-        // Clean answer text by removing square brackets and quotes
-        $cleaned_answer = preg_replace('/^[\[\]"\']+|[\[\]"\']+$/', '', $answer_row['answer_text']);
-        
-        // Splitting multiple answers if they exist
-        $split_answers = preg_split('/\s*,\s*/', $cleaned_answer);
-        foreach ($split_answers as $individual_answer) {
-            $clean_individual_answer = preg_replace('/^[\[\]"\']+|[\[\]"\']+$/', '', trim($individual_answer));
-            $answer_row['individual_answer'] = $clean_individual_answer;
+        // For Multiple Choice, True/False, and Drag & Drop - don't split answers
+        if (in_array($quiz_type, ['Multiple Choice', 'True or False', 'Drag & Drop'])) {
+            // Clean answer text
+            $cleaned_answer = preg_replace('/^[\[\]"\']+|[\[\]"\']+$/', '', $answer_row['answer_text']);
+            $answer_row['individual_answer'] = trim($cleaned_answer);
             $answers[] = $answer_row;
+        } else {
+            // For enumeration - keep the splitting logic
+            $cleaned_answer = preg_replace('/^[\[\]"\']+|[\[\]"\']+$/', '', $answer_row['answer_text']);
+            $split_answers = preg_split('/\s*,\s*/', $cleaned_answer);
+            foreach ($split_answers as $individual_answer) {
+                $clean_individual_answer = preg_replace('/^[\[\]"\']+|[\[\]"\']+$/', '', trim($individual_answer));
+                $answer_row['individual_answer'] = $clean_individual_answer;
+                $answers[] = $answer_row;
+            }
         }
     }
     $answers_stmt->close();
@@ -144,7 +206,6 @@ if (!$subject_id) {
     $subject_stmt->close();
 }
 
-$conn->close();
 ?>
 
 <!DOCTYPE html>
@@ -271,6 +332,32 @@ $conn->close();
         .user-answer span {
             font-weight: lighter ;
         }
+
+        .answers {
+            margin-top: 10px;
+            margin-left: 20px;
+        }
+        .individual-answer {
+            padding: 5px 0;
+        }
+        .correct-answers {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 5px;
+        }
+
+        .user-answer {
+            margin-top: 10px;
+            padding: 8px;
+            background-color: #fff8f8;
+            border-radius: 5px;
+        }
+
+        .individual-answer {
+            padding: 5px 10px;
+            margin: 3px 0;
+            border-radius: 3px;
+        }
     </style>
 </head>
 <body>
@@ -299,53 +386,164 @@ $conn->close();
             <div class="qstn-con">
             <div class="question">
                 <p class="qstn"><?php echo $question_no . '.' . ' ' . $question['question_text']; ?></p>
+            <?php 
+            error_log("Displaying results for quiz $quiz_id with questions: " . print_r(array_column($questions, 'question_id'), true));
+            ?>
             
-            <div class="answers">   
-                <?php
-                // para sa pag display ng multiple choice, true or false, at drag-and-drop
-                if (in_array($quiz_type, ['Multiple Choice', 'True or False', 'Drag & Drop'])) {
-                    foreach ($question['answers'] as $answer): ?>
-                        <div class="individual-answer">
-                        <li>
-                            <?php
-                            $style = "";
-                            if ($answer['is_correct'] == 1) {
-                                $style = 'color: green;';
-                            } 
-                            
-                            if (isset($wrong_answers[$question['question_id']]) && $wrong_answers[$question['question_id']] == $answer['answer_id']) {
-                                $style = "color: red;";
-                            }
-                            ?>
-                            <span style="<?php echo $style; ?>">
-                                <?php echo $answer['individual_answer']; ?>
-                            </span>
-                            <?php
-                            if (isset($wrong_answers[$question['question_id']]) && $wrong_answers[$question['question_id']] == $answer['answer_id']) {
-                                echo "<span style='color: red;'> (Your answer)</span>";
-                            }
-                            ?>
-                        </div>
-                    <?php endforeach;
-                }
-                else { ?>
+            <div class="answers">  
+                <?php 
+                // Check individual question type for proper display logic
+                $is_multiple_choice_type = in_array($question['question_type'], ['multiple_choice', 'true_or_false', 'drag_and_drop']);
+                ?>
+
+                <?php if ($is_multiple_choice_type): ?>
                     <div class="answers">
                         <?php 
-                        // Show correct answers
-                        echo "<div class='individual-answer' style='color: green;'><strong>Correct Answer(s):</strong>";
-                        foreach ($question['answers'] as $answer) {
-                            echo "<li>" . $answer['individual_answer'] . "</li>";
-                        }
-                        echo "</div>";
-
-                        // Show user's answer if it exists
-                        if (isset($wrong_answers[$question['question_id']])) {
-                            echo "<div class='user-answer' style='color: red;'><strong>Your Answer:</strong> " . "<span>" .
-                                 htmlspecialchars($wrong_answers[$question['question_id']]) . "</span> </div>";
+                        // Check if user got this question wrong
+                        $user_got_wrong = isset($wrong_answers[$question['question_id']]);
+                        
+                        if ($user_got_wrong) {
+                            // User got it wrong - show all options with proper coloring
+                            $user_answer_data = $wrong_answers[$question['question_id']];
+                            $user_selected_answer_id = null;
+                            $user_selected_answer_text = null;
+                            
+                            // Get user's selected answer
+                            if (is_array($user_answer_data)) {
+                                if (isset($user_answer_data['answer_id'])) {
+                                    $user_selected_answer_id = $user_answer_data['answer_id'];
+                                }
+                                if (isset($user_answer_data['answer_text'])) {
+                                    $user_selected_answer_text = $user_answer_data['answer_text'];
+                                }
+                            } else {
+                                $user_selected_answer_text = $user_answer_data;
+                            }
+                            
+                            // Display all answers with appropriate styling
+                            foreach ($question['answers'] as $answer) {
+                                $answer_style = '';
+                                $answer_marker = '';
+                                $is_user_selection = false;
+                                
+                                // Check if this is the user's selected answer
+                                if ($user_selected_answer_id && $user_selected_answer_id == $answer['answer_id']) {
+                                    $is_user_selection = true;
+                                } elseif ($user_selected_answer_text && trim($user_selected_answer_text) === trim($answer['individual_answer'])) {
+                                    $is_user_selection = true;
+                                }
+                                
+                                if ($answer['is_correct'] == 1) {
+                                    // Correct answer - green with checkmark
+                                    $answer_style = 'color: green; font-weight: bold;';
+                                    $answer_marker = ' ✓';
+                                } elseif ($is_user_selection) {
+                                    // User's wrong selection - red with X
+                                    $answer_style = 'color: red; font-weight: bold;';
+                                    $answer_marker = ' (Your answer)';
+                                } else {
+                                    // Other incorrect options - black (neutral)
+                                    $answer_style = 'color: black;';
+                                    $answer_marker = '';
+                                }
+                                
+                                echo '<div class="individual-answer">';
+                                echo '<span style="' . $answer_style . '">';
+                                echo htmlspecialchars($answer['individual_answer']) . $answer_marker;
+                                echo '</span>';
+                                echo '</div>';
+                            }
+                        } else {
+                            // User got it correct - only show the correct answer in green
+                            foreach ($question['answers'] as $answer) {
+                                if ($answer['is_correct'] == 1) {
+                                    echo '<div class="individual-answer">';
+                                    echo '<span style="color: green; font-weight: bold;">';
+                                    echo htmlspecialchars($answer['individual_answer']) . ' ✓';
+                                    echo '</span>';
+                                    echo '</div>';
+                                    break; // Only show one correct answer
+                                }
+                            }
                         }
                         ?>
                     </div>
-                <?php } ?>
+                <?php else: ?>
+                    <!-- Enumeration/Identification/Fill in the blanks question display -->
+                    <div class="answers">
+                        <?php 
+                            // Display correct answers
+                            echo "<div class='correct-answers'><strong>Correct Answer(s):</strong>";
+                            foreach ($question['answers'] as $answer) {
+                                echo "<div class='individual-answer' style='color: green; font-weight: bold;'>" . 
+                                    htmlspecialchars($answer['individual_answer']) . " ✓</div>";
+                            }
+                            echo "</div>";
+
+                            // Get user's actual answer from database using the quiz_id as well
+                            $user_answer_sql = "SELECT answer FROM student_answers 
+                                                WHERE student_id = ? 
+                                                AND question_id = ? 
+                                                ORDER BY answered_at DESC LIMIT 1";
+                            $user_answer_stmt = $conn->prepare($user_answer_sql);
+                            $user_answer_stmt->bind_param("ii", $student_id, $question['question_id']);
+                            $user_answer_stmt->execute();
+                            $user_answer_result = $user_answer_stmt->get_result();
+                            
+                            if ($user_answer_result->num_rows > 0) {
+                                $user_answer_row = $user_answer_result->fetch_assoc();
+                                $user_actual_answer = $user_answer_row['answer'];
+                                //$is_correct = $user_answer_row['is_correct'];
+
+                                // Debug output - remove in production
+                                error_log("Found answer for question {$question['question_id']}: $user_actual_answer");
+                                
+                                // Check if this question is in wrong_answers array
+                                $is_wrong = isset($wrong_answers[$question['question_id']]);
+                                
+                                echo "<div class='user-answer'><strong>Your Answer:</strong>";
+                                
+                                // For enumeration questions, split the answer by commas
+                                if ($question['question_type'] === 'enumeration') {
+                                    $user_answers = array_map('trim', explode(',', $user_actual_answer));
+                                    
+                                    // Get correct answers for comparison
+                                    $correct_answer_text = '';
+                                    foreach ($question['answers'] as $answer) {
+                                        if ($answer['is_correct'] == 1) {
+                                            $correct_answer_text = $answer['answer_text'];
+                                            break;
+                                        }
+                                    }
+                                    $correct_answers = array_map('trim', explode(',', $correct_answer_text));
+                                    
+                                    foreach ($user_answers as $user_ans) {
+                                        $is_correct = in_array(strtolower(trim($user_ans)), array_map('strtolower', array_map('trim', $correct_answers)));
+                                        $color = $is_correct ? 'green' : 'red';
+                                        $mark = $is_correct ? '✓' : '✗';
+                                        echo "<div class='individual-answer' style='color: $color; font-weight: bold;'>" . 
+                                            htmlspecialchars($user_ans) . " $mark</div>";
+                                    }
+                                } 
+                                // For identification and fill-in-the-blanks
+                                else {
+                                    $color = $is_wrong ? 'red' : 'green';
+                                    $mark = $is_wrong ? '✗' : '✓';
+                                    echo "<div class='individual-answer' style='color: $color; font-weight: bold;'>" . 
+                                        htmlspecialchars($user_actual_answer) . " $mark</div>";
+                                }
+                                echo "</div>";
+                            } else {
+                                error_log("No answer found for question {$question['question_id']} and student $student_id");
+                                // No answer found in database
+                                echo "<div class='user-answer'><strong>Your Answer:</strong> ";
+                                echo "<div class='individual-answer' style='color: red; font-weight: bold;'>No answer recorded ✗</div>";
+                                echo "</div>";
+                            }
+                            $user_answer_stmt->close();
+                        ?>
+                    </div>
+                <?php endif; ?>
             </div>    
          </div>
     </div>
@@ -355,6 +553,11 @@ $conn->close();
 </div>
 
 <br>
+
+<?php
+// Close connection at the very end
+$conn->close();
+?>
 
 </body>
 </html>

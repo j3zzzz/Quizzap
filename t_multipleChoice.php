@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         h1{
             position: relative;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             color: #f8b500;
             text-align: center;
             font-size: 50px;
@@ -133,17 +133,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         label{
             color: black;
-            font-family: Tilt Warp Regular;
-            font-size: 22px;
+            font-family: Fredoka;
+            font-size: 20px;
+            font-weight: 500;
         }
 
         label[for=timer]{
-            font-size: 25px;
+            font-size: 22px;
             margin-left: 8%;
         }
 
         label[for=title]{
-            font-size: 30px;
+            font-size: 22px;
             margin-left: 3%;
         }
 
@@ -158,7 +159,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border: 3px solid #B9B6B6;
             margin-top: 1%;
             text-transform: capitalize;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         input[type=number]{
@@ -167,7 +168,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             padding: 10px;
             border: 3px solid #B9B6B6;
             margin-right: 3%;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         input[type=radio]{
@@ -210,7 +211,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-weight: bold;
         }
 
@@ -236,7 +237,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-weight: bold;
             margin-left: 10px;
         }
@@ -258,7 +259,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border: 2px solid #F8b500;
             padding: 10px;
             font-size: 15px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             margin-bottom: 1.5%;
             margin-left: 80%;
             box-shadow: 0 6px 0 0 #BC8900;

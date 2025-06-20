@@ -66,10 +66,11 @@ $conn->close();
 
     .quiz-type {
         position: relative;
-        font-family: Tilt Warp Regular;
+        font-family: Fredoka;
         color: #f8b500;
         text-align: center;
         font-size: 70px;
+        font-weight: 600;
     }
 
     hr{
@@ -97,7 +98,8 @@ $conn->close();
         align-items: center;
         background-color: white;
         color: #f8b500;
-        font-family: Tilt Warp Regular;
+        font-family: Fredoka;
+        font-weight: 600;
         font-size: 30px;
         border: 2px solid #f8b500;
         border-radius: 15px;

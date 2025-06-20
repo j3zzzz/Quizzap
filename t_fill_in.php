@@ -20,7 +20,6 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
     <title>Create Fill in the Blanks Quiz</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-
         * {
             margin: 0;
             padding: 0;
@@ -49,7 +48,7 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
 
         h1{
             position: relative;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             color: #f8b500;
             text-align: center;
             font-size: 50px;
@@ -69,18 +68,21 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
 
         label{
             color: black;
-            font-family: Tilt Warp Regular;
-            font-size: 22px;
+            font-family: Fredoka;
+            font-size: 20px;
+            font-weight: 500;
         }
 
         label[for=timer]{
-            font-size: 25px;
-            margin-left: 18%;
+            font-size: 22px;
+            margin-left: 15%;
+            font-weight: 500;
         }
 
         label[for=title]{
-            font-size: 30px;
+            font-size: 22px;
             margin-left: 2%;
+            font-weight: 500;
         }
 
         #title{
@@ -89,22 +91,22 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
 
         input[type=text]{
             width: 100%;
-            padding: 15px;
             border-radius: 10px;
             padding: 10px;
             border: 3px solid #B9B6B6;
             margin-top: 1%;
-            font-family: Tilt Warp Regular;
-            font-size: 20px;
+            text-transform: capitalize;
+            font-family: Fredoka;
+            font-size: 17px;
         }
 
         input[type=number]{
-            width: 6%;
+            width: 10%;
             border-radius: 10px;
             padding: 10px;
             border: 3px solid #B9B6B6;
-            margin-right: 3%;
-            font-family: Tilt Warp Regular;
+            margin-right: 2%;
+            font-family: Fredoka;
         }
 
         .question {
@@ -153,20 +155,23 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
         .btn-saveQuiz {
             background-color: #f8b500;
             color: white;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             box-shadow: 0 5px 0 0 #BC8900;
         }
         .btn-removeQuestion {
             margin-top: 2%;
             background-color: #f44336;
             color: white;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
         }
         .btn-back {
             background-color: white;
             color: #B9B6B6;
             border: 2px solid #B9B6B6;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
         }
         .actions {
             display: flex;
@@ -175,9 +180,10 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
             justify-content: space-between;
         }
         .question-number {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 25px;
             margin-bottom: 10px;
+            font-weight: 500;
         }
         .remove-answer {
             font-size: 13px;
@@ -185,14 +191,17 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
             color: white;
             border: none;
             border-radius: 4px;
-            padding: 7px;
+            padding: 10px;
             cursor: pointer;
             width: 3%;
-            height: 20%;
+            height: 20%; 
             margin-top: 2%;
+            align-items: center;
+            width: 5%;
         }
         .add-answer {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             background-color: white;
             color: #f8b500;
             border: 2px solid #f8b500;
@@ -219,8 +228,8 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: Tilt Warp Regular;
-            font-weight: bold;
+            font-family: Fredoka;
+            font-weight: 500;
         }
         .number-btn:hover {
             background-color: #f8b500;
@@ -251,12 +260,19 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
         }
         
         .add-question-btn:hover {
             background-color: #f8b500;
             color: white;
+        }
+        
+        /* Hide remove buttons when there's only one */
+        .single-answer .remove-answer,
+        .single-question .btn-removeQuestion {
+            display: none;
         }
     </style>
 </head>
@@ -316,6 +332,9 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
             const container = document.getElementById('questionsContainer');
             const questionDiv = document.createElement('div');
             questionDiv.className = 'question-container';
+            if (currentQuestions === 0) {
+                questionDiv.classList.add('single-question');
+            }
             const questionNumber = currentQuestions + 1;
 
             questionDiv.innerHTML = `
@@ -329,7 +348,7 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
                 <div class="answers-section">
                     <label>Possible Answers:</label>
                     <div class="answer-list">
-                        <div class="answer-container">
+                        <div class="answer-container single-answer">
                             <input type="text" 
                                    name="blanks_answers[${currentQuestions}][]" 
                                    class="answer-input" 
@@ -351,6 +370,9 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
 
             container.appendChild(questionDiv);
             currentQuestions++;
+            
+            // Update single-question class for all questions
+            updateQuestionRemoveButtons();
         }
 
         function addAnswer(questionIndex) {
@@ -368,23 +390,47 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
                 </button>
             `;
             answerList.appendChild(answerContainer);
+            
+            // Remove single-answer class from all containers in this question
+            const containers = answerList.querySelectorAll('.answer-container');
+            containers.forEach(container => {
+                container.classList.remove('single-answer');
+            });
         }
 
         function removeAnswer(button) {
             const container = button.parentElement;
             const answerList = container.parentElement;
+            
             if (answerList.children.length > 1) {
                 container.remove();
-            } else {
-                alert('At least one answer is required!');
+                
+                // If only one answer left, add single-answer class
+                if (answerList.children.length === 1) {
+                    answerList.querySelector('.answer-container').classList.add('single-answer');
+                }
             }
         }
 
         function removeQuestion(button) {
-            const question = button.closest('.question-container');
-            question.remove();
-            currentQuestions--;
-            updateQuestionNumbers();
+            if (document.querySelectorAll('.question-container').length > 1) {
+                const question = button.closest('.question-container');
+                question.remove();
+                currentQuestions--;
+                updateQuestionNumbers();
+                updateQuestionRemoveButtons();
+            }
+        }
+
+        function updateQuestionRemoveButtons() {
+            const questions = document.querySelectorAll('.question-container');
+            questions.forEach(question => {
+                if (questions.length === 1) {
+                    question.classList.add('single-question');
+                } else {
+                    question.classList.remove('single-question');
+                }
+            });
         }
 
         function updateQuestionNumbers() {
@@ -408,49 +454,44 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
         });
 
         document.getElementById('quiz-form').addEventListener('submit', function(e) {
-        e.preventDefault();       
-    
-        const formData = new FormData(this);
-        const allQuestionsFilled = Array.from(document.querySelectorAll('.question-box')).every(questionDiv => {
-            const inputs = questionDiv.querySelectorAll('input[type="text"]');
-            return Array.from(inputs).every(input => input.value.trim() !== '');
-        });
+            e.preventDefault();       
+            
+            const formData = new FormData(this);
+            const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
+                const inputs = questionDiv.querySelectorAll('input[type="text"]');
+                return Array.from(inputs).every(input => input.value.trim() !== '');
+            });
 
-        if (!allQuestionsFilled) {
-            alert('Please fill all questions and answers before submitting.');
-            return;
-        }
-        
-        fetch('t_save_quiz.php', {
-            method: 'POST',
-            body: formData
-        })
-        .then(response => response.text())
-        .then(text => {
-            try {
-                const data = JSON.parse(text);    
-                if (data && data.success) {
-                    alert(data.message); // Show success message
-                    window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`; // Redirect to subject dashboard
-                } else {
-                    alert('Error creating quiz: ' + (data.message));
-                    error_log('Error details', data);
+            if (!allQuestionsFilled) {
+                alert('Please fill all questions and answers before submitting.');
+                return;
+            }
+            
+            fetch('t_save_quiz.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(text => {
+                try {
+                    const data = JSON.parse(text);    
+                    if (data && data.success) {
+                        alert(data.message); // Show success message
+                        window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`; // Redirect to subject dashboard
+                    } else {
+                        alert('Error creating quiz: ' + (data.message));
+                        error_log('Error details', data);
+                    }
+                } catch (error) {    
+                    console.log('Failed to parse server response ' + text);
+                    console.error('Invalid JSON Response: ', text);
                 }
-            } catch (error) {    
-            console.log('Failed to parse server response ' + text);
-            console.error('Invalid JSON Response: ', text);
-        }
-    })
-    .catch(error => {
-        console.log('Failes to save quiz: ' + (error.message));
-        console.error('Fetch error: ', error);
-    });
-});
-
+            })
+            .catch(error => {
+                console.log('Failed to save quiz: ' + (error.message));
+                console.error('Fetch error: ', error);
+            });
+        });
     </script>
 </body>
 </html>
-
-["674ca1d3f08e1_images (1).jpeg","674ca1d3f0b5c_images.jpeg"]
-["computer","code"]
-["code","computer"]

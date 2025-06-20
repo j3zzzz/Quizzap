@@ -118,44 +118,101 @@ $conn->close();
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: 'Fredoka';
         }
 
         body, html {
             height: 100%;
+            overflow-x: hidden;
         }
 
         .container {
             display: flex;
-            height: 100vh;
+            min-height: 100vh;
+            position: relative;
         }
 
+        /* Sidebar styling */
         .sidebar {
-            height: 100vh;
             position: fixed;
             width: 250px;
-            background-color: #ffffff;
+            height: 100vh;
+            background-color: white;
             color: #f8b500;
             padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 2px 0 4px 0 rgba(0, 0, 0, 0.2);
+            justify-content: flex-start;
+            transition: all 0.3s ease;
+            z-index: 999;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+            transform: translateX(0);
+        }
+
+        .sidebar.collapsed {
+            width: 90px;
+            padding: 2rem 0.5rem;
+        }
+
+        .sidebar.mobile-hidden {
+            transform: translateX(-100%);
         }
 
         .sidebar .logo {
             margin-bottom: 1rem;
             margin-left: 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        hr{
-            border: 1px solid #F8B500;
+        .sidebar.collapsed .logo {
+            margin-left: 0;
+            justify-content: center;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: #f8b500;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            background: #f8b500;
+            color: white;
+            border: none;
+            padding: 0.5rem;
+            border-radius: 5px;
+            z-index: 1000;
+            font-size: 1.2rem;
         }
 
         .sidebar .menu {
+            margin-top: 30%;
             display: flex;
             flex-direction: column;
-            margin-bottom: 18rem;
+            flex-grow: 1;
+        }
+
+        .sidebar.collapsed .menu{
+            align-items: center;
+            margin-top: 45%;
         }
 
         .sidebar .menu a {
@@ -167,25 +224,80 @@ $conn->close();
             font-size: 1rem;
             border-radius: 5px;
             transition: background 0.3s;
-            font-family: Tilt Warp Regular;
+            font-family: 'Fredoka';
+            letter-spacing: 1px;
             margin-bottom: .5rem;
+            width: 100%;
         }
 
-        .sidebar .menu a:hover, .sidebar .menu a.active {
+        .sidebar.collapsed .menu a {
+            justify-content: center;
+            padding: 1rem 0;
+            width: 90%;
+        }
+
+        .sidebar .menu a span {
+            margin-left: 0.5rem;
+            transition: opacity 0.2s;
+            font-family: 'Fredoka';
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .sidebar.collapsed .menu a span {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .sidebar .menu a:hover,
+        .sidebar .menu a.active {
             background-color: #f8b500;
-            color: #ffffff;
+            color: white;
         }
 
         .sidebar .menu a i {
             margin-right: 0.5rem;
+            min-width: 20px;
+            text-align: center;
+            font-size: clamp(1rem, 1.2vw, 1.5rem);
         }
 
-        /* Dashboard content area */
-        .content {
-            margin-left: 17%;
+        .sidebar.collapsed .menu a i {
+            margin-right: 0;
+            font-size: 1.2rem;
+        }
+
+        .sidebar.collapsed .toggle-btn{
+            margin: auto;
+        }
+
+        .sidebar.collapsed .logo-img {
+            display: none;
+        }
+
+        .sidebar.collapsed .logo-icon {
+            display: block !important;
+        }
+
+       /* Dashboard content area */
+       .content {
             flex: 1;
             background-color: #ffffff;
             padding: 2rem;
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content.expanded {
+            margin-left: 90px;
+        }
+
+        .content span {
+            font-family: Fredoka;
+            font-size: larger;
         }
 
         .content-header {
@@ -196,16 +308,20 @@ $conn->close();
         }
 
         .content-header h1 {
+            width: 100%;
             font-size: 2rem;
             color: #333333;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            padding: 10px;
+            border-bottom: 1.5px solid #F8B500;
         }
 
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
         }
 
         .content-header .actions {
@@ -222,7 +338,7 @@ $conn->close();
             font-size: 1rem;
             cursor: pointer;
             margin-right: 1rem;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         .content-header .actions button:hover {
@@ -241,33 +357,9 @@ $conn->close();
             font-size: 1.5rem;
         }
 
-        .content-header hr{
-            border: 1px solid #F8B500;
-            width: 1150px;
-        }
-
-        .subject-cont {
-            border: 3px solid #cf5200;
-            border-radius: 5px;
-            background-color: #ffb787;
-            width: 60%;
-            height: 400px;
-            overflow: auto;
-            box-shadow: 5px 6px 0 0 rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            z-index: 5;
-        }
-
-        .subject-cont a {
-            color: #CF5300;
-            letter-spacing: 1px;
-            font-size: 25px;
-            text-decoration: none;
-        }
-
         .subject-button {
             color: black;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 24px;
             background-color: white;
             display: inline-block;
@@ -311,7 +403,7 @@ $conn->close();
 
         .subject-button span {
             font-size: 15px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             color: #f8b500;
         }
 
@@ -369,7 +461,7 @@ $conn->close();
             background-color: #F8B500;
             color: white;
             border: 2px solid #F8B500;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 18px;
             box-shadow: 0 6px 0 0 #BC8900;
             cursor: pointer;
@@ -392,11 +484,9 @@ $conn->close();
             border: 3px solid #DCDCDC;
             border-radius: 15px;
             padding: 50px;
-            width: 200%;
+            width: 100%; /* Changed from 200% to 100% */
             max-width: 1000px;
-            margin-left: -15%;
-            margin-right: auto;
-            margin-top: 2%;
+            margin: 2% auto 0 auto; /* Centered horizontally, removed negative margin */
             overflow: auto;
             box-shadow: 2px 4px 2px 0 rgba(0, 0, 0, 0.2);
         }
@@ -418,7 +508,8 @@ $conn->close();
             box-shadow: 0 4px 0 0 #BC8900;
             text-decoration: none;
             text-align: center;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             font-size: 22px;
             color: black;
             cursor: pointer;
@@ -438,7 +529,7 @@ $conn->close();
         }
 
         .quiz-btn .tooltiptext {
-            font-family: 'Tilt Warp Regular';
+            font-family: 'Fredoka';
             font-size: 12px;
             visibility: hidden;
             width: 180px;
@@ -554,13 +645,13 @@ $conn->close();
          
         /* Handle */
         ::-webkit-scrollbar-thumb {
-          background: #ff6d0d; 
+          background: #f8b500; 
           border-radius: 10px;
         }
 
         /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
-          background: #A34404; 
+          background: #f8b500; 
         }
 
         .modal-body {
@@ -575,7 +666,7 @@ $conn->close();
             border-radius: 20px;
             padding: 30px 40px;
             width: 35%;
-            height: 65%;
+            height: 80%;
             margin: auto;
             top: 5%;
             left: 15%;
@@ -589,13 +680,16 @@ $conn->close();
 
         #ready {
             font-size: 18px;
+            font-weight: 500;
             color: black;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             text-align: left;
+            padding:10px;
+            border-bottom: 1.5px solid #f8b500;
         }   
 
         .modal-content button {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             color: white;
             font-size: 18px;
             width: 40%;
@@ -664,7 +758,7 @@ $conn->close();
 
         .close:hover,
         .close:focus {
-          color: #ed5e00;
+          color: #f8b500;
           text-decoration: none;
           cursor: pointer;
         }
@@ -674,7 +768,7 @@ $conn->close();
         }
 
         #quiz-details h1 {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: xx-large ;
             text-align: center;
             margin-top: 1%;
@@ -682,7 +776,7 @@ $conn->close();
         }
 
         #quiz-details h2 {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             margin-top: 4%;
             padding-bottom: 5px;
             padding-top: 1px;
@@ -691,7 +785,7 @@ $conn->close();
         }
 
         #quiz-details span {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             float: right;
             right: 5%;
             margin-top: -6.5%;
@@ -765,16 +859,36 @@ $conn->close();
 </head>
 <body>
     <div class="container">
+        <!-- Mobile Toggle Button -->
+        <button class="mobile-toggle" onclick="toggleMobileSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <header>
-                <div class="logo"><img src="img/logo1.png" width="200px" height="80px"></div>
+                <button id="toggleSidebar" class="toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <img src="img/logo1.png" width="200px" height="80px" class="logo-img">
+                    <img src="img/logo 2.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
+                </div>
             </header>
-            <hr>
+            <hr style="border: 1px solid #f8b500;">
             <div class="menu">
-                <a href="s_Classes.php"><i class="fa-solid fa-list"></i>Classes</a>
-                <a href="s_quiz.php" class="active"><i class="fa-regular fa-circle-question"></i>Quizzes</a>
-                <a href="s_scores.php?subject_id=<?php echo $subject_id;?>"><i class="fa-solid fa-list-ol"></i>Scores</a>       
+                <a href="s_Classes.php" title="Classes">
+                    <i class="fa-solid fa-list"></i>
+                    <span>Classes</span>
+                </a>
+                <a href="s_quiz.php" class="active" title="Quizzes">
+                    <i class="fa-regular fa-circle-question"></i>
+                    <span>Quizzes</span>
+                </a>
+                <a href="s_scores.php?subject_id=<?php echo $subject_id;?>" title="Scores">
+                    <i class="fa-solid fa-list-ol"></i>
+                    <span>Scores</span>
+                </a>
             </div>
         </div>
 
@@ -783,7 +897,6 @@ $conn->close();
             <div class="content-header">
                 <div><br>
                     <h1><?php echo htmlspecialchars($subject_name); ?></h1><br>
-                    <hr>
                 </div>
                 <div class="actions">
                     <div class="profile"><img src="<?php echo $profilePic; ?>" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
@@ -799,7 +912,6 @@ $conn->close();
             </div>
     <center>
 
-    <div class="content">
         <div class="quiz">
             <?php 
                 if ($result->num_rows > 0) {
@@ -825,8 +937,7 @@ $conn->close();
                 
                 <!-- Modal content -->    
                 <span class="close">&times;</span>
-                <h2 id="ready">Are you Ready to Ace this Quiz?</h2>
-                <hr style="height: 4px; background-color: #CCCCCC; border-radius: 5px; border: none;"><br>
+                <h2 id="ready">Are you Ready to Ace this Quiz?</h2><br>
                 
                 <div class="modal-body">    
                     <div id="quiz-details"></div>
@@ -835,6 +946,48 @@ $conn->close();
     </div>
 
     <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.querySelector('.sidebar');
+            const content = document.querySelector('.content');
+            const toggleBtn = document.getElementById('toggleSidebar');
+
+            // Check if sidebar state is saved in localStorage
+            const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            
+            // Set initial state based on localStorage
+            if (isSidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                content.classList.add('expanded');
+            }
+
+            // Toggle sidebar when button is clicked
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    content.classList.toggle('expanded');
+                    
+                    // Save state to localStorage
+                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                });
+            }
+        });
+
+        function profileDropdown() { // Dropdown funtion
+        document.getElementById("dropdown").classList.toggle("show");
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdwn-btn')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
+        
         document.addEventListener("DOMContentLoaded", function() {
     // Get the modal and elements inside it
     var modal = document.getElementById("quiz-info-modal");
@@ -892,22 +1045,6 @@ $conn->close();
         }
     };
 });
-
-    function profileDropdown() { // Dropdown funtion
-        document.getElementById("dropdown").classList.toggle("show");
-        }
-
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropdwn-btn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
-            }
-        }
-    }
 </script>
 </body>
 </html>

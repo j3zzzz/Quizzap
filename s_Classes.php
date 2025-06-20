@@ -75,7 +75,7 @@ $conn->close();
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: 'Fredoka';
         }
 
         body, html {
@@ -87,31 +87,71 @@ $conn->close();
             height: 100vh;
         }
 
+        /* Sidebar styling */
         .sidebar {
-            height: 100vh;
             position: fixed;
             width: 250px;
-            background-color: #F8B500;
+            height: 100vh;
+            background-color: #f8b500;
             color: #ffffff;
             padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .sidebar.collapsed {
+            width: 90px;
+            padding: 2rem 0.5rem;
         }
 
         .sidebar .logo {
             margin-bottom: 1rem;
             margin-left: 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        hr{
-            border: 1px solid white;
+        .sidebar.collapsed .logo {
+            margin-left: 0;
+            justify-content: center;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-btn{
+            align-items: center;
         }
 
         .sidebar .menu {
+            margin-top: 40%;
             display: flex;
             flex-direction: column;
-            margin-bottom: 20rem;
+            flex-grow: 1;
+        }
+
+        .sidebar.collapsed .menu{
+            align-items: center;
+            margin-top: 45%;
         }
 
         .sidebar .menu a {
@@ -123,25 +163,118 @@ $conn->close();
             font-size: 1rem;
             border-radius: 5px;
             transition: background 0.3s;
-            font-family: Tilt Warp Regular;
+            font-family: 'Fredoka';
+            letter-spacing: 1px;
             margin-bottom: .5rem;
+            width: 100%;
         }
 
-        .sidebar .menu a:hover, .sidebar .menu a.active {
+        .sidebar.collapsed .menu a {
+            justify-content: center;
+            padding: 1rem 0;
+            width: 90%;
+        }
+
+        .sidebar .menu a span {
+            margin-left: 0.5rem;
+            transition: opacity 0.2s;
+            font-family: 'Fredoka';
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .sidebar.collapsed .menu a span {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .sidebar .menu a:hover,
+        .sidebar .menu a.active {
             background-color: white;
-            color: #F8B500;
+            color: #f8b500;
         }
 
         .sidebar .menu a i {
             margin-right: 0.5rem;
+            min-width: 20px;
+            text-align: center;
+            font-size: clamp(1rem, 1.2vw, 1.5rem);
+        }
+
+        .sidebar.collapsed .menu a i {
+            margin-right: 0;
+            font-size: 1.2rem;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar.collapsed .toggle-btn{
+            margin: auto;
+        }
+
+        .sidebar.collapsed .logo-img {
+            display: none;
+        }
+
+        .sidebar.collapsed .logo-icon {
+            display: block !important;
+        }
+
+        .sidebar.collapsed .menu a {
+            padding: 1rem 0;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .sidebar.collapsed .menu a span {
+            display: none;
+        }
+
+        .sidebar.collapsed .menu a i {
+            margin-right: 0;
+            font-size: 1.5rem;
+        }
+
+        .sidebar.collapsed hr {
+            margin: 0.5rem auto;
+            width: 50%;
         }
 
         /* Dashboard content area */
         .content {
-            margin-left: 17%;
             flex: 1;
             background-color: #ffffff;
             padding: 2rem;
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content.expanded {
+            margin-left: 90px;
+        }
+
+        .content span {
+            font-family: Fredoka;
+            font-size: larger;
         }
 
         .content-header {
@@ -152,16 +285,20 @@ $conn->close();
         }
 
         .content-header h1 {
+            width: 95%;
             font-size: 2rem;
             color: #333333;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            padding: 10px;
+            border-bottom: 1.5px solid #F8B500;
         }
 
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
         }
 
         .content-header .actions {
@@ -178,7 +315,7 @@ $conn->close();
             font-size: 1rem;
             cursor: pointer;
             margin-right: 1rem;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         .content-header .actions button:hover {
@@ -197,33 +334,10 @@ $conn->close();
             font-size: 1.5rem;
         }
 
-        .content-header hr{
-            border: 1px solid #F8B500;
-            width: 1150px;
-        }
-
-        .subject-cont {
-            border: 3px solid #cf5200;
-            border-radius: 5px;
-            background-color: #ffb787;
-            width: 60%;
-            height: 400px;
-            overflow: auto;
-            box-shadow: 5px 6px 0 0 rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            z-index: 5;
-        }
-
-        .subject-cont a {
-            color: #CF5300;
-            letter-spacing: 1px;
-            font-size: 25px;
-            text-decoration: none;
-        }
-
         .subject-button {
             color: black;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             font-size: 24px;
             background-color: white;
             display: inline-block;
@@ -232,7 +346,7 @@ $conn->close();
             text-decoration: none;
             text-align: left;
             padding: 12px 30px;
-            width: 30%;
+            width: 35%;
             margin: auto;
             margin-top: 2%;
             margin-bottom: 2%;
@@ -254,7 +368,8 @@ $conn->close();
 
         .subject-button span {
             font-size: 15px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             color: #f8b500;
         }
 
@@ -347,14 +462,26 @@ $conn->close();
 
 <div class="container">
         <!-- Sidebar --> 
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <header>
-                <div class="logo"><img src="img/logo4.png" width="200px" height="80px"></div>
+                <button id="toggleSidebar" class="toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <img src="img/logo4.png" width="200px" height="80px" class="logo-img">
+                    <img src="img/logo 6.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
+                </div>
             </header>
-            <hr>
+            <hr style="border: 1px solid white;">
             <div class="menu">
-                <a href="s_Home.php"><i class="fa-solid fa-house"></i>Dashboard</a>
-                <a href="s_Classes.php" class="active"><i class="fa-regular fa-address-book"></i>Classes</a>
+                <a href="s_Home.php" title="Dashboard">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="s_Classes.php" class="active" title="Classes">
+                <i class="fa-regular fa-address-book"></i>
+                    <span>Classes</span>
+                </a>
             </div>
         </div>
 
@@ -363,7 +490,6 @@ $conn->close();
             <div class="content-header">
                 <div><br>
                     <h1>Classes</h1><br>
-                    <hr>
                 </div>
                 <div class="actions">
                     <div class="profile"><img src="<?php echo $profilePic; ?>" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
@@ -398,6 +524,32 @@ $conn->close();
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.querySelector('.sidebar');
+    const content = document.querySelector('.content');
+    const toggleBtn = document.getElementById('toggleSidebar');
+
+    // Check if sidebar state is saved in localStorage
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    
+    // Set initial state based on localStorage
+    if (isSidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        content.classList.add('expanded');
+    }
+
+    // Toggle sidebar when button is clicked
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('expanded');
+            
+            // Save state to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+    }
+});
+
     function profileDropdown() { // Dropdown funtion
     document.getElementById("dropdown").classList.toggle("show");
     }

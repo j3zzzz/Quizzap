@@ -69,7 +69,7 @@ $conn->close();
 
         h1 {
             position: relative;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             color: #f8b500;
             text-align: center;
             font-size: 50px;
@@ -99,8 +99,8 @@ $conn->close();
 
         label {
             color: black;
-            font-family: Tilt Warp Regular;
-            font-size: 22px;
+            font-family: Fredoka;
+            font-size: 20px;
         }
 
         label[for=timer] {
@@ -130,7 +130,7 @@ $conn->close();
             padding: 10px;
             border: 3px solid #B9B6B6;
             margin-top: 1%;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 18px;
         }
 
@@ -140,7 +140,7 @@ $conn->close();
             padding: 10px;
             border: 3px solid #B9B6B6;
             margin-right: 3%;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         input[type=radio]{
@@ -155,7 +155,7 @@ $conn->close();
             padding: 10px;
             border-radius: 10px;
             border: 3px solid #B9B6B6;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             background-color: #f0f0f0;
             cursor: pointer;
         }
@@ -165,7 +165,7 @@ $conn->close();
             color: white;
             border: none;
             padding: 12px 24px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 16px;
             border-radius: 8px;
             cursor: pointer;
@@ -176,13 +176,25 @@ $conn->close();
             background-color: #F8B500;
         }
 
+        .delete-btn {
+            background-color:#f44336;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-family: Fredoka;
+            font-size: 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
         .question {
             background-color: #fff5e1;
             border: 1px solid #f0c808;
             border-radius: 8px;
             padding: 20px;
             margin-bottom: 15px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         .question input[type=text] {
@@ -192,7 +204,7 @@ $conn->close();
         h4 {
             color: #444;
             margin-bottom: 10px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         .question-number {
@@ -213,7 +225,7 @@ $conn->close();
             display: block;
             margin: 20px auto 0;
             transition: background-color 0.3s;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         input[type="submit"]:hover {
@@ -312,7 +324,7 @@ $conn->close();
         .add-icon {
             width: 40px;
             height: 40px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 24px;
             color: #f8b500;
             cursor: pointer;
@@ -331,7 +343,7 @@ $conn->close();
         }
 
         .add-answer, .remove-answer {
-            font-family: 'Tilt Warp';
+            font-family: 'Fredoka';
             font-size: 20px;
             color: #f8b500;
             cursor: pointer;
@@ -407,6 +419,51 @@ $conn->close();
             width: 300px;
             height: 300px;
         }
+
+        .matching-pairs-section {
+            margin-top: 15px;
+        }
+
+        .matching-pairs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .matching-pair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .matching-column {
+            flex: 1;
+        }
+
+        .pair-number {
+            font-weight: bold;
+            min-width: 30px;
+        }
+
+        .remove-pair {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .add-pair {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 8px 15px;
+            cursor: pointer;
+            font-family: Fredoka;
+        }
     </style>
 </head>
 <body>
@@ -455,43 +512,51 @@ $conn->close();
 
     <script>
         let questionCounter = 1;
+    const answerCounts = { 1: 1 };
 
-        const answerCounts = { 1: 1};
+    function addQuestion() {
+        const questType = document.getElementById("questType").value;
+        answerCounts[questionCounter] = 1;
+        const container = document.createElement('div');
+        container.className = 'question';
+        container.dataset.questionNumber = questionCounter;
+        container.innerHTML = `
+            <div class="question-header">
+                <div class="question-number">Question ${questionCounter}</div>
+                <button type="button" onclick="deleteQuestion(this)" class="delete-btn">Delete</button>
+            </div>
+            <input type="hidden" name="question_type[]" value="${questType}">
+            ${getQuestionTemplate(questType, questionCounter-1)}
+        `;
+        
+        document.getElementById("questionsContainer").appendChild(container);
+        questionCounter++;
+    }
 
-        function addQuestion() {
-            const questType = document.getElementById("questType").value;
-            answerCounts[questionCounter] = 1;
-            const container = document.createElement('div');
-            container.className = 'question';
-            container.innerHTML = `
-                <div class="question-header">
-                    <div class="question-number">Question ${questionCounter}</div>
-                    <button type="button" onclick="this.parentElement.parentElement.remove()" class="delete-btn">Delete</button>
-                </div>
-                <input type="hidden" name="question_type[]" value="${questType}">
-                ${getQuestionTemplate(questType, questionCounter-1)}
-            `;
+    function deleteQuestion(button) {
+        const questionDiv = button.closest('.question');
+        questionDiv.remove();
+        renumberQuestions();
+    }
+
+    function renumberQuestions() {
+        const questions = document.querySelectorAll('.question');
+        questions.forEach((question, index) => {
+            const questionNumber = index + 1;
+            question.dataset.questionNumber = questionNumber;
+            question.querySelector('.question-number').textContent = `Question ${questionNumber}`;
             
-            document.getElementById("questionsContainer").appendChild(container);
-            questionCounter++;
-        }
-
-        function previewImages(input, previewId) {
-            const previewContainer = document.getElementById(previewId);
-            previewContainer.innerHTML = ''; // Clear previous previews
-
-            if (input.files) {
-                Array.from(input.files).forEach(file => {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        previewContainer.appendChild(img);
-                    }
-                    reader.readAsDataURL(file);
-                });
-            }
-        }
+            // Update any indexes in the question content
+            const questionIndex = questionNumber - 1;
+            const inputs = question.querySelectorAll('input[name^="answers["], input[name^="correct["], input[name^="left_items["], input[name^="right_items["]');
+            inputs.forEach(input => {
+                const name = input.name;
+                input.name = name.replace(/\[\d+\]/, `[${questionIndex}]`);
+            });
+        });
+        
+        questionCounter = questions.length + 1;
+    }
 
         function getQuestionTemplate(questType, index) {
             switch (questType) {
@@ -563,38 +628,31 @@ $conn->close();
                             <span class="add-answer" onclick="addAnswer(${index})">&#43;</span>
                             <span class="remove-answer" onclick="removeAnswer(${index})" style="display: none;">&#8722;</span>
                         </div>`;
-                 case "matching_type":
-                    return `
-                        <h4>Matching Type</h4>
-                        <label>Question:</label>
-                        <input type="text" name="questions[]" required>
-                        <div class="matching-type-container">
-                            <div class="left-items-section">
-                                <label>Left Items (Images):</label>
-                                <div id="left-images-container-${index}">
-                                    <div class="left-image-input">
-                                        <input type="file" name="left_images[${index}][]" accept="image/*" 
-                                               onchange="handleLeftImageUpload(this, ${index})" required>
-                                    </div>
-                                </div>
-                                <button type="button" onclick="addLeftImageInput(${index})">Add More Images</button>
-                            </div>
-
-                            <div class="right-items-section">
-                                <label>Right Items:</label>
-                                <div id="right-items-container-${index}">
-                                    <div class="right-item-input">
-                                        <input type="text" name="right_items[${index}][]" placeholder="Matching Item" required>
-                                    </div>
-                                </div>
-                                <button type="button" onclick="addRightItemInput(${index})">Add More Items</button>
-                            </div>
-
-                            <div class="matching-configuration">
-                                <h4>Configure Matches</h4>
-                                <div id="match-configuration-${index}"></div>
-                            </div>
-                        </div>`;
+                        case "matching_type":
+    return `
+        <h4>Matching Type</h4>
+        <label>Question:</label>
+        <input type="text" name="questions[]" required>
+        <div class="matching-pairs-section">
+            <label>Matching Pairs:</label>
+            <div class="matching-pairs-container" id="matching-pairs-${index}">
+                <div class="matching-pair">
+                    <div class="pair-number">1</div>
+                    <div class="matching-column">
+                        <input type="text" name="left_items[${index}][]" required placeholder="Left item">
+                    </div>
+                    <div class="matching-column">
+                        <input type="text" name="right_items[${index}][]" required placeholder="Right item">
+                    </div>
+                    <button type="button" class="remove-pair" onclick="removeMatchingPair(this, ${index})">
+                        Remove
+                    </button>
+                </div>
+            </div>
+            <button type="button" class="add-pair" onclick="addMatchingPair(${index})">
+                Add Another Pair
+            </button>
+        </div>`;
                                 default:
                                     return '';
                             }
@@ -700,86 +758,41 @@ $conn->close();
             });
         }   
 
-        // New functions for handling matching type
-        function addLeftImageInput(questionIndex) {
-            const container = document.getElementById(`left-images-container-${questionIndex}`);
-            const newInput = document.createElement('div');
-            newInput.className = 'left-image-input';
-            newInput.innerHTML = `
-                <input type="file" name="left_images[${questionIndex}][]" accept="image/*" 
-                       onchange="handleLeftImageUpload(this, ${questionIndex})" required>
-                <button type="button" onclick="this.parentElement.remove()">Remove</button>
-            `;
-            container.appendChild(newInput);
-        }
+        function addMatchingPair(questionIndex) {
+    const container = document.getElementById(`matching-pairs-${questionIndex}`);
+    const pairCount = container.querySelectorAll('.matching-pair').length;
+    
+    const pairDiv = document.createElement('div');
+    pairDiv.className = 'matching-pair';
+    pairDiv.innerHTML = `
+        <div class="pair-number">${pairCount + 1}</div>
+        <div class="matching-column">
+            <input type="text" name="left_items[${questionIndex}][]" required placeholder="Left item">
+        </div>
+        <div class="matching-column">
+            <input type="text" name="right_items[${questionIndex}][]" required placeholder="Right item">
+        </div>
+        <button type="button" class="remove-pair" onclick="removeMatchingPair(this, ${questionIndex})">
+            <i class="fas fa-trash"></i>
+        </button>
+    `;
+    container.appendChild(pairDiv);
+}
 
-        function addRightItemInput(questionIndex) {
-            const container = document.getElementById(`right-items-container-${questionIndex}`);
-            const newInput = document.createElement('div');
-            newInput.className = 'right-item-input';
-            newInput.innerHTML = `
-                <input type="text" name="right_items[${questionIndex}][]" placeholder="Matching Item" required>
-                <button type="button" onclick="this.parentElement.remove()">Remove</button>
-            `;
-            container.appendChild(newInput);
-        }
-
-        function handleLeftImageUpload(input, questionIndex) {
-            const file = input.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    updateMatchConfiguration(questionIndex);
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function updateMatchConfiguration(questionIndex) {
-            const leftImagesContainer = document.getElementById(`left-images-container-${questionIndex}`);
-            const rightItemsContainer = document.getElementById(`right-items-container-${questionIndex}`);
-            const matchConfigContainer = document.getElementById(`match-configuration-${questionIndex}`);
-
-            // Clear previous configuration
-            matchConfigContainer.innerHTML = '';
-
-            const leftImages = leftImagesContainer.querySelectorAll('input[type="file"]');
-            const rightItems = rightItemsContainer.querySelectorAll('input[type="text"]');
-
-            if (leftImages.length > 0 && rightItems.length > 0) {
-                leftImages.forEach((leftImage, index) => {
-                    if (leftImage.files.length > 0) {
-                        const matchRow = document.createElement('div');
-                        matchRow.className = 'match-row';
-
-                        // Display image preview
-                        const imgPreview = document.createElement('img');
-                        const reader = new FileReader();
-                        reader.onload = function(e) {
-                            imgPreview.src = e.target.result;
-                            imgPreview.style.width = '100px';
-                            imgPreview.style.height = '100px';
-                            imgPreview.style.objectFit = 'cover';
-                        };
-                        reader.readAsDataURL(leftImage.files[0]);
-
-                        // Create dropdown to select matching right item
-                        const matchSelect = document.createElement('select');
-                        matchSelect.name = `matching_config[${questionIndex}][]`;
-                        rightItems.forEach((rightItem, rightIndex) => {
-                            const option = document.createElement('option');
-                            option.value = rightIndex;
-                            option.text = rightItem.value || `Item ${rightIndex + 1}`;
-                            matchSelect.appendChild(option);
-                        });
-
-                        matchRow.appendChild(imgPreview);
-                        matchRow.appendChild(matchSelect);
-                        matchConfigContainer.appendChild(matchRow);
-                    }
-                });
-            }
-        }
+function removeMatchingPair(button, questionIndex) {
+    const pairContainer = button.closest('.matching-pair');
+    const pairsContainer = pairContainer.parentElement;
+    
+    if (pairsContainer.children.length > 1) {
+        pairContainer.remove();
+        
+        // Update pair numbers after removal
+        const pairs = pairsContainer.querySelectorAll('.matching-pair');
+        pairs.forEach((pair, index) => {
+            pair.querySelector('.pair-number').textContent = index + 1;
+        });
+    }
+}
 
     // Validate form
     function validateForm() {

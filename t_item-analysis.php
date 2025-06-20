@@ -62,7 +62,6 @@ $result = $stmt->get_result();
 $quizResults = [];
 
 if ($result->num_rows > 0) {
-
   while ($row = $result->fetch_assoc()) {
     $quizResults[] = [
       'title' => $row['title'], 
@@ -157,10 +156,10 @@ $conn->close();
 
         var options = {
            colors: ['#e4a600', '#F8B500', '#FCD058'],
-           fontName: 'Tilt Warp',
+           fontName: 'Fredoka',
            fontSize: 15,
            height: 500,
-           width: 1050,
+           width: '100%',
           chart: {
             title: 'Your Students Performance for this Subject',
             subtitle: 'Computed based on their Scores for all of the Quiz Taken in this Subject',
@@ -179,7 +178,7 @@ $conn->close();
 
             tooltip: {
               textStyle: {
-                fontName: 'Tilt Warp',
+                fontName: 'Fredoka',
                 bold: false,
               }
             },
@@ -219,13 +218,13 @@ $conn->close();
 
         var options = {
           colors: ['#e4a600', '#F8B500', '#FCD058'],
-          fontName: 'Tilt Warp',
+          fontName: 'Fredoka',
           fontSize: 15,
            height: 500,
-           width: 1050,
+           width: '100%',
           chart: {
               titleTextStyle: {
-                fontName: 'Tilt Warp',
+                fontName: 'Fredoka',
                 color: '#666',
                 fontSize: 18,
                 bold: true
@@ -248,7 +247,7 @@ $conn->close();
 
           tooltip: {
           textStyle: {
-            fontName: 'Tilt Warp'
+            fontName: 'Fredoka'
           }
           },          
           
@@ -289,242 +288,324 @@ $conn->close();
     </script>
 
 <style>
+  * {
+    font-family: 'Fredoka', sans-serif;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
   body {
-    overflow: auto;
-    font-family: Tilt Warp;
-  }
-    
-  .buttons {
-    margin-left: 30%;
+    background-color: white;
+    color: #333;
+    line-height: 1.6;
+    overflow-x: hidden;
   }
 
-    /* Scroll Bar */
-  /* width */
-  ::-webkit-scrollbar {
-    width: 10px;
-    height: 10px;
-  }
-
-  /* Track */
-  ::-webkit-scrollbar-track {
-    box-shadow: inset 0 0 5px grey; 
-    border-radius: 5px;
-  }
-    
-  /* Handle */
-  ::-webkit-scrollbar-thumb {
-    background: #F8B500; 
-    border-radius: 5px;
-  }
-
-  /* Handle on hover */
-  ::-webkit-scrollbar-thumb:hover {
-    background: #FCD058; 
-  }
-
-  #filter {
-    margin-left: 5%;
-    width: fit-content;
-  }
-
-  select {
-    border-radius: 5px;
-    font-family: Tilt Warp;
-    padding: 2px 5px;
-    cursor: pointer;
-  }
-
-  .quiz-btn {
-    background-color: #F8B500;
-    display: block;
-    margin: auto;
-    margin-block-end: 10%;
-    width: 60%;
-    padding: 12px 15px;
-    padding-bottom: 8px;
-    border-radius: 8px;
-    box-shadow: 5px 6px 0 0 rgba(0, 0, 0, 0.2);
-    text-decoration: none;
-    text-align: center;
-    color: white;
-    cursor: pointer;
-  }
-
-  .quiz-btn:hover {
-      background-color: #E5D098;
-      color: white;
-  }
-
-  .quiz-btn:active {
-      background-color: #A34404;
-      box-shadow: 5px 6px 0 0 rgba(0, 0, 0, 0.3);
-  } 
-
-  .no-quiz-btn {
-      position: relative;
-      text-align: center;
-      margin: auto;
-      margin-top: 3px;
-      padding: 3px 0;
-  }
-
-  #columnchart_material, #columnchart {
-    margin-top: 0%; 
-  }
-
+  /* Header and Main Content */
   #main {
-    transition: margin-left .5s;
+    transition: all 0.3s ease;
+    padding: 20px;
     margin-left: 0;
+    min-height: 100vh;
+    max-width: 1200px;
+    margin: 0 auto;
   }
 
   #main.open {
-    margin-left: 60%;
+    margin-left: 20%;
+    width: 80%;
+    max-width: none;
   }
 
+  .sum h1 {
+    color: black;
+    margin: 20px 0;
+    font-size: clamp(1.5rem, 2.5vw, 2.2rem);
+    text-align: center;
+    font-weight: 600;
+    padding: 10px;
+  }
+
+  /* Side Navigation */
   .side-nav {
-    align-content: center;
-    justify-content: center;
-    align-items: center;
-    display: inline-block;
-    background-color: #FAFAFA;
-    border-top-color: transparent;
     position: fixed;
-    border: 1px solid #ccc;
-    float: left;
     top: 0;
     left: -20%;
     width: 20%;
-    height: 100%;
-    z-index: 4;
-    transition: 0.5s;
+    min-width: 250px;
+    height: 100vh;
+    background-color: white;
+    color: black;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
   }
 
-  @media screen and (max-width: 768px) {
-    .side-nav {
-      width: 0;
-      position: fixed;
-    }
+  .side-nav.open {
+    left: 0;
+  }
+
+  /* Menu buttons */
+  #closeMenu, #openMenu {
+    color: white;
+    background-color: #F8B500;
+    border: none;
+    padding: 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+
+  #openMenu {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 100;
   }
 
   #closeMenu {
     position: absolute;
-    background-color: #F8B500;
-    padding: 8px 8px;
-    margin-top: 5%;
-    right: 25px;
-    float: right;
-    border-radius: 5px;
-    z-index: 3;
-    cursor: pointer;
-    transition: 0.3s;
-  }
-
-  .side-nav.open {
-    width: 60%;
+    top: 20px;
+    right: 20px;
   }
 
   #closeMenu:hover, #openMenu:hover {
-    background-color: black;
+    background-color: #e67e22;
+    transform: scale(1.05);
+  }
+
+  /* Logo */
+  #logo img {
+    width: 85%;
+    max-width: 200px;
+    margin: 30px auto 20px;
+    display: block;
+    cursor: pointer;
+    transition: transform 0.3s ease;
+  }
+
+  /* Horizontal Rules */
+  #hr1, #hr2 {
+    background-color: #F8B500;
+    height: 2px;
+    border: none;
+    margin: 20px auto;
+    width: 90%;
+  }
+
+  /* Back Button */
+  #back {
+    cursor: pointer;
+    width: fit-content;
+    margin: 20px auto;
+    padding: 10px;
+    text-align: center;
+    transition: all 0.3s ease;
+    color: #ccc;
+  }
+
+  #back:hover {
+    transform: translateX(-5px);
     color: #F8B500;
   }
 
-  #openMenu {
-    z-index: 1;
-    position: absolute;
-    top: 2%;
-    background-color: #F8B500;
-    float: left;
-    padding: 8px 8px;
-    border-radius: 5px;
-    transition: 0.3s;
-    cursor: pointer;
-  }
-
-  .sum {
-    width: 90%;
-    position: relative;
-    margin-top: 2%;
-    margin-bottom: 2%;
-    left: 5%;
-    overflow: auto;
-  }
-
-  #hr1 {
-    background-color: #F8B500; 
-    height: 2px; 
-    border: none;
-    margin-top: -2%;
-    width: 90%;
-    margin-left: 5%;
-    align-self: center;
-  }
-
-  #hr2 {
-    background-color: #F8B500; 
-    height: 2px; 
-    border: none;
-    width: 90%;
-  }
-
-  #back {
-    cursor: pointer; 
-    width: fit-content;
-    margin: auto;
-    margin-bottom: -5%;
-  }
-
-  span {
-    font-size: 20px;
-  }
-
-  .side-nav img {
-    padding: -1px 10px;
-    cursor: pointer;
-    width: 85%;
-    height: 15%;
-    z-index: 2;
-    margin-top: 10%;
-    margin-bottom: -1%;
-  }
-
-  #logo {
-    position: relative;
-    z-index: 2;
-  }
-
-  .side-nav p{
-    text-align: center;
-    font-size: 30px;
-    margin-bottom: -25%;
-    padding: 5px 10px;
-  }
-
-
+  /* Quiz Items */
   .quiz-items {
-    position: relative;
-    overflow: auto;
-    margin-top: 25%;
-    left: 0;
-    width: 92%;
-    height: 70%;
-    float: left;
-    padding: 0px 10px;
+    padding: 20px;
+    margin-top: 20px;
+    height: calc(100vh - 300px);
+    overflow-y: auto;
   }
 
-  #no-data {
-    position: relative;
-    width: fit-content;
-    color:  black;
+  .quiz-btn {
     background-color: #F8B500;
-    padding: 20px 20px;
-    border: 2px solid black;
-    border-radius: 20px;
-    margin-top: 2%;
-    margin-left: auto;
-    margin-right: auto;
+    color: white;
+    border: none;
+    padding: 12px 15px;
+    margin: 10px auto;
+    width: 100%;
+    border-radius: 8px;
+    text-align: center;
+    text-decoration: none;
+    display: block;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   }
 
+  .quiz-btn:hover {
+    background-color: #e4a600;
+    transform: translateY(-2px);
+  }
+
+  /* Filter Section */
+  #filter {
+    margin: 20px 0;
+    padding: 0 5%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #filter label {
+    font-weight: 500;
+    color: #2c3e50;
+  }
+
+  #filter select {
+    padding: 8px 15px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    background-color: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 1rem;
+  }
+
+  #filter select:focus {
+    outline: none;
+    border-color: #F8B500;
+    box-shadow: 0 0 0 2px rgba(248, 181, 0, 0.2);
+  }
+
+  /* Charts */
+  #graph-area {
+    width: 100%;
+    padding: 20px;
+    margin: 20px 0;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  #columnchart_material, #columnchart {
+    width: 100%;
+    height: 500px;
+    margin: 0 auto;
+  }
+
+  /* Sidebar content */
+  .side-nav p {
+    text-align: center;
+    color: black;
+    font-weight: 500;
+    padding: 0 20px;
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+  }
+
+  /* No data message */
+  #no-data {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 1200px) {
+    .side-nav {
+      width: 25%;
+      left: -25%;
+    }
+    #main.open {
+      margin-left: 25%;
+      width: 75%;
+    }
+  }
+
+  @media (max-width: 992px) {
+    .side-nav {
+      width: 30%;
+      left: -30%;
+    }
+    #main.open {
+      margin-left: 30%;
+      width: 70%;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .side-nav {
+      width: 40%;
+      left: -40%;
+    }
+    #main.open {
+      margin-left: 40%;
+      width: 60%;
+    }
+    #columnchart_material, #columnchart {
+      height: 400px;
+    }
+  }
+
+  @media (max-width: 576px) {
+    .side-nav {
+      width: 80%;
+      left: -80%;
+    }
+    #main.open {
+      margin-left: 80%;
+      width: 100%;
+    }
+    #graph-area {
+      padding: 10px;
+    }
+    #filter {
+      padding: 0 10px;
+    }
+    .quiz-items {
+      height: calc(100vh - 250px);
+    }
+    #columnchart_material, #columnchart {
+      height: 350px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .side-nav {
+      width: 90%;
+      left: -90%;
+    }
+    #main.open {
+      margin-left: 90%;
+    }
+    #openMenu {
+      top: 10px;
+      left: 10px;
+    }
+    #filter {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: #f1f1f1;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #F8B500;
+    border-radius: 4px;
+  }
+
+  /* Sidebar scrollbar */
+  .side-nav::-webkit-scrollbar-track {
+    background: #34495e;
+  }
+
+  .side-nav::-webkit-scrollbar-thumb {
+    background: #F8B500;
+  }
 </style>
 
   </head>
@@ -540,7 +621,7 @@ $conn->close();
     <hr id="hr1">
 
     <div id="filter">
-      <label for="filters">Filter:</label>
+      <label for="filters">Filter by:</label>
         <select name="filters" id="filters" onchange="displayedFilters()">
           <option value="Student Performance">Student Performance</option>
           <option value="Quiz Type">Quiz Type</option>

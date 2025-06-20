@@ -269,7 +269,7 @@ if (isset($_POST['import_csv'])) {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: 'Fredoka';
         }
 
         body, html {
@@ -281,31 +281,71 @@ if (isset($_POST['import_csv'])) {
             height: 100vh;
         }
 
+        /* Sidebar styling */
         .sidebar {
             position: fixed;
             width: 250px;
             height: 100vh;
-            background-color: #F8B500;
+            background-color: #f8b500;
             color: #ffffff;
             padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: flex-start;
+            transition: all 0.3s ease;
+            z-index: 999;
+        }
+
+        .sidebar.collapsed {
+            width: 90px;
+            padding: 2rem 0.5rem;
         }
 
         .sidebar .logo {
             margin-bottom: 1rem;
             margin-left: 5%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        hr{
-            border: 1px solid white;
+        .sidebar.collapsed .logo {
+            margin-left: 0;
+            justify-content: center;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .toggle-btn{
+            align-items: center;
         }
 
         .sidebar .menu {
+            margin-top: 40%;
             display: flex;
             flex-direction: column;
-            margin-bottom: 18rem;
+            flex-grow: 1;
+        }
+
+        .sidebar.collapsed .menu{
+            align-items: center;
+            margin-top: 45%;
         }
 
         .sidebar .menu a {
@@ -317,29 +357,117 @@ if (isset($_POST['import_csv'])) {
             font-size: 1rem;
             border-radius: 5px;
             transition: background 0.3s;
-            font-family: Tilt Warp Regular;
+            font-family: 'Fredoka';
+            letter-spacing: 1px;
             margin-bottom: .5rem;
+            width: 100%;
         }
 
-        .sidebar .menu a:hover, .sidebar .menu a.active {
+        .sidebar.collapsed .menu a {
+            justify-content: center;
+            padding: 1rem 0;
+            width: 90%;
+        }
+
+        .sidebar .menu a span {
+            margin-left: 0.5rem;
+            transition: opacity 0.2s;
+            font-family: 'Fredoka';
+            font-weight: bold;
+            font-size: 20px;
+        }
+
+        .sidebar.collapsed .menu a span {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            display: none;
+        }
+
+        .sidebar .menu a:hover,
+        .sidebar .menu a.active {
             background-color: white;
-            color: #F8B500;
+            color: #f8b500;
         }
 
         .sidebar .menu a i {
             margin-right: 0.5rem;
+            min-width: 20px;
+            text-align: center;
+            font-size: clamp(1rem, 1.2vw, 1.5rem);
+        }
+
+        .sidebar.collapsed .menu a i {
+            margin-right: 0;
+            font-size: 1.2rem;
+        }
+
+        .toggle-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .toggle-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .sidebar.collapsed .toggle-btn{
+            margin: auto;
+        }
+
+        .sidebar.collapsed .logo-img {
+            display: none;
+        }
+
+        .sidebar.collapsed .logo-icon {
+            display: block !important;
+        }
+
+        .sidebar.collapsed .menu a {
+            padding: 1rem 0;
+            justify-content: center;
+            width: 100%;
+        }
+
+        .sidebar.collapsed .menu a span {
+            display: none;
+        }
+
+        .sidebar.collapsed .menu a i {
+            margin-right: 0;
+            font-size: 1.5rem;
+        }
+
+        .sidebar.collapsed hr {
+            margin: 0.5rem auto;
+            width: 50%;
         }
 
         /* Dashboard content area */
         .content {
             flex: 1;
             background-color: #ffffff;
-            padding: 3rem;
-            margin-left: 17%;
+            padding: 2rem;
+            margin-left: 250px;
+            transition: margin-left 0.3s ease;
+        }
+
+        .content.expanded {
+            margin-left: 90px;
         }
 
         .content span {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: larger;
         }
 
@@ -351,16 +479,20 @@ if (isset($_POST['import_csv'])) {
         }
 
         .content-header h1 {
+            width: 95%;
             font-size: 2rem;
             color: #333333;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            padding: 10px;
+            border-bottom: 1.5px solid #F8B500;
         }
 
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
         }
 
         .content-header .actions {
@@ -377,7 +509,7 @@ if (isset($_POST['import_csv'])) {
             font-size: 1rem;
             cursor: pointer;
             margin-right: 1rem;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         .content-header .actions button:hover {
@@ -394,54 +526,6 @@ if (isset($_POST['import_csv'])) {
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
-        }
-
-        .content-header hr{
-            border: 1px solid #F8B500;
-            width: 100%;
-            margin-top: 5% !important;
-            margin-left: -12%;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: Tilt Warp Regular;
-        }
-
-        th {
-            background-color: #f8b500;
-            color: white;
-            font-weight: bold;
-            padding: 20px;
-            text-align: center;
-            font-family: Tilt Warp Regular;
-        }
-
-        td {
-            padding: 20px;
-            text-align: center;
-            font-family: Tilt Warp Regular;
-        }
-
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
-
-        table tr:first-child th:first-child {
-            border-top-left-radius: 10px;
-        }
-
-        table tr:first-child th:last-child {
-            border-top-right-radius: 10px;
-        }
-
-        table tr:last-child td:first-child {
-            border-bottom-left-radius: 10px;
-        }
-
-        table tr:last-child td:last-child {
-            border-bottom-right-radius: 10px;
         }
 
         .progress-bar-container {
@@ -462,12 +546,14 @@ if (isset($_POST['import_csv'])) {
         }
 
         label{
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 600;
             letter-spacing: 1px;
         }
 
         .heading{
             font-size: 20px;
+            font-weight: 600;
         }
 
         .delete-button {
@@ -476,7 +562,7 @@ if (isset($_POST['import_csv'])) {
             cursor: pointer;
             color: black;
             font-size: 20px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         .filter-container {
@@ -488,12 +574,13 @@ if (isset($_POST['import_csv'])) {
             margin-left: 20px;
             padding: 8px;
             font-size: 15px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             border: none;
         }
 
         .filter-container option{
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         .bulk-actions {
@@ -510,10 +597,12 @@ if (isset($_POST['import_csv'])) {
         }
 
         #delete-selected-btn{
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             font-size: 15px;
             border-radius: 8px;
             margin-top: 2%;
+            background:rgb(180, 30, 3);
         }
 
         #csv-cont {
@@ -522,7 +611,7 @@ if (isset($_POST['import_csv'])) {
         }
 
         #bulk {
-            font-family: Tilt Warp Regular !important;
+            font-family: Fredoka !important;
             width: 50%;
             border-radius: 8px;
             display: flex;
@@ -538,7 +627,8 @@ if (isset($_POST['import_csv'])) {
         .choose-file {
             border-radius: 5px;
             cursor: pointer;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             background-color: #ccc;
         }
 
@@ -570,7 +660,8 @@ if (isset($_POST['import_csv'])) {
             cursor: pointer;
             color: white;
             border-radius: 5px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             transition: 0.2s;
             background-color: #f8b500;
         }
@@ -582,7 +673,8 @@ if (isset($_POST['import_csv'])) {
         }
 
         .message {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
         }
 
         .file-container {
@@ -600,7 +692,8 @@ if (isset($_POST['import_csv'])) {
             margin-right: 15px;
         }
         .download-btn {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            font-weight: 500;
             background-color: #f8b500;
             color: white;
             border: none;
@@ -618,7 +711,7 @@ if (isset($_POST['import_csv'])) {
         }
 
         .dropdown-content {
-            width: 300px;
+            width: 250px;
             right: 1%;
             display: none;
             position: absolute;
@@ -627,37 +720,32 @@ if (isset($_POST['import_csv'])) {
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             z-index: 1;
             padding: 10px 0;
-            top: 15%;
+            top: 100px;
         }
 
         .dropdown-content:before {
-            content: " " ;
+            content: " ";
             position: absolute;
             background: #F8B500;
-            width: 30px;
-            height: 30px;
-            top: 1px;
-            right: 23px;
-            transform: rotate(135deg);
-            z-index: -1 !important;
+            width: 20px;
+            height: 20px;
+            top: -10px;
+            right: 20px;
+            transform: rotate(45deg);
+            z-index: -1;
         }
 
         .dropdown-content button {
-            background-color: white;     
-            justify-content: center;
-            align-items: center;
-            align-self: center;
-            font-family: Purple Smile;
-            font-size: 18px;
+            font-family: 'Fredoka';
+            font-size: 16px;
             font-weight: lighter;
             border: 2px solid white !important;
-            color: black;
+            color: white;
             width: 86% !important;
-            padding: 13px 20px !important;
+            padding: 10px 15px !important;
             margin: 8px 20px !important;
             text-decoration: none;
             display: block;
-            float: none;
             text-align: center;
             background-color: transparent;
             transition: background-color 0.3s, color 0.3s;
@@ -665,31 +753,243 @@ if (isset($_POST['import_csv'])) {
             cursor: pointer;
             letter-spacing: 1px;
             box-sizing: border-box;
-            z-index: 1 !important;  
         }
 
-        .dropdown-content a:hover, .dropdown-content button:hover{
+        .dropdown-content a:hover, .dropdown-content button:hover {
             background-color: white !important;
             color: #F8B500;
         }
 
         .show {
-             display: block;
+            display: block;
         }
+
+        @media (max-width: 992px) {
+        .sidebar {
+            width: 90px;
+            padding: 2rem 0.5rem;
+        }
+        .sidebar .menu a span {
+            display: none;
+        }
+        .sidebar .logo-img {
+            display: none;
+        }
+        .sidebar .logo-icon {
+            display: block !important;
+        }
+        .sidebar .menu a i {
+            margin-right: 0;
+            font-size: 1.5rem;
+        }
+        .content {
+            margin-left: 90px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .sidebar {
+            transform: translateX(-100%);
+            width: 250px;
+        }
+        .sidebar.active {
+            transform: translateX(0);
+        }
+        .content {
+            margin-left: 0;
+        }
+        .content.expanded {
+            margin-left: 0;
+        }
+        #toggleSidebar {
+            display: block;
+            position: fixed;
+            left: 10px;
+            top: 10px;
+            z-index: 1000;
+            background: #f8b500;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    }
+
+    /* Improved Table Styling */
+    table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-family: 'Fredoka', sans-serif;
+        margin: 20px 0;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    th {
+        background-color: #f8b500;
+        color: white;
+        padding: 15px;
+        text-align: center;
+        font-weight: 600;
+        position: sticky;
+        top: 0;
+    }
+
+    td {
+        padding: 15px;
+        text-align: center;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+
+    tr:hover {
+        background-color: #f1f1f1;
+        transition: background-color 0.2s ease;
+    }
+
+    tr:last-child td {
+        border-bottom: none;
+    }
+
+    /* Table header rounded corners */
+    thead tr:first-child th:first-child {
+        border-top-left-radius: 10px;
+    }
+
+    thead tr:first-child th:last-child {
+        border-top-right-radius: 10px;
+    }
+
+    /* Table body rounded corners */
+    tbody tr:last-child td:first-child {
+        border-bottom-left-radius: 10px;
+    }
+
+    tbody tr:last-child td:last-child {
+        border-bottom-right-radius: 10px;
+    }
+
+    /* Responsive table */
+    @media (max-width: 768px) {
+        table {
+            display: block;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        
+        th, td {
+            min-width: 120px;
+        }
+    }
+
+    /* Checkbox styling */
+    input[type="checkbox"] {
+        transform: scale(1.3);
+        cursor: pointer;
+    }
+
+    /* Empty table message */
+    .empty-message {
+        color: #666;
+        font-style: italic;
+        padding: 20px;
+        text-align: center;
+    }
+
+    @media (max-width: 576px) {
+        #csv-cont {
+            flex-direction: column;
+            gap: 15px;
+        }
+        #bulk {
+            width: 100%;
+        }
+    }
+
+    /* Profile dropdown responsive */
+    @media (max-width: 576px) {
+        .dropdown-content {
+            width: 250px;
+            right: 0;
+        }
+    }
+
+    /* Filter container responsive */
+    .filter-container {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+    }
+
+    @media (max-width: 576px) {
+        .filter-container {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .filter-container select {
+            margin-left: 0;
+            width: 100%;
+        }
+    }
+
+    /* Message styling */
+    .message {
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 5px;
+        background-color: #f8f8f8;
+        border-left: 4px solid #f8b500;
+        font-weight: 500;
+    }
+
+    /* File container responsive */
+    .file-container {
+        display: flex;
+        align-items: center;
+        padding: 20px 20px;
+    }
+
+    @media (max-width: 576px) {
+        .file-container {
+            width: 100%;
+            justify-content: space-between;
+        }
+    }
     </style>
 </head>
 <body>
     <div class="container">
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div class="sidebar" id="sidebar">
             <header>
-                <div class="logo"><img src="img/logo4.png" onclick="window.location.href='t_Profile.php'" width="200px" height="80px"></div>
+                <button id="toggleSidebar" class="toggle-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="logo">
+                    <img src="img/logo4.png" width="200px" height="80px" class="logo-img">
+                    <img src="img/logo 6.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
+                </div>
             </header>
-            <hr>
+            <hr style="border: 1px solid white;">
             <div class="menu">
-                <a href="t_Home.php"><i class="fa-solid fa-house"></i>Dashboard</a>
-                <a href="t_Students.php" class="active"><i class="fa-regular fa-address-book"></i>Students</a>
-                <a href="t_SubjectsList.php"><i class="fa-solid fa-list"></i>Subjects</a>
+                <a href="t_Home.php" title="Dashboard">
+                    <i class="fa-solid fa-house"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="t_Students.php" class="active" title="Students">
+                    <i class="fa-regular fa-address-book"></i>
+                    <span>Students</span>
+                </a>
+                <a href="t_SubjectsList.php" title="Subjects">
+                    <i class="fa-solid fa-list"></i>
+                    <span>Subjects</span>
+                </a>
             </div>
         </div>
 
@@ -697,18 +997,15 @@ if (isset($_POST['import_csv'])) {
         <div class="content">
             <div class="content-header">
                 <h1>Students</h1><br>
-                <hr>
                 <div class="actions">
                     <div class="profile">
-                        <img src="<?php echo $profilePic; ?>" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
-
-                    <div id="dropdown" class="dropdown-content">
-                        <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                        <form action="logout.php" method="post">
-                            <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                        </form>
-                    </div> 
-
+                        <img src="<?php echo $profilePic; ?>" style="cursor: pointer;" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
+                            <div id="dropdown" class="dropdown-content">
+                                 <button onclick="window.location.href='t_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                                <form action="logout.php" method="POST">
+                                    <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                                </form>
+                            </div>
                     </div>
                 </div>
             </div>
@@ -799,10 +1096,47 @@ if (isset($_POST['import_csv'])) {
     </div>
 
 <script>
-    // Profile picture click handler
-    document.querySelector('.profile').addEventListener('click', function() {
-        window.location.href = 't_Profile.php';
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.querySelector('.sidebar');
+        const content = document.querySelector('.content');
+        const toggleBtn = document.getElementById('toggleSidebar');
+
+        // Check if sidebar state is saved in localStorage
+        const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        
+        // Set initial state based on localStorage
+        if (isSidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+            content.classList.add('expanded');
+        }
+
+        // Toggle sidebar when button is clicked
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                content.classList.toggle('expanded');
+                
+                // Save state to localStorage
+                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+            });
+        }
     });
+
+    function profileDropdown() { // Dropdown funtion
+    document.getElementById("dropdown").classList.toggle("show");
+    }
+
+    window.onclick = function(event) {
+        if (!event.target.matches('.dropdwn-btn')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
+            }
+        }
+    }
 
     // CSV template with only headers
     const csvTemplate = `"Account Number","First Name","Last Name","Grade Level","Strand"`;

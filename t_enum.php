@@ -90,10 +90,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enumeration Quiz Creator</title>
-    
-
-<style>
-    * {
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -121,7 +120,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         h1{
             position: relative;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             color: #f8b500;
             text-align: center;
             font-size: 50px;
@@ -134,25 +133,28 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-bottom: 3%;
             border: 2px solid #f8b500;
             border-radius: 15px;
-            padding: 20px;
+            padding: 40px;
             background-color: white;
             box-shadow: 5px 6px 0 0 #BC8900;
         }
 
         label{
             color: black;
-            font-family: Tilt Warp Regular;
-            font-size: 22px;
+            font-family: Fredoka;
+            font-size: 20px;
+            font-weight: 500;
         }
 
         label[for=timer]{
-            font-size: 25px;
-            margin-left: 13%;
+            font-size: 22px;
+            margin-left: 15%;
+            font-weight: 500;
         }
 
         label[for=title]{
-            font-size: 30px;
-            margin-left: 3%;
+            font-size: 22px;
+            margin-left: 2%;
+            font-weight: 500;
         }
 
         #title{
@@ -161,129 +163,113 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         input[type=text]{
             width: 100%;
-            padding: 15px;
             border-radius: 10px;
             padding: 10px;
             border: 3px solid #B9B6B6;
             margin-top: 1%;
-            font-family: Tilt Warp Regular;
-            font-size: 20px;
+            text-transform: capitalize;
+            font-family: Fredoka;
+            font-size: 17px;
         }
 
         input[type=number]{
-            width: 6%;
+            width: 10%;
             border-radius: 10px;
             padding: 10px;
             border: 3px solid #B9B6B6;
-            margin-right: 3%;
-            font-family: Tilt Warp Regular;
+            margin-right: 2%;
+            font-family: Fredoka;
         }
 
-        .question {
-            margin-bottom: 20px;
-            padding: 40px;
+        .quiz-form {
             background-color: white;
-            border: 2px solid #DCDCDC;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .question-container {
+            background-color: #fff5e1;
+            padding: 30px;
+            margin-bottom: 15px;
             border-radius: 10px;
-            display: none;
-            margin-left: 3%;
-            margin-right: 3%;
+            border: 2px solid #f8b500;
         }
-
-        .ans-btn{
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-saveQuiz {
+            background-color: #f8b500;
+            color: white;
+            font-family: Fredoka;
+            font-weight: 500;
+            box-shadow: 0 5px 0 0 #BC8900;
+        }
+        .btn-removeQuestion {
+            margin-top: 2%;
+            background-color: #f44336;
+            color: white;
+            font-family: Fredoka;
+            font-weight: 500;
+        }
+        .btn-back {
+            background-color: white;
+            color: #B9B6B6;
+            border: 2px solid #B9B6B6;
+            font-family: Fredoka;
+            font-weight: 500;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
             justify-content: space-between;
-            align-items: center;
-            font-family: Purple Smile;
-            font-size: 20px;
-            width: 30%;
-            padding: 10px;
-            border-radius: 15px;
-            border: 3px solid #A34404;
-            background: white;
-            color: #A34404;
         }
-
-        .question-number-buttons {
-            font-family: 'Tilt Warp';
-            max-width: 100%;
+        .question-number {
+            font-family: Fredoka;
+            font-size: 25px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .add-question-btn {
+            width: 120px;
+            height: 40px;
+            padding: 10px;
+            border: 2px solid #f8b500;
+            border-radius: 5px;
+            background-color: white;
+            color: #f8b500;
+            cursor: pointer;
             display: flex;
             align-items: center;
-            margin-bottom: 20px;
-            margin-left: 3%;
+            justify-content: center;
+            font-family: Fredoka;
+            font-weight: 500;
         }
-
-        .question-number-button {
-            width: 40px;
-            height: 40px;
-            margin-left: .5%;
-            padding: 5px 10px;
-            cursor: pointer;
-            border-radius: 50% !important;
-            font-family: Tilt Warp Regular;
-            background-color: white;
-            border: 2px solid #F8B500;
-            color: #F8B500;
-            border-radius: 4px;
-            position: relative;
-        }
-
-        .question-number-button.active {
+        
+        .add-question-btn:hover {
             background-color: #f8b500;
             color: white;
         }
-
-
-        .question-number-button.completed {
-            background-color: #F8b500;
-            color: white;
-        }
-
-        .add-icon {
-            width: 40px;
-            height: 40px;
-            font-family: Tilt Warp Regular;
-            font-size: 24px;
-            color: #f8b500;
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-            margin-left: 10px;
-            display: flex;
-            border: 2px solid #f8b500;
-            border-radius: 50%;
-            gap: 5px;
-        }
-
-        .add-icon:hover {
-            background-color: #f8b500 !important;
-            color: white !important;
-        }
-
-        .question-box {
-            margin-bottom: 20px;
-            padding: 40px;
-            background-color: #fff5e1;
-            border: 2px solid #f8b500;
-            border-radius: 10px;
+        
+        /* Hide remove buttons when there's only one */
+        .single-question .btn-removeQuestion {
             display: none;
-            margin-left: 3%;
-            margin-right: 3%;
         }
 
-        .submit-btn{
-            background-color: #F8b500;
-            color: white;
-            width: 15%;
-            border-radius: 10px;
-            border: 2px solid #F8b500;
-            padding: 10px;
-            font-size: 15px;
-            font-family: Tilt Warp Regular;
-            margin-bottom: 1.5%;
-            margin-left: 80%;
-            box-shadow: 0 6px 0 0 #BC8900;
+        .number-buttons {
+            display: flex;
+            margin-top: 20px;
+            align-items: center;
         }
-    </style>    
+    </style>
 </head>
 <body>
 
@@ -294,142 +280,157 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         </div>
     </header>
 
-    <h1>Create Enumeration Quiz</h1> 
+    <h1>Create Enumeration Quiz</h1>
 
     <div class="create-q-cont">
-    <div class="container">
-        <form id="quiz-form" action="" method="POST"><br>
+        <form id="quiz-form" method="POST" action="">
             <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
-            <label for="title">Quiz Title:</label>
-            <input type="text" id="title" name="title" required>
+            <input type="hidden" name="quiz_type" value="Enumeration">
 
-            <label for="timer">Timer (minutes):</label>
-            <input type="number" id="timer" name="timer" required><br><br><br>
-
-            <div id="questions-container">
-                <div class="question-box" id="question-1">
-                    <label for="question_1">Question 1:</label><br>
-                    <input type="text" id="question_1" name="questions[]" rows="3" cols="50" required><br><br>
-                    <label for="correct_answer_1">Correct Answers (separated by commas):</label><br>
-                    <input type="text" id="correct_answer_1" name="correct_answer[]" required><br><br>
-                </div>
-            </div><br><br>
-
-            <div class="question-number-buttons" id="question-number-buttons">
-                <button type="button" class="question-number-button" onclick="showQuestion(1)">1</button>
-                <span class="add-icon" onclick="addQuestion()">&#43;</span>
+            <div class="form-group">
+                <label for="title">Quiz Title:</label>
+                <input type="text" id="title" name="title" required>
+        
+                <label for="timer">Timer (minutes):</label>
+                <input type="number" id="timer" name="timer" min="1" required>
             </div>
-            <br>
-            <input type="hidden" id="quiz_type" name="quiz_type" value="Enumeration">
-            <input class="submit-btn"type="submit" value="Save Quiz">
+
+            <div id="questionsContainer"></div>
+
+            <div class="number-buttons" id="numberButtons">
+                <button type="button" class="add-question-btn" id="addQuestionBtn">
+                    <i class="fas fa-plus"></i> Add Question
+                </button>
+            </div>
+
+            <div class="actions">
+                <button type="button" class="btn btn-back" onclick="goBack()">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button type="submit" class="btn btn-saveQuiz">
+                    <i class="fas fa-save"></i> Save Quiz
+                </button>
+            </div>
         </form>
     </div>
 
     <script>
-        let questionCount = 1;
+        let currentQuestions = 0;
+        const maxQuestions = 20;
 
         function addQuestion() {
-            questionCount++;
-            console.log('Adding question:', questionCount);
+            if (currentQuestions >= maxQuestions) {
+                alert('Maximum number of questions reached!');
+                return;
+            }
 
-            const questionsDiv = document.getElementById('questions-container');
-            const newQuestionNumberButtonsDiv = document.getElementById('question-number-buttons');
+            const container = document.getElementById('questionsContainer');
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-container';
+            if (currentQuestions === 0) {
+                questionDiv.classList.add('single-question');
+            }
+            const questionNumber = currentQuestions + 1;
 
-            const newQuestionDiv = document.createElement('div');
-            newQuestionDiv.className = 'question-box';
-            newQuestionDiv.setAttribute('id', `question-${questionCount}`);
-            newQuestionDiv.style.display = 'none'; // Hide initially
-
-            newQuestionDiv.innerHTML = `
-                <label for="question_${questionCount}">Question ${questionCount}:</label><br>
-                <input type="text" id="question_${questionCount}" name="questions[]" rows="3" cols="50" required><br><br>
-                <label for="correct_answer_${questionCount}">Correct Answers (separated by commas):</label><br>
-                <input type="text" id="correct_answer_${questionCount}" name="correct_answer[]" required><br><br>
+            questionDiv.innerHTML = `
+                <div class="form-group">
+                    <div class="question-number">Question ${questionNumber}</div>
+                    <input type="text" 
+                           name="questions[]" 
+                           required 
+                           placeholder="Enter question text">
+                    <label style="margin-top: 10px; display: block;">Correct Answers (separated by commas):</label>
+                    <input type="text" 
+                           name="correct_answer[]" 
+                           required 
+                           placeholder="Enter correct answers separated by commas">
+                </div>
+                <button type="button" class="btn btn-removeQuestion" onclick="removeQuestion(this)">
+                    <i class="fas fa-trash"></i> Remove Question
+                </button>
             `;
-            questionsDiv.appendChild(newQuestionDiv);
 
-            const buttonContainer = document.getElementById('question-number-buttons');
-            const newButton = document.createElement('button');
-            newButton.type = 'button';
-            newButton.classList.add('question-number-button');
-            newButton.textContent = questionCount;
-            newButton.addEventListener('click', (function(qnumber) {
-                return function() {
-                    showQuestion(qnumber);
-                };
-            })(questionCount));
-
-            newQuestionNumberButtonsDiv.insertBefore(newButton, newQuestionNumberButtonsDiv.querySelector('.add-icon'));
-
-            showQuestion(questionCount);
-        }    
-
-        function showQuestion(number) {
-            console.log("Switching to question:", number);
-
-            const allQuestions = document.querySelectorAll('.question-box');
-            allQuestions.forEach((question, index) => {
-                console.log("Hiding question:", index + 1);
-                question.style.display = 'none';
-            });
-
-            const selectedQuestion = document.getElementById(`question-${number}`);
-            if (selectedQuestion) {    
-                console.log("Showing question:", number);
-                selectedQuestion.style.display = 'block';
-            } else {
-                console.log("Question not found:", number);
-            }
-
-            const allButtons = document.querySelectorAll('.question-number-button');
-            allButtons.forEach((button) => {
-                button.classList.remove('active');
-            });
-
-            const activeButton = Array.from(allButtons).find(button => button.textContent == number);
-            if (activeButton) {
-                console.log("Setting active button for question:", number);
-                activeButton.classList.add('active');
-            } else {
-                console.log("Active button not found for question:", number);
-            }
-        }        
-        
-        function initQuizForm() {
-            showQuestion(1); // Show the first question on load
+            container.appendChild(questionDiv);
+            currentQuestions++;
+            
+            // Update single-question class for all questions
+            updateQuestionRemoveButtons();
         }
 
-        window.onload = function() {
-            initQuizForm();
+        function removeQuestion(button) {
+            if (document.querySelectorAll('.question-container').length > 1) {
+                const question = button.closest('.question-container');
+                question.remove();
+                currentQuestions--;
+                updateQuestionNumbers();
+                updateQuestionRemoveButtons();
+            }
+        }
 
-        document.getElementById('quiz-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-        const formData = new FormData(this);
-        const allQuestionsFilled = Array.from(document.querySelectorAll('.question-box')).every(questionDiv => {
-            const inputs = questionDiv.querySelectorAll('input[type="text"]');
-            return Array.from(inputs).every(input => input.value.trim() !== '');
+        function updateQuestionRemoveButtons() {
+            const questions = document.querySelectorAll('.question-container');
+            questions.forEach(question => {
+                if (questions.length === 1) {
+                    question.classList.add('single-question');
+                } else {
+                    question.classList.remove('single-question');
+                }
+            });
+        }
+
+        function updateQuestionNumbers() {
+            const questions = document.querySelectorAll('.question-container');
+            questions.forEach((question, index) => {
+                const numberDiv = question.querySelector('.question-number');
+                numberDiv.textContent = `Question ${index + 1}`;
+            });
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const addQuestionBtn = document.getElementById('addQuestionBtn');
+            addQuestionBtn.addEventListener('click', addQuestion);
+
+            // Add first question automatically
+            addQuestion();
         });
 
-        if (!allQuestionsFilled) {
-            alert('Please fill all questions and answers before submitting.');
-            return;
-        }
-        
-        fetch('t_save_quiz.php', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.json()).then(data => {
-            if (data.success) {
-                alert(data.message); // Show success message
-                window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`; // Redirect to subject dashboard
-            } else {
-                console.error('Error creating quiz: ' + data.message);
-            }
-        })
-    });
-};
-    </script>
+        document.getElementById('quiz-form').addEventListener('submit', function(e) {
+            e.preventDefault();       
+            
+            const formData = new FormData(this);
+            const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
+                const inputs = questionDiv.querySelectorAll('input[type="text"]');
+                return Array.from(inputs).every(input => input.value.trim() !== '');
+            });
 
+            if (!allQuestionsFilled) {
+                alert('Please fill all questions and answers before submitting.');
+                return;
+            }
+            
+            fetch('t_enum.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message); // Show success message
+                    window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`; // Redirect to subject dashboard
+                } else {
+                    alert('Error creating quiz: ' + (data.message));
+                    console.error('Error details', data);
+                }
+            })
+            .catch(error => {
+                console.log('Failed to save quiz: ' + (error.message));
+                console.error('Fetch error: ', error);
+            });
+        });
+    </script>
 </body>
 </html>

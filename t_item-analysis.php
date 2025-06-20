@@ -78,16 +78,41 @@ if (empty($quizResults)) {
 }
 
 $qType = "
-  SELECT q.quiz_type, q.title AS quiz_title,
-    COUNT(qa.account_number) AS total_attempts,
-    AVG(qa.score) AS average_score,
-    MAX(qa.score) AS highest_score,
-    MIN(qa.score) AS lowest_score
+    SELECT 
+        CASE 
+            WHEN q.quiz_type = 'All Zapped' THEN 
+                CASE 
+                    WHEN qq.question_type = 'multiple_choice' THEN 'Multiple Choice'
+                    WHEN qq.question_type = 'true_or_false' THEN 'True or False'
+                    WHEN qq.question_type = 'enumeration' THEN 'Enumeration'
+                    WHEN qq.question_type = 'fill_in_the_blanks' THEN 'Fill in the Blanks'
+                    WHEN qq.question_type = 'drag_and_drop' THEN 'Drag and Drop'
+                    WHEN qq.question_type = 'identification' THEN 'Identification'
+                    WHEN qq.question_type = 'matching_type' THEN 'Matching Type'
+                    ELSE qq.question_type
+                END
+            ELSE 
+                CASE 
+                    WHEN q.quiz_type = 'multiple_choice' THEN 'Multiple Choice'
+                    WHEN q.quiz_type = 'true_false' THEN 'True or False'
+                    WHEN q.quiz_type = 'enumeration' THEN 'Enumeration'
+                    WHEN q.quiz_type = 'fill_in_the_blanks' THEN 'Fill in the Blanks'
+                    WHEN q.quiz_type = 'drag_and_drop' THEN 'Drag and Drop'
+                    WHEN q.quiz_type = 'identification' THEN 'Identification'
+                    WHEN q.quiz_type = 'matching_type' THEN 'Matching Type'
+                    ELSE q.quiz_type
+                END
+        END AS formatted_type,
+        COUNT(qa.account_number) AS total_attempts,
+        AVG(qa.score) AS average_score,
+        MAX(qa.score) AS highest_score,
+        MIN(qa.score) AS lowest_score
     FROM quizzes q
-    INNER JOIN quiz_attempts qa ON q.quiz_id = qa.quiz_id
+    LEFT JOIN quiz_attempts qa ON q.quiz_id = qa.quiz_id
+    LEFT JOIN questions qq ON q.quiz_id = qq.quiz_id AND q.quiz_type = 'All Zapped'
     WHERE q.subject_id = ?
-    GROUP BY q.quiz_type
-    ORDER BY q.quiz_id";
+    GROUP BY formatted_type
+    ORDER BY formatted_type";
 
 $stmt = $conn->prepare($qType);
 
@@ -102,13 +127,18 @@ $result = $stmt->get_result();
 $quiz_type_data = [];
 
 if ($result->num_rows > 0) {
-  while ($row = $result->fetch_assoc()) {
-    $quiz_type_data[] = $row;
-  }
+    while ($row = $result->fetch_assoc()) {
+        $quiz_type_data[] = [
+            'quiz_type' => $row['formatted_type'],
+            'total_attempts' => $row['total_attempts'],
+            'average_score' => $row['average_score'],
+            'highest_score' => $row['highest_score'],
+            'lowest_score' => $row['lowest_score']
+        ];
+    }
 } else {
-  echo "<div id='no-data'> No quiz types data available for this Subject.</div>";
+    echo "<div id='no-data'> No quiz types data available for this Subject.</div>";
 }
-
 
 $stmt->close();
 

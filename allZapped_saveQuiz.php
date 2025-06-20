@@ -150,24 +150,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     break;
                     
-                case 'enumeration':
-                    if (empty($_POST['correct_option'][$i])) {
-                        throw new Exception("Missing correct answers for enumeration question " . ($i + 1));
-                    }
-                    
-                    $answers = explode(',', $_POST['correct_option'][$i]);
-                    foreach ($answers as $answer) {
-                        $answer = trim($conn->real_escape_string($answer));
-                        if (!empty($answer)) {
+                    case 'enumeration':
+                        if (empty($_POST['correct_option'][$i])) {
+                            throw new Exception("Missing correct answers for enumeration question " . ($i + 1));
+                        }
+                        
+                        // Save all enumeration answers as a single comma-separated string
+                        $answers = $_POST['correct_option'][$i];
+                        $answer_text = trim($conn->real_escape_string($answers));
+                        
+                        if (!empty($answer_text)) {
                             $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
-                            $stmt->bind_param("is", $question_id, $answer);
+                            $stmt->bind_param("is", $question_id, $answer_text);
                             
                             if (!$stmt->execute()) {
                                 throw new Exception("Error saving enumeration answer: " . $stmt->error);
                             }
                         }
-                    }
-                    break;
+                        break;
                     
                 case 'drag_and_drop':
                     if (empty($_POST['answers'][$i]) || !is_array($_POST['answers'][$i])) {

@@ -20,6 +20,8 @@ if ($conn->connect_error) {
    exit;
 }
 
+$subject_id = null;
+
 // Check if student is logged in and fetch account_number
 if (!isset($_SESSION['account_number'])) {
     echo json_encode(["success" => false, "error" => "User not logged in or account number missing from session."]);
@@ -140,7 +142,7 @@ if ($is_partial_submit) {
 }
 
 // Retrieve the quiz type from the database
-$sql = "SELECT quiz_type FROM quizzes WHERE quiz_id = ?";
+$sql = "SELECT quiz_type, subject_id FROM quizzes WHERE quiz_id = ?";
 $stmt = $conn->prepare($sql);
 if (!$stmt) {
     echo json_encode(["success" => false, "error" => "Failed to prepare statement: " . $conn->error]);
@@ -154,6 +156,7 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
     $quiz_type = $row['quiz_type'];
+    $subject_id = $row['subject_id'];
 } else {
     echo json_encode(["success" => false, "error" => "Quiz not found."]);
     exit;
@@ -167,10 +170,11 @@ $wrong_answers = [];
 
 foreach ($answers as $question_id => $answer) {
     $is_correct = 0;
+    $answer_text_to_store = '';
 
     if ($quiz_type === 'True or False' || $quiz_type === 'Multiple Choice' || $quiz_type === 'Drag & Drop') {
         // For True or False Multiple Choice and Drag and Drop/
-        $sql = "SELECT is_correct FROM answers WHERE answer_id = ?";
+        $sql = "SELECT answer_text, is_correct FROM answers WHERE answer_id = ?";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             echo json_encode(["success" => false, "error" => "Failed to prepare statement: " . $conn->error]);
@@ -182,10 +186,12 @@ foreach ($answers as $question_id => $answer) {
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
             $is_correct = ($row['is_correct'] === 1) ? 1 : 0;
+            $answer_text_to_store = $row['answer_text'];
+
             if ($row['is_correct'] == 1) {
                 $score++;
             } else {
-                $wrong_answers[$question_id] = $answer;
+                $wrong_answers[$question_id] = $row['answer_text'];
             }
         } else {
             echo json_encode(["success" => false, "error" => "Answer not found."]);
@@ -267,7 +273,7 @@ foreach ($answers as $question_id => $answer) {
         echo json_encode(["success" => false, "error" => "Failed to prepare statement for inserting answers: " . $conn->error]);
         exit;
     }
-    $stmt_insert->bind_param("iiisi", $student_id, $quiz_id, $question_id, $answer, $is_correct);
+    $stmt_insert->bind_param("iiisi", $student_id, $quiz_id, $question_id, $answer_text_to_store, $is_correct);
     $stmt_insert->execute();
     $stmt_insert->close();    
 }
@@ -291,7 +297,8 @@ echo json_encode([
     "score" => $score,
     "total" => $total,
     "wrong_answers" => $wrong_answers,
-    "is_final_submit" => $is_final_submit
+    "is_final_submit" => $is_final_submit,
+    "subject_id" => $subject_id
 ]);
 
 $conn->close();

@@ -985,37 +985,63 @@ $conn->close();
             window.isIntentionalSubmit = !isPartialSubmit;
             window.isSubmitting = true;
 
+            // Prepare the data to send
+            const submitData = {
+                answers: userAnswers,
+                quiz_id: <?php echo $quiz_id; ?>,
+                partial_submit: isPartialSubmit
+            };
+
             fetch('s_submit_quiz.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    answers: userAnswers, 
-                    quiz_id: <?php echo $quiz_id; ?>,
-                    partial_submit: isPartialSubmit
-                 })
+                body: JSON.stringify(submitData)
             })
-            .then(response => response.json())    
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })    
             .then(data => {
                 if (data.success) {
-                    const queryParams = new URLSearchParams({
+                    // Store the result in session before redirecting
+                    const resultData = {
+                        quiz_id: <?php echo $quiz_id; ?>,
                         score: data.score,
                         total: data.total,
-                        quiz_id: <?php echo $quiz_id; ?>,
-                        wrong_answers: JSON.stringify(data.wrong_answers),
-                        partial_submit: isPartialSubmit ? '1' : '0'
+                        wrong_answers: data.wrong_answers,
+                        subject_id: <?php echo $subject_id; ?> // Make sure this is available
+                    };
+
+                    // Store the result in session via PHP
+                    fetch('store_quiz_result.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(resultData)
+                    })
+                    .then(() => {
+                        window.location.href = 'quiz_result.php';
+                    })
+                    .catch(error => {
+                        console.error('Error storing result:', error);
+                        window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
                     });
-                    window.location.href = `quiz_result.php?${queryParams.toString()}`;
                 } else {
-                    alert('Error submitting quiz.'); //+ data.error
-                    window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
+                    // Show the actual error message from server
+                    const errorMsg = data.error || 'Unknown error occurred';
+                    alert('Error submitting quiz: ' + errorMsg);
+                    window.isSubmitting = false;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
                 alert('There was an error submitting your quiz. Please try again.');
-                window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
+                window.isSubmitting = false;
             });   
         }
 

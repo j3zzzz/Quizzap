@@ -92,7 +92,7 @@ $conn->close();
         }
 
         nav p{
-            font-family: Purple Smile;
+            font-family: Fredoka;
             color: white;
             font-size: 30px;
             margin-right: 30px;
@@ -101,20 +101,20 @@ $conn->close();
 
         p{
             font-size: 30px;
-            font-family: Tilt Warp;
+            font-family: Fredoka;
             color: white;
         }
 
 
         h1 {
-            font-family: Tilt Warp;
+            font-family: Fredoka;
             width: fit-content;
             letter-spacing: 2px;
         }
 
         .quiz-cont {
             background-color: #FFFFFF;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             color: #f8b500;
             margin-top: 2%;
             margin-bottom: 5%;
@@ -139,7 +139,7 @@ $conn->close();
 
 
         #question-text {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             letter-spacing: 2px;
             width: none;
             flex-grow: 1;
@@ -147,14 +147,14 @@ $conn->close();
         }
 
         #question-number {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 28px;
             color: black;
         }
 
         .timer {
             background-color: white;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 20px;
             color: #707070;
             padding: 10px;
@@ -174,7 +174,7 @@ $conn->close();
         }
 
         .answer-button {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             background-color: white;
             border-radius: 10px;
             display: inline-block;
@@ -208,7 +208,7 @@ $conn->close();
             width: 100%;
             padding: 10px;
             border-radius: 15px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 18px;
             border: 2px solid #B9B6B6;
         }
@@ -269,7 +269,7 @@ $conn->close();
         }
 
         .question-btn {
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 18px;
             margin: 0 5px;
             padding: 5px 10px;
@@ -327,7 +327,7 @@ $conn->close();
         .drop-zone-prompt {
             color: #999;
             font-size: 16px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
         .choices-container {
@@ -348,7 +348,7 @@ $conn->close();
             border: 2px solid #f8b500;
             border-radius: 8px;
             cursor: move;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             color: #f8b500;
             transition: all 0.3s ease;
             box-shadow: 0 2px 0 0 #BC8900;
@@ -364,57 +364,66 @@ $conn->close();
             transform: scale(0.95);
         }      
 
-        .matching-container {
-            padding: 5%;
-            display: flex;
-            gap: 20px;
-            border: 2px solid #f8b500;
-            border-radius: 5px;
-            background-color: #fff6e6;
-        }
+        .match-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
 
-        .matching-image {
-            max-width: 100%;
-            height: auto;
-            display: block;
-            margin: 10px 0;
-        }
+.left-items, .right-items {
+    border: 1px solid #f8b500;
+    border-radius: 8px;
+    padding: 15px;
+    background-color: #fff5e1;
+    color: black;
+    font-weight: 500;
+}
 
-        .matching-left-side {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 50%;
-        }
+.match-item {
+    padding: 10px;
+    margin: 5px 0;
+    cursor: pointer;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    border: 1px solid #ddd;
+    color: black;
+}
 
-        .matching-right-side {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            width: 50%;
-        }
+.match-item:hover {
+    background-color: #f8b500;
+    color: white;
+}
 
-        .matching-left-item {
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-        }
+.match-item.selected {
+    background-color: #f8b500;
+    color: white;
+}
 
-        .matching-image {
-            max-width: 300px;
-            max-height: 300px;
-            object-fit: contain;
-        }
+.match-item.matched {
+    background-color: #FCEF91;
+    border-color: #f8b500;
+    color: black;
+    cursor: default;
+}
 
-        .matching-select {
-            margin-top: 6%;
-            margin-bottom: 35%;
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #f8b500;
-            border-radius: 8px;
-            font-family: 'Tilt Warp Regular';
-        }  
+.pairs-display {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+.clear-matches-btn {
+    margin-top: 10px;
+    padding: 8px 15px;
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
 
         .submit-btn {
             background-color: #f8b500;
@@ -424,7 +433,7 @@ $conn->close();
             border:none;
             padding: 10px;
             font-size: 18px;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             margin-top: 2%;
             width: 60%;
             box-shadow: 0 6px 0 0 #BC8900;
@@ -672,126 +681,109 @@ $conn->close();
                         answerInput.value = userAnswers[questions[index].question_id];
                     }
                 } else if (quizType === 'Matching Type') {
-                    // Parse the left_items, right_items, and matching_config from the current question
-                    const leftItems = JSON.parse(questions[index].left_items || '[]');
-                    const rightItems = JSON.parse(questions[index].right_items || '[]');
+    // Parse the left_items and right_items from the current question
+    const leftItems = JSON.parse(questions[index].left_items || '[]');
+    const rightItems = JSON.parse(questions[index].right_items || '[]');
+    
+    // Create match container
+    const matchContainer = document.createElement('div');
+    matchContainer.className = 'match-container';
+    
+    // Left items column
+    const leftColumn = document.createElement('div');
+    leftColumn.className = 'left-items';
+    leftColumn.innerHTML = '<h4>Items to Match</h4>';
+    
+    // Add left items (numbered)
+    leftItems.forEach((item, idx) => {
+        const matchItem = document.createElement('div');
+        matchItem.className = 'match-item';
+        matchItem.textContent = `${idx + 1}. ${item}`;
+        matchItem.dataset.answerId = `left_${idx}`;
+        matchItem.dataset.side = 'left';
+        matchItem.dataset.itemIndex = idx;
+        matchItem.addEventListener('click', function() {
+            selectMatchItem(this, questions[currentQuestion].question_id);
+        });
+        leftColumn.appendChild(matchItem);
+    });
 
-                    const matchingContainer = document.createElement('div');
-                    matchingContainer.className = 'matching-container';
+    // Right items column
+    const rightColumn = document.createElement('div');
+    rightColumn.className = 'right-items';
+    rightColumn.innerHTML = '<h4>Match With</h4>';
+    
+    // Add right items (lettered)
+    const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    rightItems.forEach((item, idx) => {
+        const matchItem = document.createElement('div');
+        matchItem.className = 'match-item';
+        matchItem.textContent = `${letters[idx]}. ${item}`;
+        matchItem.dataset.answerId = `right_${idx}`;
+        matchItem.dataset.side = 'right';
+        matchItem.dataset.itemIndex = idx;
+        matchItem.addEventListener('click', function() {
+            selectMatchItem(this, questions[currentQuestion].question_id);
+        });
+        rightColumn.appendChild(matchItem);
+    });
 
-                    // Create left side container for items to match
-                    const leftSideContainer = document.createElement('div');
-                    leftSideContainer.className = 'matching-left-side';
+    // Add columns to container
+    matchContainer.appendChild(leftColumn);
+    matchContainer.appendChild(rightColumn);
+    answersDiv.appendChild(matchContainer);
 
-                    // Display all left items as images
-                    leftItems.forEach((item, i) => {
-                        const leftItemDiv = document.createElement('div');
-                        leftItemDiv.className = 'matching-left-item';
+    // Pairs display area
+    const pairsDisplay = document.createElement('div');
+    pairsDisplay.className = 'pairs-display';
+    pairsDisplay.innerHTML = '<h4>Your Matches:</h4><div id="pairs-list-' + questions[currentQuestion].question_id + '"></div>';
+    answersDiv.appendChild(pairsDisplay);
 
-                        const img = document.createElement('img');
-                        const imagePath = 'uploads/left_images/' + item;
+    // Clear button
+    const clearBtn = document.createElement('button');
+    clearBtn.textContent = 'Clear All Matches';
+    clearBtn.className = 'clear-matches-btn';
+    clearBtn.addEventListener('click', function() {
+        clearAllMatches(questions[currentQuestion].question_id);
+    });
+    answersDiv.appendChild(clearBtn);
 
-                        console.log(`Image source: ${imagePath}`); // Log for debugging
-                        
-                        img.src = imagePath;
-                        img.alt = `Left Item ${i + 1}`;
-                        img.className = 'matching-image';
+    // Initialize matching data for this question
+    if (!window.matchingData) {
+        window.matchingData = {};
+    }
+    window.matchingData[questions[currentQuestion].question_id] = {
+        selectedLeft: null,
+        selectedRight: null,
+        matches: []
+    };
 
-                        // Error handling for image loading
-                        img.onerror = function() {
-                            console.error(`Failed to load image: ${this.src}`);
-                            this.alt = 'Image not available'; // Provide alt text if the image fails
-                            this.src = ''; // Optionally set a fallback or empty source
-                        };
-
-                        leftItemDiv.appendChild(img);
-
-                        // Add a unique identifier to match with right items
-                        leftItemDiv.setAttribute('data-left-item-index', i);
-                        leftSideContainer.appendChild(leftItemDiv);
-                    });
-
-                    // Create right side container for selection
-                    const rightSideContainer = document.createElement('div');
-                    rightSideContainer.className = 'matching-right-side';
-
-                    // Ensure ALL left items have a selection option
-                    leftItems.forEach((leftItem, i) => {
-                        const rightSelectContainer = document.createElement('div');
-                        rightSelectContainer.className = 'matching-right-select-container';
-
-                        const select = document.createElement('select');
-                        select.className = 'matching-select';
-                        select.setAttribute('data-left-item-index', i);
-
-                        // Add a default "Select" option
-                        const defaultOption = document.createElement('option');
-                        defaultOption.value = '';
-                        defaultOption.textContent = 'Select';
-                        select.appendChild(defaultOption);
-
-                        // Populate select options with right items
-                        rightItems.forEach((rightItem, j) => {
-                            const option = document.createElement('option');
-                            option.value = j;
-                            option.textContent = rightItem;
-                            select.appendChild(option);
-                        });
-
-                        // Event listener to save the matching answer
-                        select.addEventListener('change', function() {
-                            const leftItemIndex = this.getAttribute('data-left-item-index');
-
-                            // Get the existing answers or initialize an empty object
-                            const existingAnswers = userAnswers[questions[index].question_id] 
-                                ? JSON.parse(userAnswers[questions[index].question_id]) 
-                                : {};
-
-                            // Only save if an option is selected (not the default "Select")
-                            if (this.value !== '') {
-                                // Update the answer for this specific item
-                                existingAnswers[`Item ${parseInt(leftItemIndex) + 1}`] = this.options[this.selectedIndex].text;
-
-                                // Save the updated answers
-                                saveAnswer(questions[index].question_id, JSON.stringify(existingAnswers));
-
-                                // Mark the question as answered
-                                document.getElementById(`question-btn-${index}`).classList.add('answered');
-                            }
-                        });
-
-                        // For restoring answers
-                        if (userAnswers[questions[index].question_id]) {
-                            const savedAnswers = JSON.parse(userAnswers[questions[index].question_id]);
-
-                            leftItems.forEach((leftItem, i) => {
-                                const itemKey = `Item ${i + 1}`;
-
-                                if (savedAnswers[itemKey]) {
-                                    const select = rightSideContainer.querySelector(`select[data-left-item-index="${i}"]`);
-
-                                    // Find and set the option that matches the saved answer text
-                                    for (let j = 0; j < select.options.length; j++) {
-                                        if (select.options[j].text === savedAnswers[itemKey]) {
-                                            select.selectedIndex = j;
-                                            break;
-                                        }
-                                    }
-                                }
-                            });
-                        }
-
-                        rightSelectContainer.appendChild(select);
-                        rightSideContainer.appendChild(rightSelectContainer);
-                    });
-
-                    // Combine left and right containers
-                    matchingContainer.appendChild(leftSideContainer);
-                    matchingContainer.appendChild(rightSideContainer);
-
-                    // Append to the answers div
-                    answersDiv.appendChild(matchingContainer);
-                } else if (quizType === 'Identification') {
+    // Load any saved matches
+    if (userAnswers[questions[currentQuestion].question_id]) {
+        try {
+            const savedMatches = JSON.parse(userAnswers[questions[currentQuestion].question_id]);
+            if (Array.isArray(savedMatches)) {
+                window.matchingData[questions[currentQuestion].question_id].matches = savedMatches;
+                updateMatchesDisplay(questions[currentQuestion].question_id);
+                
+                // Mark matched items
+                savedMatches.forEach(match => {
+                    const leftItem = document.querySelector(`[data-answer-id="${match.left}"]`);
+                    const rightItem = document.querySelector(`[data-answer-id="${match.right}"]`);
+                    if (leftItem) leftItem.classList.add('matched');
+                    if (rightItem) rightItem.classList.add('matched');
+                });
+            }
+        } catch (e) {
+            console.error('Error parsing saved matches:', e);
+        }
+    }
+    
+    // Mark question as answered if there are matches
+    if (window.matchingData[questions[currentQuestion].question_id].matches.length > 0) {
+        document.getElementById(`question-btn-${currentQuestion}`).classList.add('answered');
+    }
+} else if (quizType === 'Identification') {
                     // Render input field for identification type
                     const answerInput = document.createElement('input');
                     answerInput.type = 'text';
@@ -894,6 +886,169 @@ $conn->close();
             
             return false;
         }
+
+        function selectMatchItem(item, questionId) {
+    const side = item.dataset.side;
+    const matchData = window.matchingData[questionId];
+    
+    // Remove previous selection from the same side
+    document.querySelectorAll(`.match-item[data-side="${side}"]`).forEach(el => {
+        if (el.closest('.quiz-cont') && !el.classList.contains('matched')) {
+            el.classList.remove('selected');
+        }
+    });
+
+    // Don't allow selection of already matched items
+    if (item.classList.contains('matched')) {
+        return;
+    }
+
+    // Select current item
+    item.classList.add('selected');
+
+    if (side === 'left') {
+        matchData.selectedLeft = item;
+    } else {
+        matchData.selectedRight = item;
+    }
+
+    // If both sides have selections, create a match
+    if (matchData.selectedLeft && matchData.selectedRight) {
+        createMatch(questionId);
+    }
+}
+
+function createMatch(questionId) {
+    const matchData = window.matchingData[questionId];
+    const leftItem = matchData.selectedLeft;
+    const rightItem = matchData.selectedRight;
+    
+    const leftId = leftItem.dataset.answerId;
+    const rightId = rightItem.dataset.answerId;
+    
+    // Check if either item is already matched
+    const existingMatch = matchData.matches.find(m => m.left === leftId || m.right === rightId);
+    if (existingMatch) {
+        alert('One of these items is already matched. Clear existing matches first.');
+        return;
+    }
+
+    // Create the match
+    const match = {
+        left: leftId,
+        leftText: leftItem.textContent,
+        right: rightId,
+        rightText: rightItem.textContent
+    };
+    
+    matchData.matches.push(match);
+    
+    // Update display
+    updateMatchesDisplay(questionId);
+    
+    // Save to answers (stringify the matches array)
+    saveAnswer(questionId, JSON.stringify(matchData.matches));
+    
+    // Clear selections
+    leftItem.classList.remove('selected');
+    rightItem.classList.remove('selected');
+    leftItem.classList.add('matched');
+    rightItem.classList.add('matched');
+    
+    matchData.selectedLeft = null;
+    matchData.selectedRight = null;
+    
+    // Mark question as answered
+    document.getElementById(`question-btn-${currentQuestion}`).classList.add('answered');
+}
+
+
+function updateMatchesDisplay(questionId) {
+    const matchData = window.matchingData[questionId];
+    const pairsList = document.getElementById('pairs-list-' + questionId);
+    
+    pairsList.innerHTML = '';
+    
+    matchData.matches.forEach((match, index) => {
+        const pairElement = document.createElement('div');
+        pairElement.className = 'match-pair';
+        pairElement.style.display = 'flex';
+        pairElement.style.justifyContent = 'space-between';
+        pairElement.style.alignItems = 'center';
+        pairElement.style.padding = '8px 12px';
+        pairElement.style.backgroundColor = '#FCEF91';
+        pairElement.style.border = '1px solid #F8B500';
+        pairElement.style.borderRadius = '5px';
+        pairElement.style.marginBottom = '5px';
+        
+        pairElement.innerHTML = `
+            <span style="flex: 1; font-weight: 500; color: black;">${match.leftText}</span>
+            <span style="margin: 0 10px; font-weight: 500; color: #28a745;">↔</span>
+            <span style="flex: 1; font-weight: 500; color: black;">${match.rightText}</span>
+            <button onclick="removeMatch(${questionId}, ${index})" style="
+                background: #dc3545; 
+                color: white; 
+                border: none; 
+                border-radius: 3px; 
+                padding: 2px 6px; 
+                cursor: pointer; 
+                font-size: 12px;
+                margin-left: 10px;
+            ">×</button>
+        `;
+        
+        pairsList.appendChild(pairElement);
+    });
+    
+    if (matchData.matches.length === 0) {
+        pairsList.innerHTML = '<p style="color: #666; font-style: italic;">No matches yet</p>';
+    }
+}
+
+function removeMatch(questionId, matchIndex) {
+    const matchData = window.matchingData[questionId];
+    const removedMatch = matchData.matches[matchIndex];
+    
+    // Remove the match
+    matchData.matches.splice(matchIndex, 1);
+    
+    // Remove 'matched' class from items
+    document.querySelectorAll('.match-item').forEach(item => {
+        if (item.dataset.answerId === removedMatch.left || item.dataset.answerId === removedMatch.right) {
+            item.classList.remove('matched');
+        }
+    });
+    
+    // Update display and save
+    updateMatchesDisplay(questionId);
+    saveAnswer(questionId, matchData.matches);
+    
+    // Unmark question as answered if no matches left
+    if (matchData.matches.length === 0) {
+        document.getElementById(`question-btn-${currentQuestion}`).classList.remove('answered');
+    }
+}
+
+function clearAllMatches(questionId) {
+    const matchData = window.matchingData[questionId];
+    
+    // Clear all matches
+    matchData.matches = [];
+    matchData.selectedLeft = null;
+    matchData.selectedRight = null;
+    
+    // Remove all visual indicators
+    document.querySelectorAll('.match-item').forEach(item => {
+        item.classList.remove('selected', 'matched');
+    });
+    
+    // Update display and save
+    updateMatchesDisplay(questionId);
+    delete userAnswers[questionId];
+    
+    // Unmark question as answered
+    document.getElementById(`question-btn-${currentQuestion}`).classList.remove('answered');
+}
 
         function saveAnswer(questionId, answerId) {
             userAnswers[questionId] = answerId;

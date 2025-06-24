@@ -276,6 +276,27 @@ $subject_id = $_GET['subject_id'];
             margin-right: 5px;
             min-width: 20px;
         }
+
+        .matching-pairs-section {
+            margin-top: 15px;
+        }
+
+        .matching-pairs-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 10px 0;
+        }
+
+        .matching-pair {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .matching-column {
+            flex: 1;
+        }
     </style>    
 </head>
 <body>
@@ -292,7 +313,7 @@ $subject_id = $_GET['subject_id'];
     <div class="create-q-cont">
         <form id="quiz-form" method="POST" action="t_save_quiz.php">
             <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
-            <input type="hidden" name="quiz_type" value="Matching Words">
+            <input type="hidden" name="quiz_type" value="Matching Type">
 
             <div class="form-group">
                 <label for="title">Quiz Title:</label>
@@ -344,11 +365,11 @@ $subject_id = $_GET['subject_id'];
                     <div class="question-number">Question ${questionNumber}</div>
                     <input type="text" name="questions[]" required placeholder="Enter question or instruction">
                 </div>
-                <div class="matching-section">
+                <div class="matching-pairs-section">
                     <label>Matching Pairs:</label>
-                    <div class="matching-pairs-list">
-                        <div class="matching-pair-container">
-                            <span class="pair-number">1</span>
+                    <div class="matching-pairs-container" id="matching-pairs-${currentQuestions}">
+                        <div class="matching-pair">
+                            <div class="pair-number">1</div>
                             <div class="matching-column">
                                 <input type="text" name="left_items[${currentQuestions}][]" required placeholder="Left item">
                             </div>
@@ -377,13 +398,13 @@ $subject_id = $_GET['subject_id'];
         }
 
         function addPair(questionIndex) {
-            const pairsList = document.querySelectorAll('.question-container')[questionIndex].querySelector('.matching-pairs-list');
-            const pairCount = pairsList.querySelectorAll('.matching-pair-container').length;
+            const pairsList = document.querySelectorAll('.question-container')[questionIndex].querySelector('.matching-pairs-container');
+            const pairCount = pairsList.querySelectorAll('.matching-pair').length;
             
-            const pairContainer = document.createElement('div');
-            pairContainer.className = 'matching-pair-container';
-            pairContainer.innerHTML = `
-                <span class="pair-number">${pairCount + 1}</span>
+            const pairDiv = document.createElement('div');
+            pairDiv.className = 'matching-pair';
+            pairDiv.innerHTML = `
+                <div class="pair-number">${pairCount + 1}</div>
                 <div class="matching-column">
                     <input type="text" name="left_items[${questionIndex}][]" required placeholder="Left item">
                 </div>
@@ -394,18 +415,18 @@ $subject_id = $_GET['subject_id'];
                     <i class="fas fa-trash"></i>
                 </button>
             `;
-            pairsList.appendChild(pairContainer);
+            pairsList.appendChild(pairDiv);
         }
 
         function removePair(button, questionIndex) {
-            const pairContainer = button.closest('.matching-pair-container');
+            const pairContainer = button.closest('.matching-pair');
             const pairsList = pairContainer.parentElement;
             
             if (pairsList.children.length > 1) {
                 pairContainer.remove();
                 
                 // Update pair numbers after removal
-                const pairs = pairsList.querySelectorAll('.matching-pair-container');
+                const pairs = pairsList.querySelectorAll('.matching-pair');
                 pairs.forEach((pair, index) => {
                     pair.querySelector('.pair-number').textContent = index + 1;
                 });

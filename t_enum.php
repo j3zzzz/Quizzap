@@ -36,27 +36,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $quiz_id = $stmt->insert_id;
         $stmt->close();
 
-        $stmt_question = $conn->prepare("INSERT INTO questions (quiz_id, question) VALUES (?, ?)");
+        $stmt_question = $conn->prepare("INSERT INTO questions (quiz_id, question_text) VALUES (?, ?)");
         if ($stmt_question === false) {
             die('Prepare failed: ' . htmlspecialchars($conn->error));
         }
 
-        $stmt_answer = $conn->prepare("INSERT INTO answers (question_id, answer, is_correct) VALUES (?, ?, ?)");
-                if ($stmt_answer === false) {
-                    die('Prepare failed: ' . htmlspecialchars($conn->error));
-                }
+        $stmt_answer = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, ?)");
+        if ($stmt_answer === false) {
+            die('Prepare failed: ' . htmlspecialchars($conn->error));
+        }
 
         foreach ($questions as $index => $question) {
             $stmt_question->bind_param("is", $quiz_id, $question);
             if ($stmt_question->execute()) {
-                $question_id = $stmt->insert_id;
-
-                $correct_answers = explode(',', $answers[$index]); // Split answers by commas
+                $question_id = $conn->insert_id; // Changed from $stmt->insert_id to $conn->insert_id
+                
+                $correct_answers = explode(',', $answers[$index]);
                 foreach ($correct_answers as $answer) {
-                    $correct_answer = trim($correct_answer);
-                    $is_correct = 1; // Since it's an enumeration type, all provided answers are correct
-                    $stmt_answer->bind_param("isi", $question_id, $answer, $is_correct);
-                    $stmt_answer->execute();
+                    $answer = trim($answer);
+                    if (!empty($answer)) {
+                        $is_correct = 1;
+                        $stmt_answer->bind_param("isi", $question_id, $answer, $is_correct);
+                        $stmt_answer->execute();
+                    }
                 }
             }
         }
@@ -91,6 +93,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Enumeration Quiz Creator</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
@@ -283,7 +286,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <h1>Create Enumeration Quiz</h1>
 
     <div class="create-q-cont">
-        <form id="quiz-form" method="POST" action="">
+        <form id="quiz-form" method="POST" action="t_save_quiz.php">
             <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
             <input type="hidden" name="quiz_type" value="Enumeration">
 
@@ -399,38 +402,59 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         });
 
         document.getElementById('quiz-form').addEventListener('submit', function(e) {
-            e.preventDefault();       
-            
-            const formData = new FormData(this);
-            const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
-                const inputs = questionDiv.querySelectorAll('input[type="text"]');
-                return Array.from(inputs).every(input => input.value.trim() !== '');
-            });
+    e.preventDefault();       
+    
+    const formData = new FormData(this);
+    const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
+        const inputs = questionDiv.querySelectorAll('input[type="text"]');
+        return Array.from(inputs).every(input => input.value.trim() !== '');
+    });
 
-            if (!allQuestionsFilled) {
-                alert('Please fill all questions and answers before submitting.');
-                return;
-            }
-            
-            fetch('t_enum.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message); // Show success message
-                    window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`; // Redirect to subject dashboard
-                } else {
-                    alert('Error creating quiz: ' + (data.message));
-                    console.error('Error details', data);
+    if (!allQuestionsFilled) {
+        alert('Please fill all questions and answers before submitting.');
+        return;
+    }
+    
+    fetch('t_save_quiz.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success alert
+            Swal.fire({
+                icon: 'success',
+                title: 'Success!',
+                text: data.message,
+                confirmButtonColor: '#f8b500',
+                confirmButtonText: 'OK'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Redirect after confirmation
+                    window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`;
                 }
-            })
-            .catch(error => {
-                console.log('Failed to save quiz: ' + (error.message));
-                console.error('Fetch error: ', error);
             });
+        } else {
+            // Show error alert
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message || 'Failed to create quiz',
+                confirmButtonColor: '#f44336'
+            });
+        }
+    })
+    .catch(error => {
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to save quiz: ' + error.message,
+            confirmButtonColor: '#f44336'
         });
+        console.error('Fetch error: ', error);
+    });
+});
     </script>
 </body>
 </html>

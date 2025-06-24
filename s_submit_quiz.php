@@ -59,85 +59,8 @@ $answers = $data['answers'];
 $quiz_id = $data['quiz_id'];
 $is_final_submit = !($data['partial_submit'] ?? false);
 
-// Validate required parameters
 if (!$quiz_id) {
-    echo "Quiz ID is missing.", $conn;
-}
-
-// Detect partial submission with enhanced methods
-function detectPartialSubmit() {
-    $partialSubmit = false;
-
-    // Check browser back button or refresh
-    if (isset($_SERVER['HTTP_CACHE_CONTROL']) && 
-        (strpos($_SERVER['HTTP_CACHE_CONTROL'], 'max-age=0') !== false || 
-         strpos($_SERVER['HTTP_CACHE_CONTROL'], 'no-cache') !== false)) {
-        $partialSubmit = true;
-    }
-
-    // Check for browser navigation events
-    if (isset($_SERVER['HTTP_SEC_FETCH_MODE']) && 
-        $_SERVER['HTTP_SEC_FETCH_MODE'] === 'navigate') {
-        $partialSubmit = true;
-    }
-
-    // Check browser referrer
-    if (isset($_SERVER['HTTP_REFERER']) && 
-        parse_url($_SERVER['HTTP_REFERER'], PHP_URL_PATH) !== parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH)) {
-        $partialSubmit = true;
-    }
-
-    return $partialSubmit;
-}
-
-// If no answers submitted and detected as partial submit
-$is_partial_submit = detectPartialSubmit() && empty($answers);
-
-if ($is_partial_submit) {
-    // Fetch quiz details for partial submission
-    $sql = "SELECT 
-                q.quiz_type, 
-                q.quiz_name,
-                COUNT(que.question_id) as total_questions,
-                MAX(que.quiz_duration) as quiz_duration
-            FROM quizzes q
-            LEFT JOIN questions que ON q.quiz_id = que.quiz_id
-            WHERE q.quiz_id = ?
-            GROUP BY q.quiz_id, q.quiz_type, q.quiz_name";
-    
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $quiz_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
-    
-    if ($result->num_rows === 0) {
-        echo "Quiz not found or no questions available.", $conn;
-    }
-
-    $quizDetails = $result->fetch_assoc();
-    $stmt->close();
-
-    // Log partial attempt
-    $sql_log = "INSERT INTO quiz_partial_attempts 
-                (student_id, quiz_id, account_number, created_at) 
-                VALUES (?, ?, ?, NOW())";
-    $stmt_log = $conn->prepare($sql_log);
-    $stmt_log->bind_param("iis", $student_id, $quiz_id, $account_number);
-    $stmt_log->execute();
-    $stmt_log->close();
-
-    // Return partial submission details
-    echo json_encode([
-        "success" => true,
-        "quiz_id" => $quiz_id,
-        "quiz_name" => $quizDetails['quiz_name'],
-        "quiz_type" => $quizDetails['quiz_type'],
-        "total_questions" => $quizDetails['total_questions'],
-        "quiz_duration" => $quizDetails['quiz_duration'] ?? null,
-        "partial_submit" => true,
-        "message" => "Partial submission detected. Resume or restart quiz."
-    ]);
-    $conn->close();
+    echo json_encode(["success" => false, "error" => "Quiz ID is missing."]);
     exit;
 }
 
@@ -194,6 +117,34 @@ foreach ($answers as $question_id => $answer) {
                 $wrong_answers[$question_id] = $row['answer_text'];
             }
         } else {
+            echo json_encode(["success" => false, "error" => "Answer not found for answer_id: " . $answer]);
+            exit;
+        }
+        $stmt->close();
+
+    } elseif ($question_type === 'true_or_false') {
+        $sql = "SELECT answer_id, is_correct FROM answers 
+                WHERE question_id = ? AND (answer_id = ? OR LOWER(TRIM(answer_text)) = LOWER(TRIM(?)))";
+        $stmt = $conn->prepare($sql);
+        
+        // Convert answer to appropriate types
+        $answer_id_param = is_numeric($answer) ? $answer : 0;
+        $answer_text_param = is_numeric($answer) ? '' : $answer;
+        
+        $stmt->bind_param("iis", $question_id, $answer_id_param, $answer_text_param);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            $row = $result->fetch_assoc();
+            $is_correct = $row['is_correct'];
+            
+            if ($is_correct) {
+                $score++;
+            } else {
+                $wrong_answers[$question_id] = $row['answer_text'];
+            }
+        } else {
             echo json_encode(["success" => false, "error" => "Answer not found."]);
             exit;
         }
@@ -224,19 +175,20 @@ foreach ($answers as $question_id => $answer) {
             $correct_count = count(array_uintersect($correct_answers, $submitted_answers, 'strcasecmp'));
             $is_correct = ($correct_count == count($correct_answers)) ? 1 : 0;
 
-            $score += $correct_count;
-            if ($correct_count != count($correct_answers)) {
+            if ($is_correct) {
+                $score++;
+            } else {
                 $wrong_answers[$question_id] = $answer;
             }
         } else {
-            echo json_encode(["success" => false, "error" => "Question not found."]);
+            echo json_encode(["success" => false, "error" => "Question not found for question_id: " . $question_id]);
             exit;
         }
         $stmt->close();
 
-    } elseif ($quiz_type === 'Matching Type') {
-        // For Matching type
-        $sql = "SELECT matching_config FROM questions WHERE question_id = ?";
+    } elseif ($question_type === 'enumeration') {
+        // For Enumeration type
+        $sql = "SELECT answer_text FROM answers WHERE question_id = ?";
         $stmt = $conn->prepare($sql);
         if (!$stmt) {
             echo json_encode(["success" => false, "error" => "Failed to prepare statement: " . $conn->error]);
@@ -245,25 +197,107 @@ foreach ($answers as $question_id => $answer) {
         $stmt->bind_param("i", $question_id);
         $stmt->execute();
         $result = $stmt->get_result();
-        
+
         if ($result && $result->num_rows > 0) {
             $row = $result->fetch_assoc();
-            // Assuming matching_config is stored as a JSON string
-            $correct_mappings = json_decode($row['matching_config'], true);
+            $correct_answers = explode(',', $row['answer_text']);
+            $submitted_answers = explode(',', $answer);
 
-            // Check if the submitted answer matches the correct mapping
-            if (isset($correct_mappings[$answer])) {
-                $is_correct = 1;
-                $score++;
-            } else {
+            // Trim and make both arrays lowercase for case-insensitive comparison
+            $correct_answers = array_map('strtolower', array_map('trim', $correct_answers));
+            $submitted_answers = array_map('strtolower', array_map('trim', $submitted_answers));
+
+            // Compare submitted answers with correct answers (case-insensitive)
+            $correct_count = count(array_uintersect($correct_answers, $submitted_answers, 'strcasecmp'));
+            
+            // For enumeration, give partial credit
+            $score += $correct_count;
+            if ($correct_count != count($correct_answers)) {
                 $wrong_answers[$question_id] = $answer;
             }
         } else {
-            echo json_encode(["success" => false, "error" => "Question not found."]);
+            echo json_encode(["success" => false, "error" => "Question not found for question_id: " . $question_id]);
             exit;
         }
         $stmt->close();
+
+    } elseif ($question_type === 'matching_type') {
+        // Get all correct answers for this matching question
+        $sql = "SELECT answer_text FROM answers WHERE question_id = ? AND is_correct = 1";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("i", $question_id);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        
+        $correct_matches = [];
+        while ($row = $result->fetch_assoc()) {
+            $parts = explode('|', $row['answer_text']);
+            if (count($parts) >= 2) {
+                $correct_matches[] = [
+                    'left' => trim($parts[0]),
+                    'right' => trim($parts[1])
+                ];
+            }
+        }
+        
+        $correct_count = 0;
+        $submitted_matches = [];
+        
+        // Process submitted answers
+        foreach ($answer as $match) {
+            $submitted_left = '';
+            $submitted_right = '';
+            
+            if (isset($match['leftText'], $match['rightText'])) {
+                $submitted_left = trim($match['leftText']);
+                $submitted_right = trim($match['rightText']);
+            } elseif (isset($match['left'], $match['right'])) {
+                $submitted_left = trim($match['left']);
+                $submitted_right = trim($match['right']);
+            }
+            
+            // Clean up text by removing numbering/lettering
+            $submitted_left = preg_replace('/^\d+\.\s*/', '', $submitted_left);
+            $submitted_right = preg_replace('/^[A-Z]\.\s*/', '', $submitted_right);
+            
+            if (!empty($submitted_left) && !empty($submitted_right)) {
+                $submitted_matches[] = [
+                    'left' => $submitted_left,
+                    'right' => $submitted_right
+                ];
+                
+                // Check if this match is correct (case-insensitive)
+                foreach ($correct_matches as $correct_match) {
+                    if (strcasecmp($submitted_left, $correct_match['left']) === 0 && 
+                        strcasecmp($submitted_right, $correct_match['right']) === 0) {
+                        $correct_count++;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Calculate score - Full credit only if all matches are correct
+        if ($correct_count == count($correct_matches) && count($submitted_matches) == count($correct_matches)) {
+            $score++;
+            $is_correct = 1;
+        } else {
+            $is_correct = 0;
+            
+            // Store wrong answer details
+            $wrong_answers[$question_id] = [
+                'submitted_matches' => $submitted_matches,
+                'correct_matches' => $correct_matches,
+                'correct_count' => $correct_count,
+                'total_expected' => count($correct_matches)
+            ];
+        }
+        
+        $stmt->close();
     }
+
+    // Convert answer to string for database storage
+    $answer_string = is_array($answer) ? json_encode($answer) : $answer;
 
     // Insert the student's answer into the student_answers table for ALL quiz types
     $sql_insert = "INSERT INTO student_answers (student_id, quiz_id, question_id, answer, is_correct) 

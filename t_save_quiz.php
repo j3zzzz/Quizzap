@@ -94,17 +94,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 } else {
                     throw new Exception("No answers provided for fill in the blanks question at index " . $index);
                 }
-            } elseif ($quiz_type == 'Enumeration') {
+            }  elseif ($quiz_type == 'Enumeration') {
                 $correct_answer_list = explode(',', $correct_answer[$index]);
-                foreach ($correct_answer_list as $answer) {
-                    $answer = trim($answer);
-                    $stmt_answer = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
-                    $stmt_answer->bind_param("is", $question_id, $answer);
-                    if (!$stmt_answer->execute()) {
-                        throw new Exception("Error inserting enumeration answer: " . $stmt_answer->error);
-                    }
-                    $stmt_answer->close();
+                // Trim each answer and filter out empty ones
+                $correct_answer_list = array_filter(array_map('trim', $correct_answer_list));
+                
+                if (empty($correct_answer_list)) {
+                    throw new Exception("No valid answers provided for enumeration question at index " . $index);
                 }
+                
+                // Save all enumeration answers as a single comma-separated string
+                $answer_text = implode(',', $correct_answer_list);
+                $stmt_answer = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
+                $stmt_answer->bind_param("is", $question_id, $answer_text);
+                if (!$stmt_answer->execute()) {
+                    throw new Exception("Error inserting enumeration answer: " . $stmt_answer->error);
+                }
+                $stmt_answer->close();
             } elseif ($quiz_type == 'Identification') {
                 $correct_answer_list = explode(',', $correct_answer[$index]);
                 foreach ($correct_answer_list as $answer) {

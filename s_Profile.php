@@ -1,64 +1,88 @@
 <?php
-// Start the session
 session_start();
 if (strpos($_SESSION['account_number'], 'S') !== 0) {
     header("Location: login.php");
     exit();
 }
 
-// Database connection details
 $servername = "localhost";
 $username = "root";
 $password = "";
 $dbname = "rawrit";
 
-// Create a connection
 $conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check if the connection is successful
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
-// Assuming the user is logged in and their account number is stored in a session
 $account_number = $_SESSION['account_number'];
 $fname = $_SESSION['fname'];
 
-// SQL query to fetch the student's profile data
-$sql = "SELECT fname, lname, account_number, glevel, strand FROM students WHERE account_number = ?";
+// Initialize variables
+$name = "Unknown";
+$lname = "Unknown";
+$glevel = "Unknown";
+$strand = "Unknown";
+$profile_pic = 'default-profile.jpg';
+
+// Fetch student data
+$sql = "SELECT fname, lname, account_number, glevel, strand, profile_pic FROM students WHERE account_number = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $account_number);
 $stmt->execute();
 $result = $stmt->get_result();
 
-// Fetch the result
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
     $name = $row['fname'];
     $lname = $row['lname'];
     $glevel = $row['glevel'];
     $strand = $row['strand'];
-} else {
-    $name = "Unknown";
-    $grade_level = "Unknown";
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 }
 
-$loggedInUser = $_SESSION['account_number'];
-
-$sql = "SELECT profile_pic FROM students WHERE account_number = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $loggedInUser);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $profilePic = $row['profile_pic'] ?: "uploads/default_pic.png";
-} else {
-    $profilePic = "uploads/default_pic.png";
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $new_fname = $_POST['fname'];
+    $new_lname = $_POST['lname'];
+    $new_glevel = $_POST['glevel'];
+    $new_strand = $_POST['strand'];
+    
+    // Handle profile picture upload
+    if ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
+        $target_dir = "uploads/profiles/";
+        if (!file_exists($target_dir)) {
+            mkdir($target_dir, 0777, true);
+        }
+        
+        $file_extension = pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION);
+        $new_filename = "student_" . $account_number . "_" . time() . "." . $file_extension;
+        $target_file = $target_dir . $new_filename;
+        
+        $check = getimagesize($_FILES['profile_pic']['tmp_name']);
+        if ($check !== false) {
+            if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $target_file)) {
+                $profile_pic = $new_filename;
+            }
+        }
+    }
+    
+    // Update database
+    $update_sql = "UPDATE students SET fname = ?, lname = ?, glevel = ?, strand = ?, profile_pic = ? WHERE account_number = ?";
+    $update_stmt = $conn->prepare($update_sql);
+    $update_stmt->bind_param("ssssss", $new_fname, $new_lname, $new_glevel, $new_strand, $profile_pic, $account_number);
+    $update_stmt->execute();
+    
+    // Update session variables
+    $_SESSION['fname'] = $new_fname;
+    $name = $new_fname;
+    $lname = $new_lname;
+    $glevel = $new_glevel;
+    $strand = $new_strand;
+    
+    $update_stmt->close();
 }
 
-$stmt->close();
 $conn->close();
 ?>
 
@@ -67,383 +91,492 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile Page</title>
+    <title>Student Profile | RAWRIT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        /* Resetting margins, padding, and setting box-sizing */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+        :root {
+            --primary: #f8b500;
+            --primary-light: #ffc740;
+            --primary-dark: #e0a100;
+            --accent: #FFF3D6;
+            --text: #333;
+            --light-bg: #fff9ee;
+            --card-bg: #fff;
+            --error: #e74c3c;
+            --success: #2ecc71;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Fredoka;
+        }
 
-/* General body styling */
-body {
-    font-family: Arial, sans-serif;
-    background-color: #ed5e00;
-    color: white;
-}
+        body {
+            background-color: var(--light-bg);
+            color: var(--text);
+        }
 
-/* Header styling */
-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 20px;
-    background-color: #CF5300;
-    box-shadow: 0 3px 5px rgba(0, 0, 0, 0.3);
-}
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 5%;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo img {
+            height: 40px;
+            transition: transform 0.3s;
+        }
 
-header nav a {
-    margin: 0 15px;
-    text-decoration: none;
-    color: #FFC49C;
-    font-size: 20px;
-    font-family: "Purple Smile", cursive;
-    letter-spacing: .5px;
-}
+        nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
 
-header nav a:hover {
-    color: #923a00;
-    transform: scale(1.1);
-}
+        nav a {
+            color: rgba(0, 0, 0, 0.8);
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 5px 0;
+            transition: all 0.3s;
+        }
+        
+        nav a:hover {
+            color: #000;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
 
-.active {
-    font-size: 25px;
-    color: white;
-}
+        nav a.active {
+            color: #000;
+            font-weight: 600;
+            border-bottom: 2px solid #000;
+        }
 
-/* Main content styling */
-main {
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
+        .logout-btn {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-/* Profile card styling */
-.profile-card {
-    display: flex;
-    width: 50%;
-    padding: 50px;
-    background-color: #FFEFE4;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-    margin: 0 auto;
-    margin-top: 20px;
-}
+        .logout-btn:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
 
-/* Left and right sections within the profile card */
-.profile-card .left,
-.profile-card .right {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
+        
+        main {
+            padding: 40px 5%;
+            min-height: calc(100vh - 70px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .profile-container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+            border: 1px solid rgba(248, 181, 0, 0.2);
+        }
 
-/* Left side content styling */
-.profile-card .left img {
-    width: 150px;
-    height: 150px;
-    border-radius: 50%;
-    margin-bottom: 20px;
-}
+        .profile-header {
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+        }
 
-.profile-card .edit-button {
-    margin-top: 20px;
-}
+        .profile-title {
+            color: #000;
+            font-size: 24px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+        }
 
-/* Right side profile details styling */
-.profile-details {
-    color: #cf5300;
-    font-size: 18px;
-    text-align: left;
-}
+        .profile-content {
+            padding: 30px;
+        }
+        
+        .profile-preview {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .profile-pic-container {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 5px solid var(--accent);
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.3);
+        }
+        
+        .profile-pic {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .profile-info {
+            text-align: center;
+            width: 100%;
+        }
+        
+        .account-number {
+            font-size: 18px;
+            color: var(--primary-dark);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .full-name {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
 
-.profile-details span {
-    font-weight: bold;
-    color: #ff7a3b;
-}
+        .student-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        
+        .detail-group {
+            background-color: var(--accent);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .detail-label {
+            font-size: 14px;
+            color: var(--primary-dark);
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .detail-value {
+            font-size: 16px;
+            color: var(--text);
+            font-family: Fredoka;
+        }
+        
+        .profile-form {
+            display: grid;
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .form-label {
+            font-size: 14px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .form-input {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        .form-input:focus {
+            border-color: var(--primary);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.1);
+        }
 
-.profile-details p {
-    color: #cf5300;
-    margin-bottom: 15px;
-}
+        .profile-pic-edit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .profile-pic-preview {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 5px solid var(--accent);
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .preview-actions {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #000;
+            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.3);
+        }
 
-/* Vertical line styling between two sections */
-.vertical-line {
-    width: 1px;
-    background-color: #f8b500;
-    margin: 0 20px;
-    border-left: 2px solid white;
-}
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(248, 181, 0, 0.4);
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+        }
+        
+        .btn-secondary {
+            background-color: #f1f1f1;
+            color: var(--text);
+            border: 1px solid #ddd;
+        }
 
-/* Profile icon styling */
-.profile-icon {
-    float: left;
-    width: 27%;
-    height: 220px;
-    background-color: #ff7a3b;
-    border-radius: 50%;
-    margin-bottom: 8%;
-}
+        .btn-secondary:hover {
+            background-color: #e1e1e1;
+        }
+                
+        .edit-btn {
+            background-color: rgba(0, 0, 0, 0.1);
+            color: #000;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
 
-/* Paragraph styling */
-p {
-    text-indent: 50px;
-    color: #cf5300;
-}
+        .edit-btn:hover {
+            background-color: rgba(0, 0, 0, 0.2);
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media (max-width: 768px) {
+            header {
+                padding: 15px 20px;
+            }
+            
+            nav {
+                gap: 12px;
+            }
+            
+            .profile-content {
+                padding: 20px;
+            }
+            
+            .profile-header {
+                padding: 0 20px;
+            }
 
-/* Edit button styling */
-.edit-button {
-    float: left;
-    margin-top: 40%;
-}
+            .student-details {
+                grid-template-columns: 1fr;
+            }
+        }
 
-/* Update Profile Picture button styling */
-#updateProfilePicBtn {
-    width: 300px;
-    float: left;
-    font-family: "Baskerville Old Face Regular", sans-serif;
-    font-weight: bold;
-    padding: 10px 20px;
-    background-color: #ecd094;
-    color: black;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    display: block;
-    margin: 0 auto;
-}
+        /* Add some subtle animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-/* Upload button styling */
-#upload-btn {
-    width: 76%;
-    margin-left: 20px;
-}
+        .profile-container {
+            animation: fadeIn 0.5s ease-out;
+        }
 
-input[type="file"],
-#upload-btn {
-    border: none;
-    background-color: #ecd094;
-    font-family: "Baskerville Old Face Regular", sans-serif;
-    padding: 5px 10px;
-    border-radius: 5px;
-    font-size: 20px;
-    align-items: center;
-    text-align: center;
-}
-
-button:hover {
-    background-color: #444;
-}
-
-.btn {
-    background-color: #4CAF50;
-    border: none;
-    color: white;
-    padding: 15px 32px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 16px;
-    margin: 4px 2px;
-    cursor: pointer;
-}
-
-.btn-update {
-    background-color: #008CBA;
-}
-
-/* Modal styling */
-.modal {
-    display: none;
-    position: fixed;
-    z-index: 1;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0, 0, 0, 0.4);
-    padding-top: 60px;
-    transition: all 0.1s ease;
-}
-
-.modal-content {
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(4px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    margin: 5% auto;
-    padding: 5px 10px;
-    width: 190px;
-    height: 110px;
-}
-
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-}
-
-.close:hover,
-.close:focus {
-    color: black;
-    text-decoration: none;
-    cursor: pointer;
-}
-
-/* Navbar profile picture styling */
-.navbar-profile-pic {
-    width: 60px;
-    height: 60px;
-    border-radius: 50%;
-    object-fit: cover;
-    margin-left: 10px;
-}
-
-/* Profile container styling */
-.profile-container {
-    position: relative;
-    display: inline-block;
-}
-
-.profile-pic {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-/* Dropdown content styling */
-.dropdown-content {
-    display: none;
-    position: absolute;
-    background-color: #f9f9f9;
-    min-width: 160px;
-    box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-    z-index: 1;
-}
-
-.dropdown-content a {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-}
-
-.dropdown-content a:hover {
-    background-color: #f1f1f1;
-}
-
-/* Custom file upload styling */
-#profile_pic {
-    display: none;
-}
-
-.custom-file-upload {
-    font-family: "Baskerville Old Face Regular", sans-serif;
-    margin: 10px 0;
-    padding: 10px 20px;
-    background-color: #ecd094;
-    color: black;
-    border: 2px solid #cf5300;
-    border-radius: 5px;
-    cursor: pointer;
-    text-align: center;
-    display: inline-block;
-    font-size: 16px;
-}
-
-.custom-file-upload:hover {
-    background-color: #ff7a3b;
-    color: white;
-}
-
+      
     </style>
 </head>
 <body>
-    <header>
-        <div class="logo"><img src="rawrit2.png" width="120px" height="40px"></div>
+    <header>                   
+        <div class="logo"> <img src="img/logo4.png" width="110px" height="80px" class="logo-img"></div>
         <nav>
             <a href="s_Home.php">Home</a>
             <a href="studClasses.php">Classes</a>
             <a href="studQuizzes.php">Quizzes</a>
-            <div class="profile-container">
-                <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="Profile Picture" class="profile-pic" onclick="toggleDropdown()" />
-                <div id="dropdown-menu" class="dropdown-content">
-                    <a href="#">Profile</a>
-                    <a href="#">Settings</a>
-                    <a href="login.php">Logout</a>
-                </div>
-            </div>
+            <a class="active" href="s_Profile.php">Profile</a>
+            <form action="logout.php" method="POST">
+                <button type="submit" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </form>
         </nav>
     </header>
-
     <main>
-        <div class="profile-card">
-            <div class="left">
-                <img src="<?php echo htmlspecialchars($profilePic); ?>" alt="Profile Picture" class="profile-icon">
-                <button id="updateProfilePicBtn" class="btn btn-update">Update Profile Picture</button>
-                <div class="modal" id="profilePicModal">
-                    <div class="modal-content">
-                        <span class="close">&times;</span>
-                        <form id="uploadForm" action="upload.php" method="POST" enctype="multipart/form-data">
-                            <label for="profile_pic" class="custom-file-upload">Choose a File</label>
-                            <input type="file" name="profile_pic" id="profile_pic" onchange="document.getElementById('uploadForm').submit();">
-                            <button type="submit" id="upload-btn">Upload</button>
-                        </form>
+        <div class="profile-container">
+            <div class="profile-header">
+                <h1 class="profile-title">Student Profile</h1>
+            </div>
+            <div class="profile-content">
+                <!-- Preview Mode -->
+                <div id="previewMode" class="profile-preview">
+                    <div class="profile-pic-container">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'">
+                    </div>
+                    
+                    <div class="profile-info">
+                        <div class="account-number">Account #: <?php echo htmlspecialchars($account_number); ?></div>
+                        <div class="full-name"><?php echo htmlspecialchars($name . ' ' . $lname); ?></div>
+                        
+                        <div class="student-details">
+                            <div class="detail-group">
+                                <div class="detail-label">Grade Level</div>
+                                <div class="detail-value"><?php echo htmlspecialchars($glevel); ?></div>
+                            </div>
+                            <div class="detail-group">
+                                <div class="detail-label">Strand</div>
+                                <div class="detail-value"><?php echo htmlspecialchars($strand); ?></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="preview-actions">
+                        <button id="startEdit" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Profile
+                        </button>
                     </div>
                 </div>
-            </div>
-            <div class="vertical-line"></div>
-            <div class="right profile-details">
-                <span>Account Number:</span><p><?php echo htmlspecialchars($account_number); ?></p>
-                <span>Name:</span><p><?php echo htmlspecialchars($fname); ?></p><p><?php echo htmlspecialchars($lname); ?></p>
-                <span>Grade Level:</span><p><?php echo htmlspecialchars($glevel); ?></p>
-                <span>Strand:</span><p><?php echo htmlspecialchars($strand); ?></p>
+                
+                <!-- Edit Mode -->
+                <form id="editMode" method="POST" enctype="multipart/form-data" class="profile-form hidden">
+                    <div class="profile-pic-edit">
+                        <div class="profile-pic-preview">
+                            <img id="profilePicPreview" src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'">
+                        </div>
+                        <input type="file" id="profile_pic" name="profile_pic" accept="image/*" style="display: none;">
+                        <button type="button" id="changeProfilePic" class="btn btn-secondary">
+                            <i class="fas fa-camera"></i> Change Photo
+                        </button>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Account Number</label>
+                        <input type="text" class="form-input" value="<?php echo htmlspecialchars($account_number); ?>" disabled>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fname" class="form-label">First Name</label>
+                        <input type="text" id="fname" name="fname" class="form-input" value="<?php echo htmlspecialchars($name); ?>" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="lname" class="form-label">Last Name</label>
+                        <input type="text" id="lname" name="lname" class="form-input" value="<?php echo htmlspecialchars($lname); ?>" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="glevel" class="form-label">Grade Level</label>
+                        <input type="text" id="glevel" name="glevel" class="form-input" value="<?php echo htmlspecialchars($glevel); ?>" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="strand" class="form-label">Strand</label>
+                        <input type="text" id="strand" name="strand" class="form-input" value="<?php echo htmlspecialchars($strand); ?>" required>
+                    </div>
+                    
+                    <div class="form-actions">
+                        <button type="button" id="cancelEdit" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     </main>
-
+    
     <script>
-        var modal = document.getElementById("profilePicModal");
-        var btn = document.getElementById("updateProfilePicBtn");
-        var span = document.getElementsByClassName("close")[0];
-
-        btn.onclick = function() {
-            modal.style.display = "block";
-        };
-
-        span.onclick = function() {
-            modal.style.display = "none";
-        };
-
-        window.onclick = function(event) {
-            if (event.target == modal) {
-                modal.style.display = "none";
+        document.addEventListener('DOMContentLoaded', function() {
+            const startEdit = document.getElementById('startEdit');
+            const cancelEdit = document.getElementById('cancelEdit');
+            const previewMode = document.getElementById('previewMode');
+            const editMode = document.getElementById('editMode');
+            const changeProfilePic = document.getElementById('changeProfilePic');
+            const profilePicInput = document.getElementById('profile_pic');
+            const profilePicPreview = document.getElementById('profilePicPreview');
+            
+            // Toggle between preview and edit modes
+            function toggleEditMode() {
+                previewMode.classList.toggle('hidden');
+                editMode.classList.toggle('hidden');
             }
-        };
-
-        function toggleDropdown() {
-            var dropdown = document.getElementById("dropdown-menu");
-            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
-        }
-
-        window.onclick = function(event) {
-            if (!event.target.matches('.profile-pic')) {
-                var dropdowns = document.getElementsByClassName("dropdown-content");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.style.display === "block") {
-                        openDropdown.style.display = "none";
-                    }
+            
+            // Event listeners
+            startEdit.addEventListener('click', toggleEditMode);
+            cancelEdit.addEventListener('click', toggleEditMode);
+            
+            // Profile picture change handler
+            changeProfilePic.addEventListener('click', function() {
+                profilePicInput.click();
+            });
+            
+            profilePicInput.addEventListener('change', function(e) {
+                if (e.target.files && e.target.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(event) {
+                        profilePicPreview.src = event.target.result;
+                    };
+                    reader.readAsDataURL(e.target.files[0]);
                 }
+            });
+            
+            // If form was submitted with errors, show edit mode
+            if (window.location.search.includes('error')) {
+                toggleEditMode();
             }
-        }
+        });
     </script>
 </body>
 </html>

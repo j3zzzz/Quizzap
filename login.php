@@ -10,7 +10,7 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Arial, sans-serif;
+            font-family: Fredoka;
         }
 
         body, html {
@@ -20,21 +20,24 @@
         /* Main container styling */
         .container {
             display: flex;
+            flex-direction: column;
             height: 100vh;
             background-color: black;
         }
 
         /* Left side with slogan */
         .left {
-            flex: 1;
+            flex: 0 0 auto;
             background-color: #ffffff;
             display: flex;
             justify-content: center;
             align-items: center;
             color: #B4B2B2;
-            font-size: 4rem;
+            font-size: 2rem;
             font-weight: bold;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+            padding: 1rem;
+            text-align: center;
         }
 
         /* Color styling for 'fun' */
@@ -42,8 +45,8 @@
             color: #F8B500;
         }
 
-        .left p, span{
-            font-family: Tilt Warp Regular;
+        .left p, span {
+            font-family: Fredoka;
         }
 
         /* Right side with login form */
@@ -54,6 +57,7 @@
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            padding: 1rem;
         }
 
         /* QuizZap logo styling */
@@ -62,7 +66,13 @@
             font-weight: bold;
             color: #ffffff;
             margin-bottom: .5rem;
-            margin-top: -10%;
+            margin-top: 0;
+        }
+
+        .logo img {
+            max-width: 360px;
+            width: 100%;
+            height: auto;
         }
 
         /* Form styling */
@@ -71,8 +81,8 @@
             padding: 2rem;
             border-radius: 25px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 65%;
-            max-width: 1000px;
+            width: 100%;
+            max-width: 500px;
             text-align: center;
         }
 
@@ -82,7 +92,7 @@
             border: 3px solid #B9B6B6;
             border-radius: 10px;
             box-sizing: border-box;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             font-size: 18px;
             margin-top: 3%;
             text-align: center;
@@ -97,7 +107,7 @@
             border-radius: 10px;
             font-size: 16px;
             cursor: pointer;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
             letter-spacing: 1px;
             box-shadow: 0 4px 0 #BC8900;
         }
@@ -114,12 +124,35 @@
             margin-top: 10px;
             font-size: 12px;
             color: black;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
         }
 
-        .form-container a{
+        .form-container a {
             text-decoration: none;
-            font-family: Tilt Warp Regular;
+            font-family: Fredoka;
+        }
+
+        /* Media queries for responsiveness */
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
+            .left {
+                flex: 1;
+                font-size: 3rem;
+            }
+            .right {
+                flex: 1;
+            }
+            .logo {
+                margin-top: -10%;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .left {
+                font-size: 4rem;
+            }
         }
     </style>
 </head>
@@ -139,7 +172,7 @@
                     <center>
                     <input class="btn" type="submit" value="Login">
                     <p class="register-link">Don't have a account? <a style="color: #F8B500;" href="acctype.php">Create an account!</a></p></center><br>           
-            </form>
+                </form>
             </div>
         </div>
     </div>

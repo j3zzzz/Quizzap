@@ -45,7 +45,8 @@ $conn->close();
 
         .container {
             display: flex;
-            height: 100vh;
+            flex-direction: column;
+            min-height: 100vh;
             background-color: #f2f2f2;
         }
 
@@ -56,6 +57,8 @@ $conn->close();
             justify-content: center;
             align-items: center;
             flex-direction: column;
+            padding: 20px;
+            order: 2;
         }
 
         .right {
@@ -65,26 +68,27 @@ $conn->close();
             justify-content: center;
             align-items: center;
             color: #999;
-            font-size: 6rem;
             font-weight: bold;
             flex-direction: column;
+            padding: 40px 20px;
+            text-align: center;
+            order: 1;
         }
 
         .right span {
-            text-align: left;
             color: #F8B500;
-            font-size: 4.5rem;
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
+            font-size: 3rem;
         }
 
         .right p {
             color: #B4B2B2;
-            font-size: 1rem;
             font-weight: normal;
             text-align: center;
             max-width: 300px;
             margin-top: 0.5rem;
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
+            font-size: 1rem;
         }
 
         .logo {
@@ -92,7 +96,14 @@ $conn->close();
             font-weight: bold;
             color: #ffffff;
             margin-bottom: .5rem;
-            margin-top: -6%;
+            margin-top: 0;
+        }
+
+        .logo img {
+            width: 360px;
+            height: 130px;
+            max-width: 100%;
+            height: auto;
         }
 
         .signup-form {
@@ -100,9 +111,10 @@ $conn->close();
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 80%;
-            max-width: 1000px;
+            width: 100%;
+            max-width: 500px;
             text-align: center;
+            margin: 20px 0;
         }
 
         .signup-form input[type="text"],
@@ -112,10 +124,30 @@ $conn->close();
             border: 3px solid #B9B6B6;
             border-radius: 10px;
             box-sizing: border-box;
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
             font-size: 18px;
             margin-top: 3%;
             text-align: center;
+        }
+
+        .name-inputs {
+            display: flex;
+            gap: 1%;
+            width: 100%;
+        }
+
+        .name-inputs input {
+            width: 49.5%;
+        }
+
+        .password-inputs {
+            display: flex;
+            gap: 1%;
+            width: 100%;
+        }
+
+        .password-inputs input {
+            width: 49.5%;
         }
 
         select {
@@ -123,7 +155,7 @@ $conn->close();
             padding: 10px;
             border: 3px solid #B9B6B6;
             border-radius: 10px;
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
             font-size: 18px;
             color: #000;
             margin-top: 2%;
@@ -131,7 +163,7 @@ $conn->close();
         }
 
         option {
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
         }
 
         .signup-form .btn {
@@ -143,7 +175,7 @@ $conn->close();
             border-radius: 10px;
             font-size: 16px;
             cursor: pointer;
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
             letter-spacing: 1px;
             box-shadow: 0 4px 0 #BC8900;
             margin-top: 1rem;
@@ -158,14 +190,14 @@ $conn->close();
             margin-top: 1rem;
             font-size: 0.9rem;
             color: #555;
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
         }
 
         .signup-form a {
             color: #F8B500;
             text-decoration: none;
             font-weight: bold;
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
         }
 
         .signup-form a:hover {
@@ -178,8 +210,45 @@ $conn->close();
         }
 
         .error-message {
-            font-family: 'Tilt Warp Regular';
+            font-family: Fredoka;
             color: red;
+            margin-bottom: 10px;
+        }
+
+        /* Media queries for responsiveness */
+        @media (min-width: 768px) {
+            .container {
+                flex-direction: row;
+            }
+            
+            .left {
+                order: 1;
+                padding: 40px;
+            }
+            
+            .right {
+                order: 2;
+                padding: 40px;
+            }
+            
+            .right span {
+                font-size: 4rem;
+            }
+            
+            .logo {
+                margin-top: -6%;
+            }
+        }
+
+        @media (min-width: 992px) {
+            .right span {
+                font-size: 4.5rem;
+            }
+            
+            .right p {
+                font-size: 1.2rem;
+                max-width: 400px;
+            }
         }
     </style>
 </head>
@@ -198,8 +267,10 @@ $conn->close();
                     <form method="POST" action="s_Signup_process.php" onsubmit="return validateForm()">
                     <input type="text" name="account_number" value="<?php echo $student_account_number; ?>">
                     
-                    <input style="width: 49%;" type="text" id="fname" name="fname" placeholder="First name" required>
-                    <input style="width: 50%;" type="text" id="lname" name="lname" placeholder="Last name" required>
+                    <div class="name-inputs">
+                        <input type="text" id="fname" name="fname" placeholder="First name" required>
+                        <input type="text" id="lname" name="lname" placeholder="Last name" required>
+                    </div>
                     
                     <select id="glevel" name="glevel" onchange="toggleStrandInput()" required>
                         <option value="">Select Grade Level</option>
@@ -222,8 +293,10 @@ $conn->close();
                         </select>
                     </div>
                     
-                    <input style="width: 49%;" type="password" id="password" name="password" placeholder="Password" required>
-                    <input style="width: 50%;" type="password" id="password2" name="password2" placeholder="Confirm password" required>
+                    <div class="password-inputs">
+                        <input type="password" id="password" name="password" placeholder="Password" required>
+                        <input type="password" id="password2" name="password2" placeholder="Confirm password" required>
+                    </div>
                     
                     <center>
                         <input class="btn" type="submit" value="Register Account">

@@ -67,7 +67,7 @@ function getUserAnswerFromDatabase($conn, $student_id, $question_id) {
     
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
-        return $row['answer'];
+        return !empty($row['answer_text']) ? $row['answer_text'] : $row['answer'];
     }
     return null;
 }
@@ -194,6 +194,12 @@ if (!$subject_id) {
     if ($subject_result->num_rows > 0) {
         $subject_row = $subject_result->fetch_assoc();
         $subject_id = $subject_row['subject_id'];
+        // Store it in session for future use
+        $_SESSION['quiz_result']['subject_id'] = $subject_id;
+    } else {
+        // Only redirect if we really can't get the subject_id
+        header("Location: select_quiz.php");
+        exit();
     }
     $subject_stmt->close();
 }
@@ -379,7 +385,7 @@ if (!$subject_id) {
     <br>
 
     <div class="container">
-    <p class="score">Your score: <?php echo $display_score . " / " . $total_correct_answers; ?></p>
+    <p class="score">Your score: <?php echo (isset($display_score) ? $display_score : 0) . " / " . (isset($total_correct_answers) ? $total_correct_answers : 0); ?></p>
 
     <h2>Review Questions</h2><br>
     <div id="questions">
@@ -404,36 +410,31 @@ if (!$subject_id) {
                         $user_got_wrong = isset($wrong_answers[$question['question_id']]);
                         
                         if ($user_got_wrong) {
-                            $user_answer_data = $wrong_answers[$question['question_id']];
-                            $user_selected_answer_id = null;
-                            $user_selected_answer_text = null;
+                            // Get the user's actual selected answer from the database
+                            $user_answer_sql = "SELECT answer FROM student_answers 
+                                            WHERE student_id = ? 
+                                            AND question_id = ? 
+                                            ORDER BY answered_at DESC LIMIT 1";
+                            $user_answer_stmt = $conn->prepare($user_answer_sql);
+                            $user_answer_stmt->bind_param("ii", $student_id, $question['question_id']);
+                            $user_answer_stmt->execute();
+                            $user_answer_result = $user_answer_stmt->get_result();
                             
-                            if (is_array($user_answer_data)) {
-                                if (isset($user_answer_data['answer_id'])) {
-                                    $user_selected_answer_id = $user_answer_data['answer_id'];
-                                }
-                                if (isset($user_answer_data['answer_text'])) {
-                                    $user_selected_answer_text = $user_answer_data['answer_text'];
-                                }
-                            } else {
-                                $user_selected_answer_text = $user_answer_data;
+                            $user_selected_answer_id = null;
+                            if ($user_answer_result->num_rows > 0) {
+                                $user_answer_row = $user_answer_result->fetch_assoc();
+                                $user_selected_answer_id = $user_answer_row['answer'];
                             }
+                            $user_answer_stmt->close();
                             
                             foreach ($question['answers'] as $answer) {
                                 $answer_style = '';
                                 $answer_marker = '';
-                                $is_user_selection = false;
-                                
-                                if ($user_selected_answer_id && $user_selected_answer_id == $answer['answer_id']) {
-                                    $is_user_selection = true;
-                                } elseif ($user_selected_answer_text && trim($user_selected_answer_text) === trim($answer['individual_answer'])) {
-                                    $is_user_selection = true;
-                                }
                                 
                                 if ($answer['is_correct'] == 1) {
                                     $answer_style = 'color: green; font-weight: 600;';
                                     $answer_marker = ' ✓';
-                                } elseif ($is_user_selection) {
+                                } elseif ($user_selected_answer_id && $user_selected_answer_id == $answer['answer_id']) {
                                     $answer_style = 'color: red; font-weight: 600;';
                                     $answer_marker = ' (Your answer)';
                                 } else {
@@ -448,6 +449,7 @@ if (!$subject_id) {
                                 echo '</div>';
                             }
                         } else {
+                            // User got it right - just show correct answer
                             foreach ($question['answers'] as $answer) {
                                 if ($answer['is_correct'] == 1) {
                                     echo '<div class="individual-answer">';
@@ -461,64 +463,115 @@ if (!$subject_id) {
                         }
                         ?>
                     </div>
-                    <?php elseif ($question['question_type'] === 'matching_type'): ?>
-    <div class="answers">
-        <?php 
-        $user_got_wrong = isset($wrong_answers[$question['question_id']]);
-        
-        if ($user_got_wrong) {
-            $wrong_data = $wrong_answers[$question['question_id']];
-            
-            echo "<div class='correct-answers'><strong>Correct Matches:</strong>";
-            foreach ($wrong_data['correct_matches'] as $correct_match) {
-                echo "<div class='individual-answer' style='color: green; font-weight: 600;'>";
-                echo htmlspecialchars($correct_match['left']) . " → " . htmlspecialchars($correct_match['right']) . " ✓";
-                echo "</div>";
-            }
-            echo "</div>";
-            
-            echo "<div class='user-answer'><strong>Your Matches:</strong>";
-            foreach ($wrong_data['submitted_matches'] as $submitted_match) {
-                $is_correct = false;
-                foreach ($wrong_data['correct_matches'] as $correct_match) {
-                    if (strcasecmp($submitted_match['left'], $correct_match['left']) === 0 && 
-                        strcasecmp($submitted_match['right'], $correct_match['right']) === 0) {
-                        $is_correct = true;
-                        break;
-                    }
-                }
-                
-                $color = $is_correct ? 'green' : 'red';
-                $mark = $is_correct ? '✓' : '✗';
-                
-                echo "<div class='individual-answer' style='color: $color; font-weight: bold;'>";
-                echo htmlspecialchars($submitted_match['left']) . " → " . htmlspecialchars($submitted_match['right']) . " $mark";
-                echo "</div>";
-            }
-            echo "</div>";
-        } else {
-            // User got all matches correct
-            $correct_matches_sql = "SELECT answer_text FROM answers WHERE question_id = ? AND is_correct = 1";
-            $correct_matches_stmt = $conn->prepare($correct_matches_sql);
-            $correct_matches_stmt->bind_param("i", $question['question_id']);
-            $correct_matches_stmt->execute();
-            $correct_matches_result = $correct_matches_stmt->get_result();
-            
-            echo "<div class='correct-answers'><strong>Correct Matches:</strong>";
-            while ($match_row = $correct_matches_result->fetch_assoc()) {
-                $match_parts = explode('|', $match_row['answer_text']);
-                if (count($match_parts) >= 2) {
-                    echo "<div class='individual-answer' style='color: green; font-weight: 600;'>";
-                    echo htmlspecialchars(trim($match_parts[0])) . " → " . htmlspecialchars(trim($match_parts[1])) . " ✓";
-                    echo "</div>";
-                }
-            }
-            echo "</div>";
-            
-            $correct_matches_stmt->close();
-        }
-        ?>
-    </div>
+                <?php elseif ($question['question_type'] === 'matching_type'): ?>
+                    <div class="answers">
+                        <?php 
+                        $user_got_wrong = isset($wrong_answers[$question['question_id']]);
+                        
+                        if ($user_got_wrong) {
+                            $wrong_data = $wrong_answers[$question['question_id']];
+                            
+                            echo "<div class='correct-answers'><strong>Correct Matches:</strong>";
+                            foreach ($wrong_data['correct_matches'] as $correct_match) {
+                                echo "<div class='individual-answer' style='color: green; font-weight: 600;'>";
+                                echo htmlspecialchars($correct_match['left']) . " → " . htmlspecialchars($correct_match['right']) . " ✓";
+                                echo "</div>";
+                            }
+                            echo "</div>";
+                            
+                            echo "<div class='user-answer'><strong>Your Matches:</strong>";
+                            foreach ($wrong_data['submitted_matches'] as $submitted_match) {
+                                $is_correct = false;
+                                foreach ($wrong_data['correct_matches'] as $correct_match) {
+                                    if (strcasecmp($submitted_match['left'], $correct_match['left']) === 0 && 
+                                        strcasecmp($submitted_match['right'], $correct_match['right']) === 0) {
+                                        $is_correct = true;
+                                        break;
+                                    }
+                                }
+                                
+                                $color = $is_correct ? 'green' : 'red';
+                                $mark = $is_correct ? '✓' : '✗';
+                                
+                                echo "<div class='individual-answer' style='color: $color; font-weight: bold;'>";
+                                echo htmlspecialchars($submitted_match['left']) . " → " . htmlspecialchars($submitted_match['right']) . " $mark";
+                                echo "</div>";
+                            }
+                            echo "</div>";
+                        } else {
+                            // User got all matches correct
+                            $correct_matches_sql = "SELECT answer_text FROM answers WHERE question_id = ? AND is_correct = 1";
+                            $correct_matches_stmt = $conn->prepare($correct_matches_sql);
+                            $correct_matches_stmt->bind_param("i", $question['question_id']);
+                            $correct_matches_stmt->execute();
+                            $correct_matches_result = $correct_matches_stmt->get_result();
+                            
+                            echo "<div class='correct-answers'><strong>Correct Matches:</strong>";
+                            while ($match_row = $correct_matches_result->fetch_assoc()) {
+                                $match_parts = explode('|', $match_row['answer_text']);
+                                if (count($match_parts) >= 2) {
+                                    echo "<div class='individual-answer' style='color: green; font-weight: 600;'>";
+                                    echo htmlspecialchars(trim($match_parts[0])) . " → " . htmlspecialchars(trim($match_parts[1])) . " ✓";
+                                    echo "</div>";
+                                }
+                            }
+                            echo "</div>";
+                            
+                            $correct_matches_stmt->close();
+                        }
+                        ?>
+                    </div>
+                <?php elseif (in_array($question['question_type'], ['enumeration', 'identification', 'fill_in_the_blanks'])): ?>
+                    <div class="answers">
+                        <?php 
+                            // Display correct answers
+                            echo "<div class='correct-answers'><strong>Correct Answer(s):</strong>";
+                            foreach ($question['answers'] as $answer) {
+                                echo "<div class='individual-answer' style='color: green; font-weight: 600;'>" . 
+                                    htmlspecialchars($answer['individual_answer']) . " ✓</div>";
+                            }
+                            echo "</div>";
+
+                            // Get user's answer
+                            $user_answer = getUserAnswerFromDatabase($conn, $student_id, $question['question_id']);
+                            
+                            if ($user_answer !== null) {
+                                $is_wrong = isset($wrong_answers[$question['question_id']]);
+                                
+                                echo "<div class='user-answer'><strong>Your Answer:</strong>";
+                                
+                                if ($question['question_type'] === 'enumeration') {
+                                    $user_answers = is_array($user_answer) ? 
+                                        $user_answer : 
+                                        array_map('trim', explode(',', $user_answer));
+                                    
+                                    foreach ($user_answers as $user_ans) {
+                                        $is_correct = false;
+                                        foreach ($question['answers'] as $correct_answer) {
+                                            if (strcasecmp(trim($user_ans), trim($correct_answer['individual_answer'])) === 0) {
+                                                $is_correct = true;
+                                                break;
+                                            }
+                                        }
+                                        $color = $is_correct ? 'green' : 'red';
+                                        $mark = $is_correct ? '✓' : '✗';
+                                        echo "<div class='individual-answer' style='color: $color; font-weight: bold;'>" . 
+                                            htmlspecialchars($user_ans) . " $mark</div>";
+                                    }
+                                } else {
+                                    $color = $is_wrong ? 'red' : 'green';
+                                    $mark = $is_wrong ? '✗' : '✓';
+                                    echo "<div class='individual-answer' style='color: $color; font-weight: bold;'>" . 
+                                        htmlspecialchars($user_answer) . " $mark</div>";
+                                }
+                                echo "</div>";
+                            } else {
+                                echo "<div class='user-answer'><strong>Your Answer:</strong> ";
+                                echo "<div class='individual-answer' style='color: red; font-weight: bold;'>No answer recorded ✗</div>";
+                                echo "</div>";
+                            }
+                        ?>
+                    </div>
                 <?php else: ?>
                     <!-- Enumeration/Identification/Fill in the blanks question display -->
                     <div class="answers">

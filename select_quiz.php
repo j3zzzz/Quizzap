@@ -43,7 +43,7 @@ if (!$subject_id) {
     ?>
     <script type="text/javascript">
     alert("Subject ID not provided.");
-    window.location.href="studClasses.php";
+    window.location.href="s_Classes.php";
     </script>
     <?php
     exit();   
@@ -665,11 +665,11 @@ $conn->close();
             background-color: #FFFFFF;
             border-radius: 20px;
             padding: 30px 40px;
-            width: 35%;
+            width: 50%;
             height: 80%;
             margin: auto;
             top: 5%;
-            left: 15%;
+            left: 30%;
             transform: translateX(-50%);
             -webkit-animation-name: animatetop;
             -webkit-animation-duration: 0.4s;
@@ -791,8 +791,12 @@ $conn->close();
             margin-top: -6.5%;
             font-size: 20px;
             position: relative;
-            font-weight: bolder;
             text-align: center;
+        }
+
+        #quiz-details .availability-span {
+            line-height: 1.3;
+            margin-top: -5%;
         }
 
         .dropdown-content {
@@ -973,7 +977,7 @@ $conn->close();
         });
 
         function profileDropdown() { // Dropdown funtion
-        document.getElementById("dropdown").classList.toggle("show");
+            document.getElementById("dropdown").classList.toggle("show");
         }
 
         window.onclick = function(event) {
@@ -989,62 +993,85 @@ $conn->close();
         }
         
         document.addEventListener("DOMContentLoaded", function() {
-    // Get the modal and elements inside it
-    var modal = document.getElementById("quiz-info-modal");
-    var closeModal = document.getElementsByClassName("close")[0];
-    var quizDetails = document.getElementById("quiz-details");
-    var startQuizButton = document.getElementById("start-quiz-button");
-    
-    // Add event listener to all quiz links
-    document.querySelectorAll(".quiz-link").forEach(function(link) {
-        link.addEventListener("click", function() {
-            var quizId = this.getAttribute("data-quiz-id");
-            // Fetch quiz details (replace with actual PHP script to fetch quiz data)
-            fetch(`s_quiz_details.php?quiz_id=${quizId}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Populate the modal with quiz details
-                    quizDetails.innerHTML = `
-                        <h1>${data.title}</h1>
-                        <h2>Number of Questions: </h2> <span> ${data.num_of_questions} </span> 
-                        <h2>Quiz Type: </h2> <span> ${data.quiz_type} </span> 
-                        <h2>Time Limit: </h2> <span> ${data.timer} minute/s</span> 
-                    `;
-                    
-                    // Update the start quiz button link with conditional routing
-                    startQuizButton.onclick = function() {
-                        // Conditional routing based on quiz type
-                        if (data.quiz_type === "All Zapped") {
-                            window.location.href = `allZapped_quiz.php?quiz_id=${quizId}`;
-                        } else if (["Multiple Choice", "True or False", "Fill in the Blanks", "Enumeration", "Identification", "Drag and Drop", "Matching Type"].includes(data.quiz_type)) {
-                            window.location.href = `s_quiz.php?quiz_id=${quizId}`;
-                        } else {
-                            // Fallback for any unexpected quiz types
-                            window.location.href = `s_quiz.php?quiz_id=${quizId}`;
-                        }
-                    };
-                    
-                    // Show the modal
-                    modal.style.display = "block";
-                })
-                .catch(error => {
-                    console.error("Error fetching quiz details:", error);
+            // Get the modal and elements inside it
+            var modal = document.getElementById("quiz-info-modal");
+            var closeModal = document.getElementsByClassName("close")[0];
+            var quizDetails = document.getElementById("quiz-details");
+            var startQuizButton = document.getElementById("start-quiz-button");
+
+            // Add this function in the script section of select_quiz.php
+            function formatDateRange(startDate, endDate) {
+                if (!startDate || !endDate) {
+                    return "Always available";
+                }
+                
+                const start = new Date(startDate);
+                const end = new Date(endDate);
+                
+                const options = { 
+                    year: 'numeric', 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                };
+                
+                return `${start.toLocaleDateString('en-US', options)} to ${end.toLocaleDateString('en-US', options)}`;
+            }
+            
+            // Add event listener to all quiz links
+            document.querySelectorAll(".quiz-link").forEach(function(link) {
+                link.addEventListener("click", function() {
+                    var quizId = this.getAttribute("data-quiz-id");
+                    // Fetch quiz details (replace with actual PHP script to fetch quiz data)
+                    fetch(`s_quiz_details.php?quiz_id=${quizId}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            // Populate the modal with quiz details
+                            quizDetails.innerHTML = `
+                                <h1>${data.title}</h1>
+                                <div class="detail-row">
+                                <h2>Number of Questions: </h2> <span> ${data.num_of_questions} </span> 
+                                <h2>Quiz Type: </h2> <span> ${data.quiz_type} </span> 
+                                <h2>Time Limit: </h2> <span> ${data.timer} minute/s</span> 
+                                <h2>Attempts Remaining: </h2> <span> ${data.attempts_remaining} / ${data.max_attempts}</span>
+                                <h2>Availability: </h2> <span class="availability-span"> ${formatDateRange(data.start_date, data.end_date)} </span>
+                            `;
+                            
+                            // Update the start quiz button link with conditional routing
+                            startQuizButton.onclick = function() {
+                                // Conditional routing based on quiz type
+                                if (data.quiz_type === "All Zapped") {
+                                    window.location.href = `allZapped_quiz.php?quiz_id=${quizId}`;
+                                } else if (["Multiple Choice", "True or False", "Fill in the Blanks", "Enumeration", "Identification", "Drag and Drop", "Matching Type"].includes(data.quiz_type)) {
+                                    window.location.href = `s_quiz.php?quiz_id=${quizId}`;
+                                } else {
+                                    // Fallback for any unexpected quiz types
+                                    window.location.href = `s_quiz.php?quiz_id=${quizId}`;
+                                }
+                            };
+                            
+                            // Show the modal
+                            modal.style.display = "block";
+                        })
+                        .catch(error => {
+                            console.error("Error fetching quiz details:", error);
+                        });
                 });
+            });
+            
+            // Close the modal when the close button is clicked
+            closeModal.onclick = function() {
+                modal.style.display = "none";
+            };
+            
+            // Close the modal when the user clicks outside of it
+            window.onclick = function(event) {
+                if (event.target == modal) {
+                    modal.style.display = "none";
+                }
+            };
         });
-    });
-    
-    // Close the modal when the close button is clicked
-    closeModal.onclick = function() {
-        modal.style.display = "none";
-    };
-    
-    // Close the modal when the user clicks outside of it
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    };
-});
 </script>
 </body>
 </html>

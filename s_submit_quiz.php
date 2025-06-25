@@ -93,7 +93,7 @@ $wrong_answers = [];
 
 foreach ($answers as $question_id => $answer) {
     $is_correct = 0;
-    $answer_text_to_store = '';
+    $answer_text_to_store = is_array($answer) ? json_encode($answer) : $answer;
 
     if ($quiz_type === 'True or False' || $quiz_type === 'Multiple Choice' || $quiz_type === 'Drag & Drop') {
         // For True or False Multiple Choice and Drag and Drop/
@@ -114,7 +114,10 @@ foreach ($answers as $question_id => $answer) {
             if ($row['is_correct'] == 1) {
                 $score++;
             } else {
-                $wrong_answers[$question_id] = $row['answer_text'];
+                $wrong_answers[$question_id] = [
+                    'answer_id' => $answer,
+                    'answer_text' => $row['answer_text']
+                ];
             }
         } else {
             echo json_encode(["success" => false, "error" => "Answer not found for answer_id: " . $answer]);
@@ -122,8 +125,8 @@ foreach ($answers as $question_id => $answer) {
         }
         $stmt->close();
 
-    } elseif ($question_type === 'true_or_false') {
-        $sql = "SELECT answer_id, is_correct FROM answers 
+    } elseif ($quiz_type === 'true_or_false') {
+        $sql = "SELECT answer_id, answer_text, is_correct FROM answers 
                 WHERE question_id = ? AND (answer_id = ? OR LOWER(TRIM(answer_text)) = LOWER(TRIM(?)))";
         $stmt = $conn->prepare($sql);
         
@@ -142,7 +145,10 @@ foreach ($answers as $question_id => $answer) {
             if ($is_correct) {
                 $score++;
             } else {
-                $wrong_answers[$question_id] = $row['answer_text'];
+                $wrong_answers[$question_id] = [
+                    'answer_id' => $row['answer_id'],
+                    'answer_text' => $row['answer_text']
+                ];
             }
         } else {
             echo json_encode(["success" => false, "error" => "Answer not found."]);
@@ -178,15 +184,18 @@ foreach ($answers as $question_id => $answer) {
             if ($is_correct) {
                 $score++;
             } else {
-                $wrong_answers[$question_id] = $answer;
+                $wrong_answers[$question_id] = [
+                    'answer_text' => $answer
+                ];
             }
+            $answer_text_to_store = $answer;
         } else {
             echo json_encode(["success" => false, "error" => "Question not found for question_id: " . $question_id]);
             exit;
         }
         $stmt->close();
 
-    } elseif ($question_type === 'enumeration') {
+    } elseif ($quiz_type === 'enumeration') {
         // For Enumeration type
         $sql = "SELECT answer_text FROM answers WHERE question_id = ?";
         $stmt = $conn->prepare($sql);
@@ -221,7 +230,7 @@ foreach ($answers as $question_id => $answer) {
         }
         $stmt->close();
 
-    } elseif ($question_type === 'matching_type') {
+    } elseif ($quiz_type === 'matching_type') {
         // Get all correct answers for this matching question
         $sql = "SELECT answer_text FROM answers WHERE question_id = ? AND is_correct = 1";
         $stmt = $conn->prepare($sql);
@@ -281,6 +290,7 @@ foreach ($answers as $question_id => $answer) {
         if ($correct_count == count($correct_matches) && count($submitted_matches) == count($correct_matches)) {
             $score++;
             $is_correct = 1;
+            $answer_text_to_store = json_encode($submitted_matches);
         } else {
             $is_correct = 0;
             
@@ -293,8 +303,11 @@ foreach ($answers as $question_id => $answer) {
             ];
         }
         
+        $answer_text_to_store = json_encode($submitted_matches);
+        
         $stmt->close();
     }
+
 
     // Convert answer to string for database storage
     $answer_string = is_array($answer) ? json_encode($answer) : $answer;

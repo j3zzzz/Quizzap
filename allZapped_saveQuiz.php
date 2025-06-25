@@ -51,14 +51,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $subject_id = intval($_POST['subject_id']);
         $timer = intval($_POST['timer']);
         $quiz_type = $conn->real_escape_string($_POST['quiz_type']);
+        $start_date = isset($_POST['start_date']) && !empty($_POST['start_date']) ? $_POST['start_date'] : null;
+        $end_date = $_POST['end_date'];
+        $max_attempts = intval($_POST['max_attempts']);
 
         // Insert quiz
-        $stmt = $conn->prepare("INSERT INTO quizzes (title, subject_id, timer, quiz_type) VALUES (?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO quizzes (title, subject_id, timer, quiz_type, start_date, end_date, max_attempts) VALUES (?, ?, ?, ?, ?, ?, ?)");
         if (!$stmt) {
             throw new Exception("Prepare failed: " . $conn->error);
         }
         
-        $stmt->bind_param("siis", $title, $subject_id, $timer, $quiz_type);
+        $stmt->bind_param("siisssi", $title, $subject_id, $timer, $quiz_type, $start_date, $end_date, $max_attempts);
         
         if (!$stmt->execute()) {
             throw new Exception("Error creating quiz: " . $stmt->error);

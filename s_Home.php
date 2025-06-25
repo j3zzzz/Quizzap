@@ -763,11 +763,11 @@ $conn->close();
             background-color: #FFFFFF;
             border-radius: 20px;
             padding: 30px 40px;
-            width: 35%;
-            height: 70%;
+            width: 50%;
+            height: 80%;
             margin: auto;
             top: 5%;
-            left: 15%;
+            left: 30%;
             transform: translateX(-50%);
             -webkit-animation-name: animatetop;
             -webkit-animation-duration: 0.4s;
@@ -887,6 +887,11 @@ $conn->close();
             position: relative;
             font-weight: lighter;
             text-align: center;
+        }
+
+        #quiz-details .availability-span {
+            line-height: 1.3;
+            margin-top: -5%;
         }
 
 
@@ -1101,6 +1106,26 @@ window.onclick = function(event) {
     var closeModal = document.getElementsByClassName("close")[0];
     var quizDetails = document.getElementById("quiz-details");
     var startQuizButton = document.getElementById("start-quiz-button");
+
+    // Add this function in the script section of select_quiz.php
+    function formatDateRange(startDate, endDate) {
+        if (!startDate || !endDate) {
+            return "Always available";
+        }
+        
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        
+        const options = { 
+            year: 'numeric', 
+            month: 'short', 
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        };
+        
+        return `${start.toLocaleDateString('en-US', options)} to ${end.toLocaleDateString('en-US', options)}`;
+    }
     
     // Add event listener to all quiz links
     document.querySelectorAll(".quiz-link").forEach(function(link) {
@@ -1116,6 +1141,9 @@ window.onclick = function(event) {
                         <h2>Number of Questions: </h2> <span> ${data.num_of_questions} </span> 
                         <h2>Quiz Type: </h2> <span> ${data.quiz_type} </span> 
                         <h2>Time Limit: </h2> <span> ${data.timer} minute/s</span> 
+                        <h2>Attempts Remaining: </h2> <span> ${data.attempts_remaining} / ${data.max_attempts}</span>
+                        <h2>Availability: </h2> <span class="availability-span"> ${formatDateRange(data.start_date, data.end_date)} </span>
+
                     `;
                     
                     // Update the start quiz button link with conditional routing

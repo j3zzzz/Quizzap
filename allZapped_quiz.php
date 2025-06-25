@@ -5,6 +5,268 @@
         exit();
     }
 
+    echo '<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Take a Quiz</title>
+    <style>
+       /* Modal Styles */
+    .modal {
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        font-family: Fredoka;
+        background-color: white;
+        padding: 30px;
+        border-radius: 10px;
+        width: 80%;
+        max-width: 400px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        animation: fadeIn 0.3s ease-out;
+        position: relative;
+        z-index: 1001;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-close-btn {
+        background-color: #f8b500;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        margin-top: 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-family: Fredoka;
+    }
+
+    .modal-close-btn:hover {
+        background-color: #e6a500;
+    }
+
+    #reloadConfirmModal {
+        z-index: 9999 !important; 
+        background-color: rgba(0,0,0,0.8) !important;
+        backdrop-filter: blur(2px);
+    }
+
+    #reloadConfirmModal .modal-content {
+        z-index: 10000 !important;
+        border: 2px solid #f8b500;
+    }
+
+    .modal-buttons {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .modal-confirm-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-family: Fredoka;
+    }
+
+    .modal-confirm-btn:hover {
+        background-color: #c82333;
+    }
+
+    .modal-cancel-btn {
+        background-color: #6c757d;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        font-family: Fredoka;
+    }
+
+    .modal-cancel-btn:hover {
+        background-color: #5a6268;
+    }
+        
+    </style>
+    </head>
+    <body>
+        <div id="quizAlertModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2 id="modalTitle">Alert</h2>
+                <p id="modalMessage"></p>
+                <button onclick="handleModalClose()" class="modal-close-btn">OK</button>
+            </div>
+        </div>
+
+        <div id="reloadConfirmModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <h2>Confirm Page Reload</h2>
+                <p>Are you sure you want to reload this page? Your current quiz attempt will be submitted automatically.</p>
+                <div class="modal-buttons">
+                    <button onclick="confirmReload()" class="modal-confirm-btn">Yes, Submit Quiz</button>
+                    <button onclick="cancelReload()" class="modal-cancel-btn">Cancel</button>
+                </div>
+            </div>
+        </div>
+
+    <script>
+        function showAlertModal(title, message, redirectUrl = null) {
+            document.getElementById("modalTitle").textContent = title;
+            document.getElementById("modalMessage").textContent = message;
+            document.getElementById("quizAlertModal").style.display = "flex";
+            
+            if (redirectUrl) {
+                document.getElementById("quizAlertModal").dataset.redirect = redirectUrl;
+            }
+        }
+
+        function handleModalClose() {
+            const modal = document.getElementById("quizAlertModal");
+            const redirectUrl = modal.dataset.redirect;
+            modal.style.display = "none";
+            
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            }
+        }
+
+        // Reload confirmation functions
+        let isReloadConfirmed = false;
+        let isSubmitting = false;
+        let isModalShowing = false;
+
+        function confirmReload() {
+            isReloadConfirmed = true;
+            isModalShowing = false;
+            document.getElementById("reloadConfirmModal").style.display = "none";
+            
+            // Temporarily disable beforeunload handler
+            window.onbeforeunload = null;
+            
+            if (Object.keys(userAnswers).length > 0) {
+                submitQuiz(true); // Submit with answers
+            } else {
+                // For no answers, we need to force a reload after a small delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 100);
+            }
+        }
+
+        function cancelReload() {
+            isModalShowing = false;
+            document.getElementById("reloadConfirmModal").style.display = "none";
+        }
+
+        function showReloadConfirmModal() {
+            if (isModalShowing || isReloadConfirmed || isSubmitting) {
+                return false;
+            }
+            
+            isModalShowing = true;
+            document.getElementById("reloadConfirmModal").style.display = "flex";
+            return true;
+        }
+
+        // Override the beforeunload event completely
+        window.addEventListener("beforeunload", function(e) {
+            // Skip if this is a confirmed reload or form submission
+            if (isReloadConfirmed || isSubmitting || isModalShowing) {
+                return;
+            }
+            
+            // Prevent the default browser dialog
+            e.preventDefault();
+            
+            // Show our custom modal instead
+            setTimeout(() => {
+                if (!isModalShowing) {
+                    showReloadConfirmModal();
+                }
+            }, 10);
+            
+            
+            e.returnValue = "";
+            return "";
+        });
+
+        // Handle keyboard shortcuts that trigger reload
+        document.addEventListener("keydown", function(e) {
+            // Skip if already handling or confirmed
+            if (isModalShowing || isReloadConfirmed || isSubmitting) {
+                return;
+            }
+            
+            // List of keys that might trigger reload
+            const reloadKeys = [
+                {key: "F5", ctrl: false, shift: false},
+                {key: "r", ctrl: true, shift: false},
+                {key: "R", ctrl: true, shift: false},
+                {key: "F5", ctrl: true, shift: false}, // Ctrl+F5
+                {key: "r", meta: true, shift: false},  // Cmd+R on Mac
+                {key: "R", meta: true, shift: true}    // Cmd+Shift+R on Mac
+            ];
+
+            // Check if pressed key matches any reload combination
+            const isReloadKey = reloadKeys.some(k => {
+                const keyMatch = e.key === k.key;
+                const ctrlMatch = k.ctrl ? e.ctrlKey : !e.ctrlKey;
+                const metaMatch = k.meta ? e.metaKey : !e.metaKey;
+                const shiftMatch = k.shift ? e.shiftKey : true; // Allow shift for most, require for specific cases
+                
+                return keyMatch && ctrlMatch && metaMatch && shiftMatch && !e.altKey;
+            });
+
+            if (isReloadKey) {
+                e.preventDefault();
+                e.stopPropagation();
+                showReloadConfirmModal();
+                return false;
+            }
+        });
+
+        // Prevent right-click refresh option (optional)
+        document.addEventListener("contextmenu", function(e) {
+            // You can uncomment this if you want to prevent right-click menu entirely
+            // e.preventDefault();
+        });
+
+        // Handle browser navigation buttons (back/forward)
+        window.addEventListener("popstate", function(e) {
+            if (!isReloadConfirmed && !isSubmitting && !isModalShowing) {
+                e.preventDefault();
+                showReloadConfirmModal();
+                // Push the state back to prevent navigation
+                history.pushState(null, null, window.location.href);
+            }
+        });
+
+        // Push initial state to handle back button
+        history.pushState(null, null, window.location.href);
+    </script>';
+
     $servername = "localhost";
     $username = "root";
     $password = "";
@@ -24,17 +286,53 @@
     }
 
     $quiz_id = $_GET['quiz_id'];
-    $stmt = $conn->prepare("SELECT * FROM quizzes WHERE quiz_id = ?");
-    $stmt->bind_param("i", $quiz_id);
+
+    $student_id = $_SESSION['account_number']; // Assuming account_number is the student ID
+
+    date_default_timezone_set('Asia/Manila');
+
+    // Use this for your date comparison
+    $currentDate = new DateTime('now', new DateTimeZone('Asia/Manila'));
+    // Check quiz availability and attempts
+    $currentDate = date('Y-m-d H:i:s');
+    $quizQuery = "SELECT q.*, 
+                (SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id = q.quiz_id AND account_number = ?) AS attempts
+                FROM quizzes q WHERE q.quiz_id = ?";
+    $stmt = $conn->prepare($quizQuery);
+    if (!$stmt) {
+        // Add error handling to see what's wrong with the query
+        die("Prepare failed: " . $conn->error);
+    }
+    $stmt->bind_param("si", $student_id, $quiz_id);
     $stmt->execute();
-    $result = $stmt->get_result();
-    $quiz = $result->fetch_assoc();
+    $quiz = $stmt->get_result()->fetch_assoc();
 
     if(!$quiz) {
         echo json_encode(["success" => false, "error" => "Quiz not found."]);
-    }       
+        exit;
+    }
 
     $subject_id = $quiz['subject_id'];
+
+    $error = null;
+
+    // Check availability
+    if ($quiz['start_date'] && $currentDate < $quiz['start_date']) {
+        $error = "This quiz is not available yet. It will be available starting " . date('M j, Y g:i A', strtotime($quiz['start_date']));
+    } 
+    else if ($quiz['end_date'] && $currentDate > $quiz['end_date']) {
+        $error = "This quiz is no longer available. It ended on " . date('M j, Y g:i A', strtotime($quiz['end_date']));
+    } 
+    else if ($quiz['attempts'] >= $quiz['max_attempts']) {
+        $error = "You have reached the maximum number of attempts for this quiz.";
+    }
+
+    if ($error) {
+        // Instead of die(), we'll pass the error to JavaScript
+        echo '<script>showAlertModal("Quiz Not Available", "' . addslashes($error) . '", "select_quiz.php?subject_id=' . $subject_id . '");</script>';
+        // Still need to exit to prevent rendering the quiz
+        exit();
+    }    
 
     // Limit to 10 questions
     $sql = "SELECT question_id, question_text, question_type, left_items, right_items FROM questions WHERE quiz_id = $quiz_id";
@@ -273,11 +571,13 @@
 
             .submit-btn:hover {
                 background-color: #e6a500;
-            }            
+            }    
+            
         </style>
     </head>
     <body>
-
+    
+    <?php if (!$error):?>
     <header>
         <div class="logo"><img src="img/logo1.png" onclick="window.location.href='s_Home.php';" style="cursor: pointer;" width="200px" height="80px"></div>
         <div class="actions">
@@ -301,6 +601,7 @@
     </div>
 
     <script>
+        
         const questions = <?php echo json_encode($questions); ?>;
         const userAnswers = {};
         const timerDuration = <?php echo $quiz['timer'] * 60; ?>;
@@ -742,6 +1043,54 @@
             userAnswers[questionId] = answer;
         }
 
+        function submitQuiz(isForced = false) {
+            isSubmitting = true;
+            
+            // Disable the beforeunload handler during submission
+            window.onbeforeunload = null;
+            
+            fetch('allZapped_submitQuiz.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ 
+                    answers: userAnswers, 
+                    quiz_id: <?php echo $quiz_id; ?>,
+                    subject_id: <?php echo $subject_id; ?>
+                })
+            })
+            .then(response => response.json())    
+            .then(data => {
+                if (data.success) {
+                    // Store the result data in sessionStorage temporarily
+                    sessionStorage.setItem('quizResult', JSON.stringify({
+                        score: data.score,
+                        total: data.total,
+                        quiz_id: <?php echo $quiz_id; ?>,
+                        wrong_answers: data.wrong_answers,
+                        subject_id: <?php echo $subject_id; ?>
+                    }));
+                    
+                    if (isForced) {
+                        // If this was a forced submission due to reload, redirect directly
+                        window.location.href = 'quiz_results.php';
+                    } else {
+                        // Normal submission flow
+                        window.location.href = 'process_quiz_result.php';
+                    }
+                } else {
+                    alert('Error submitting quiz: ' + (data.error || 'Unknown error'));
+                    window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('There was an error submitting your quiz. Please try again.');
+                window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
+            });   
+        }
+
         function submitQuiz() {
             fetch('allZapped_submitQuiz.php', {
                 method: 'POST',
@@ -804,6 +1153,7 @@
             startTimer(timerDuration);
         };
     </script>
-
+    
+    <?php endif; ?>
     </body>
     </html>

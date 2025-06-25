@@ -9,7 +9,7 @@ if (!isset($_SESSION['account_number']) || strpos($_SESSION['account_number'], '
 $servername = "localhost";
 $username = "root";
 $password = "";
-$dbname = "rawrit"; // replace with your database name
+$dbname = "rawrit"; 
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
@@ -21,7 +21,7 @@ if ($conn->connect_error) {
 $loggedInUser = $_SESSION['account_number'];
 
 //query para sa profile pic
-$sql = "SELECT profile_pic FROM teachers WHERE account_number = ?";
+$sql = "SELECT profile_pic FROM students WHERE account_number = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $loggedInUser);
 $stmt->execute();
@@ -29,10 +29,12 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profilePic = $row['profile_pic'] ?: "uploads/default_profile.png"; // Pang display ng default profile pic pag wala pang profile pic na nakaset
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 } else {
-    $profilePic = "uploads/default_profile.png"; // Default picture path if no custom picture found
+    $profile_pic = 'default-profile.jpg';
 }
+
+$stmt->close();
 
 //query to fetch the student_id that will be used in any of the data sa mga cards
 $stud_id_sql = $conn->prepare
@@ -889,6 +891,10 @@ $conn->close();
             text-align: center;
         }
 
+        .profile-pic {
+            border: 2px solid #f8b500;
+        }
+
 
     </style>
 </head>
@@ -926,15 +932,14 @@ $conn->close();
                     <p>Are you ready to start your journey to learning and testing your knowledge here?</p>
                 </div>
                 <div class="actions">
-                    <div class="profile">
-                        <img src="<?php echo $profilePic; ?>" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
-                        
-                            <div id="dropdown" class="dropdown-content">
-                                 <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                                <form action="logout.php" method="post">
-                                    <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                                </form>
-                            </div>                            
+                    <div class="profile" onclick="profileDropdown()">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <div id="dropdown" class="dropdown-content">
+                            <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                            <form action="logout.php" method="POST">
+                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1153,7 +1158,7 @@ window.onclick = function(event) {
     };
 });
 
-    function profileDropdown() { // Dropdown funtion
+function profileDropdown() { // Dropdown funtion
     document.getElementById("dropdown").classList.toggle("show");
     }
 

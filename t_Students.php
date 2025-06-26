@@ -32,10 +32,11 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profilePic = $row['profile_pic'] ?: "uploads/default_profile.png";
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 } else {
-    $profilePic = "uploads/default_profile.png";
+    $profile_pic = 'default-profile.jpg';
 }
+
 $stmt->close();
 
 // Handle enrollment removal
@@ -651,8 +652,8 @@ if (isset($_SESSION['enroll_message'])) {
         }
 
         .dropdown-content {
-            width: 250px;
-            right: 1%;
+            width: 300px;
+            right: -1%;
             display: none;
             position: absolute;
             background-color: #F8B500;
@@ -660,32 +661,37 @@ if (isset($_SESSION['enroll_message'])) {
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             z-index: 1;
             padding: 10px 0;
-            top: 100px;
+            top: 135%;
         }
 
         .dropdown-content:before {
-            content: " ";
+            content: " " ;
             position: absolute;
             background: #F8B500;
-            width: 20px;
-            height: 20px;
-            top: -10px;
-            right: 20px;
-            transform: rotate(45deg);
-            z-index: -1;
+            width: 30px;
+            height: 30px;
+            top: 1px;
+            right: 23px;
+            transform: rotate(135deg);
+            z-index: -1 !important;
         }
 
         .dropdown-content button {
+            background-color: white;     
+            justify-content: center;
+            align-items: center;
+            align-self: center;
             font-family: 'Fredoka';
-            font-size: 16px;
+            color: white;
+            font-size: 18px;
             font-weight: lighter;
             border: 2px solid white !important;
-            color: white;
             width: 86% !important;
-            padding: 10px 15px !important;
+            padding: 13px 20px !important;
             margin: 8px 20px !important;
             text-decoration: none;
             display: block;
+            float: none;
             text-align: center;
             background-color: transparent;
             transition: background-color 0.3s, color 0.3s;
@@ -693,9 +699,11 @@ if (isset($_SESSION['enroll_message'])) {
             cursor: pointer;
             letter-spacing: 1px;
             box-sizing: border-box;
+            z-index: 1 !important;  
+            cursor: pointer;
         }
 
-        .dropdown-content a:hover, .dropdown-content button:hover {
+        .dropdown-content a:hover, .dropdown-content button:hover{
             background-color: white !important;
             color: #F8B500;
         }
@@ -920,6 +928,14 @@ if (isset($_SESSION['enroll_message'])) {
         box-shadow: 0 0 5px rgba(248, 181, 0, 0.5);
     }
 
+    .profile {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .profile-pic {
+        border: 2px solid #f8b500;
+    }
 
     </style>
 </head>
@@ -958,8 +974,8 @@ if (isset($_SESSION['enroll_message'])) {
             <div class="content-header">
                 <h1>Students</h1><br>
                 <div class="actions">
-                    <div class="profile">
-                        <img src="<?php echo $profilePic; ?>" style="cursor: pointer;" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
+                    <div class="profile" onclick="profileDropdown()">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                         <div id="dropdown" class="dropdown-content">
                             <button onclick="window.location.href='t_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
                             <form action="logout.php" method="POST">
@@ -1265,20 +1281,21 @@ if (enrolledSearch) {
     });
 
     function profileDropdown() {
-        document.getElementById("dropdown").classList.toggle("show");
-    }
+    document.getElementById("dropdown").classList.toggle("show");
+}
 
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropdwn-btn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
+// Close the dropdown if clicked outside
+window.onclick = function(event) {
+    if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
             }
         }
     }
+}
 
     // Subject filter function
     function filterSubject() {

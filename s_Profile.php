@@ -442,7 +442,7 @@ $conn->close();
         <div class="logo"> <img src="img/logo4.png" width="110px" height="80px" class="logo-img"></div>
         <nav>
             <a href="s_Home.php">Home</a>
-            <a href="studClasses.php">Classes</a>
+            <a href="s_Classes.php">Classes</a>
             <a href="studQuizzes.php">Quizzes</a>
             <a class="active" href="s_Profile.php">Profile</a>
             <form action="logout.php" method="POST">

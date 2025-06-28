@@ -411,7 +411,7 @@ $conn->close();
         <nav>
             <a href="t_Home.php">Home</a>
             <a href="t_Students.php">Students</a>
-            <a href="t_Subjects.php">Subjects</a>
+            <a href="t_SubjectsList.php">Subjects</a>
             <a class="active" href="t_Profile.php">Profile</a>
             <form action="logout.php" method="POST">
                 <button type="submit" class="logout-btn">

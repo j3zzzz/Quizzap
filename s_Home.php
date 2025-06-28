@@ -1208,7 +1208,6 @@ function profileDropdown() { // Dropdown funtion
 
 <?php 
 $stud_id_sql->close();
-$stmt->close();
 $not_taken_sql->close();
 $latest_high_score_sql->close();
 ?>

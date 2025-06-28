@@ -30,10 +30,12 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profilePic = $row['profile_pic'] ?: "uploads/default_profile.png"; // Pang display ng default profile pic pag wala pang profile pic na nakaset
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 } else {
-    $profilePic = "uploads/default_profile.png"; // Default picture path if no custom picture found
+    $profile_pic = 'default-profile.jpg';
 }
+
+$stmt->close();
 
 // Fetch the actual student_id from the students table
 $sql = "SELECT student_id FROM students WHERE account_number = ?";
@@ -398,7 +400,7 @@ $conn->close();
 
         .dropdown-content {
             width: 300px;
-            right: 1%;
+            right: -1%;
             display: none;
             position: absolute;
             background-color: #F8B500;
@@ -406,7 +408,7 @@ $conn->close();
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             z-index: 1;
             padding: 10px 0;
-            top: 15%;
+            top: 135%;
         }
 
         .dropdown-content:before {
@@ -426,11 +428,11 @@ $conn->close();
             justify-content: center;
             align-items: center;
             align-self: center;
-            font-family: Purple Smile;
+            font-family: 'Fredoka';
+            color: white;
             font-size: 18px;
             font-weight: lighter;
             border: 2px solid white !important;
-            color: black;
             width: 86% !important;
             padding: 13px 20px !important;
             margin: 8px 20px !important;
@@ -445,6 +447,7 @@ $conn->close();
             letter-spacing: 1px;
             box-sizing: border-box;
             z-index: 1 !important;  
+            cursor: pointer;
         }
 
         .dropdown-content a:hover, .dropdown-content button:hover{
@@ -456,6 +459,14 @@ $conn->close();
             display: block;
         }
 
+        .profile {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            border: 2px solid #f8b500;
+        }
     </style>
 </head>
 <body>
@@ -492,15 +503,15 @@ $conn->close();
                     <h1>Classes</h1><br>
                 </div>
                 <div class="actions">
-                    <div class="profile"><img src="<?php echo $profilePic; ?>" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
-                    
-                    <div id="dropdown" class="dropdown-content">
-                                 <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                                <form action="logout.php" method="post">
-                                    <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                                </form>
+                    <div class="profile" onclick="profileDropdown()">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <div id="dropdown" class="dropdown-content">
+                            <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                            <form action="logout.php" method="POST">
+                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                            </form>
+                        </div>
                     </div>
-                </div>
             </div>
         </div>
 <center>
@@ -550,21 +561,22 @@ $conn->close();
     }
 });
 
-    function profileDropdown() { // Dropdown funtion
+function profileDropdown() {
     document.getElementById("dropdown").classList.toggle("show");
-    }
+}
 
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropdwn-btn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
-                }
+// Close the dropdown if clicked outside
+window.onclick = function(event) {
+    if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+        var dropdowns = document.getElementsByClassName("dropdown-content");
+        for (var i = 0; i < dropdowns.length; i++) {
+            var openDropdown = dropdowns[i];
+            if (openDropdown.classList.contains('show')) {
+                openDropdown.classList.remove('show');
             }
         }
     }
+}
 </script>
 
 </body>

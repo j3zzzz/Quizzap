@@ -52,16 +52,30 @@ if (!$data) {
     exit;
 }
 
-$answers = $data['answers'];
-$quiz_id = $data['quiz_id'];
+$answers = $data['answers'] ?? [];
+$quiz_id = $data['quiz_id'] ?? null;
+$subject_id = $data['subject_id'] ?? null;
 
-if (!$answers || !$quiz_id) {
+if (!$quiz_id) {
     echo json_encode(["success" => false, "error" => "Answers or quiz ID is missing."]);
     exit;
 }
 
+// Get total questions for this quiz
+$sql = "SELECT COUNT(*) as total FROM questions WHERE quiz_id = ?";
+$stmt = $conn->prepare($sql);
+if (!$stmt) {
+    echo json_encode(["success" => false, "error" => "Failed to prepare statement: " . $conn->error]);
+    exit;
+}
+$stmt->bind_param("i", $quiz_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+$total = $row['total'];
+$stmt->close();
+
 $score = 0;
-$total = count($answers);
 $wrong_answers = [];
 
 foreach ($answers as $question_id => $answer) {
@@ -89,6 +103,7 @@ foreach ($answers as $question_id => $answer) {
     $stmt->close();
 
     error_log("Submitting answers for quiz $quiz_id with questions: " . print_r(array_keys($answers), true));
+    error_log("Processing question $question_id, type: $question_type, answer: " . print_r($answer, true));
 
     if ($question_type === 'multiple_choice') {
         // For True/False or Multiple Choice
@@ -310,6 +325,12 @@ foreach ($answers as $question_id => $answer) {
             $stmt->close();
 
         }   elseif ($question_type === 'matching_type') {
+                error_log("Matching type answer data: " . print_r($answer, true));
+                // Ensure the answer is an array
+                if (!is_array($answer)) {
+                    $answer = json_decode($answer, true) ?: [];
+                }
+
                 // Get all correct answers for this matching question
                 $sql = "SELECT answer_text FROM answers WHERE question_id = ? AND is_correct = 1";
                 $stmt = $conn->prepare($sql);
@@ -398,6 +419,17 @@ foreach ($answers as $question_id => $answer) {
     $stmt_insert->bind_param("iiisi", $student_id, $quiz_id, $question_id, $answer_string, $is_correct);
     $stmt_insert->execute();
     $stmt_insert->close();    
+
+    // After determining if answer is correct:
+    $update_score_sql = "UPDATE student_answers 
+                        SET is_correct = ? 
+                        WHERE student_id = ? 
+                        AND quiz_id = ? 
+                        AND question_id = ?";
+    $update_stmt = $conn->prepare($update_score_sql);
+    $update_stmt->bind_param("iiii", $is_correct, $student_id, $quiz_id, $question_id);
+    $update_stmt->execute();
+    $update_stmt->close();
 }
 
 $sql = "INSERT INTO quiz_attempts (quiz_id, account_number, score) VALUES (?, ?, ?)";

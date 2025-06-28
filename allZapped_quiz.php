@@ -289,6 +289,53 @@
 
     $student_id = $_SESSION['account_number']; // Assuming account_number is the student ID
 
+    // First get the proper student_id from students table
+    $studentQuery = "SELECT student_id FROM students WHERE account_number = ?";
+    $stmt = $conn->prepare($studentQuery);
+
+    // Check if prepare was successful
+    if (!$stmt) {
+        die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
+    }
+
+    $stmt->bind_param("s", $_SESSION['account_number']);
+    if (!$stmt->execute()) {
+        die("Execute failed: (" . $stmt->errno . ") " . $stmt->error);
+    }
+
+    $result = $stmt->get_result();
+    $student = $result->fetch_assoc();
+    $stmt->close();
+
+    if ($student) {
+        // Now query student_answers with the proper student_id
+        $answersQuery = "SELECT question_id, answer FROM student_answers 
+                        WHERE quiz_id = ? AND student_id = ?";
+        $stmt = $conn->prepare($answersQuery);
+        
+        if (!$stmt) {
+            die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
+        }
+        
+        $stmt->bind_param("ii", $quiz_id, $student['student_id']);
+        if (!$stmt->execute()) {
+            die("Execute failed: (" . $stmt->errno . ") " . $stmt->error);
+        }
+        
+        $savedAnswers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+        
+        // Convert answers to proper format
+        $prefilledAnswers = [];
+        foreach ($savedAnswers as $answer) {
+            // Try to decode JSON answers, fall back to raw value
+            $decoded = json_decode($answer['answer'], true);
+            $prefilledAnswers[$answer['question_id']] = ($decoded !== null) ? $decoded : $answer['answer'];
+        }
+    } else {
+        $prefilledAnswers = []; // No student record found
+    }
+
     date_default_timezone_set('Asia/Manila');
 
     // Use this for your date comparison
@@ -301,10 +348,12 @@
     $stmt = $conn->prepare($quizQuery);
     if (!$stmt) {
         // Add error handling to see what's wrong with the query
-        die("Prepare failed: " . $conn->error);
+        die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
     }
     $stmt->bind_param("si", $student_id, $quiz_id);
-    $stmt->execute();
+    if (!$stmt->execute()) {
+        die("Execute failed: (" . $stmt->errno . ") " . $stmt->error);
+    }
     $quiz = $stmt->get_result()->fetch_assoc();
 
     if(!$quiz) {
@@ -343,7 +392,59 @@
         $questions[] = $row;
     }
 
-    $conn->close();
+    // In the PHP section where you fetch quiz data, add code to check for existing attempts
+    $attemptQuery = "SELECT * FROM quiz_attempts 
+                    WHERE quiz_id = ? AND account_number = ? 
+                    ORDER BY attempt_time DESC LIMIT 1";
+    $stmt = $conn->prepare($attemptQuery);
+    if (!$stmt) {
+        die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
+    }
+    $stmt->bind_param("is", $quiz_id, $student_id);
+    if (!$stmt->execute()) {
+        // Add error handling to see what's wrong with the query
+        die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
+    }
+    $existingAttempt = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    $attempt_id = null;
+    $remaining_time = $quiz['timer'] * 60; // Default to full time
+
+    if ($existingAttempt) {
+        $attempt_id = $existingAttempt['attempt_id'];
+        
+        // Calculate remaining time
+        $start_time = strtotime($existingAttempt['attempt_time']);
+        $elapsed = time() - $start_time;
+        $remaining_time = max(0, ($quiz['timer'] * 60) - $elapsed);
+        
+        // Load saved answers
+        $answersQuery = "SELECT question_id, answer FROM student_answers WHERE quiz_id = ? AND student_id = ?";
+        $stmt = $conn->prepare($answersQuery);
+        $student_id_int = (int) str_replace('S', '', $_SESSION['account_number']);
+        $stmt->bind_param("ii", $quiz_id, $student_id_int);
+        $stmt->execute();
+        $savedAnswers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Convert to format expected by frontend
+        $prefilledAnswers = [];
+        foreach ($savedAnswers as $answer) {
+            $prefilledAnswers[$answer['question_id']] = json_decode($answer['answer_data'], true);
+        }
+    } else {
+        // Create new attempt
+        $insertAttempt = "INSERT INTO quiz_attempts (quiz_id, account_number, attempt_time) 
+                        VALUES (?, ?, NOW())";
+        $stmt = $conn->prepare($insertAttempt);
+        $stmt->bind_param("is", $quiz_id, $student_id);
+        $stmt->execute();
+        $attempt_id = $conn->insert_id;
+        $stmt->close();
+
+        $prefilledAnswers = [];
+    }
+
     ?>
 
     <!DOCTYPE html>
@@ -554,6 +655,32 @@
                 cursor: pointer;
             }
 
+            .match-pair {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 12px;
+                background-color: #FCEF91;
+                border: 1px solid #F8B500;
+                border-radius: 5px;
+                margin-bottom: 5px;
+            }
+
+            .remove-match-btn {
+                background: #dc3545;
+                color: white;
+                border: none;
+                border-radius: 3px;
+                padding: 2px 6px;
+                cursor: pointer;
+                font-size: 12px;
+                margin-left: 10px;
+            }
+
+            .remove-match-btn:hover {
+                background: #c82333;
+            }
+
             .submit-btn {
                 display: block;
                 width: 100%;
@@ -571,11 +698,106 @@
 
             .submit-btn:hover {
                 background-color: #e6a500;
-            }    
+            } 
+
+            /* Loading message styles */
+            .loading-message {
+                position: fixed;
+                top: 10%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background-color: rgba(255, 255, 255, 0.9);
+                padding: 20px 30px;
+                border-radius: 8px;
+                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+                z-index: 1000;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                font-family: Fredoka;
+                color: #333;
+                border: 1px solid #f8b500;
+            }
+
+            .loading-spinner {
+                border: 3px solid #f3f3f3;
+                border-top: 3px solid #f8b500;
+                border-radius: 50%;
+                width: 20px;
+                height: 20px;
+                animation: spin 1s linear infinite;
+            }
+
+            .success-message {
+                color: #28a745; /* Green color for success */
+            }
+
+            .fade-out {
+                animation: fadeOut 1.5s ease-out forwards;
+            }
+
+            @keyframes fadeOut {
+                0% { opacity: 1; }
+                100% { opacity: 0; visibility: hidden; }
+            }
+
+            @keyframes spin {
+                0% { transform: rotate(0deg); }
+                100% { transform: rotate(360deg); }
+            }   
+
+            /* Check icon styles */
+            .check-icon {
+                width: 24px;
+                height: 24px;
+                margin-right: 10px;
+            }
+
+            .check-icon-svg {
+                width: 100%;
+                height: 100%;
+            }
+
+            .check-icon-path {
+                stroke-dasharray: 24;
+                stroke-dashoffset: 24;
+                animation: drawCheck 0.5s ease-in-out forwards;
+            }
+
+            @keyframes drawCheck {
+                to {
+                    stroke-dashoffset: 0;
+                }
+            }
+
+            /* Success state for auto-save */
+            .auto-save-success .check-icon-path {
+                stroke: #28a745;
+            }
+
+            /* Error state for auto-save */
+            .auto-save-error .check-icon-path {
+                stroke: #dc3545;
+            }
             
         </style>
     </head>
     <body>
+
+    <div id="loadingMessage" class="loading-message" style="display: none;">
+        <div class="loading-spinner"></div>
+        <span id="loadingText">Loading your saved answers...</span>
+    </div>
+
+    <!-- Auto-save message styles -->
+    <div id="autoSaveMessage" class="loading-message" style="display: none;">
+        <div class="check-icon">
+            <svg viewBox="0 0 24 24" class="check-icon-svg">
+                <path class="check-icon-path" fill="none" stroke="#28a745" stroke-width="2" d="M3 12.5L8.5 18L21 5"/>
+            </svg>
+        </div>
+        <span id="autoSaveText">Auto-saving your progress...</span>
+    </div>
     
     <?php if (!$error):?>
     <header>
@@ -606,6 +828,274 @@
         const userAnswers = {};
         const timerDuration = <?php echo $quiz['timer'] * 60; ?>;
 
+        // Auto-save interval (every 10 seconds)
+        const AUTO_SAVE_INTERVAL = 10000;
+        let autoSaveInterval;
+
+        // Function to save progress to server
+        function autoSaveProgress() {
+            if (Object.keys(userAnswers).length === 0) {
+                console.log("No answers to save");
+                return;
+            }
+
+            console.log("Auto-saving progress:", userAnswers);
+
+            // Show auto-save message
+            const autoSaveMessage = document.getElementById('autoSaveMessage');
+            const checkIcon = autoSaveMessage.querySelector('.check-icon-svg');
+            autoSaveMessage.style.display = 'flex';
+            autoSaveMessage.className = 'loading-message'; // Reset classes
+            document.getElementById('autoSaveText').textContent = 'Auto-saving your progress...';
+            
+            // Reset the check icon animation
+            checkIcon.querySelector('.check-icon-path').style.strokeDashoffset = '24';
+            
+            fetch('allZapped_saveProgress.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    attempt_id: <?php echo $attempt_id; ?>,
+                    answers: userAnswers,
+                    time_remaining: document.getElementById('timer').textContent,
+                    quiz_id: <?php echo $quiz_id; ?>
+                })
+            })
+            .then(response => {
+                // First check if the response is JSON
+                const contentType = response.headers.get('content-type');
+                if (!contentType || !contentType.includes('application/json')) {
+                    return response.text().then(text => {
+                        throw new Error(`Invalid response: ${text}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (!data.success) {
+                    console.error('Auto-save failed:', data.error);
+                    autoSaveMessage.classList.add('auto-save-error');
+                    document.getElementById('autoSaveText').textContent = 'Auto-save failed - using local backup';localStorage
+                    localStorage.setItem(`quizProgress_${<?php echo $quiz_id; ?>}`, 
+                        JSON.stringify({
+                            answers: userAnswers,
+                            timer: document.getElementById('timer').textContent,
+                            timestamp: new Date().getTime()
+                        }));
+                } else {
+                    console.log("Auto-save successful");
+                    autoSaveMessage.classList.add('auto-save-success');
+                    document.getElementById('autoSaveText').textContent = 'Progress saved successfully!';
+                }
+
+                // Animate the check mark
+                setTimeout(() => {
+                    checkIcon.querySelector('.check-icon-path').style.animation = 'drawCheck 0.5s ease-in-out forwards';
+                    
+                    // Fade out after 1.5 seconds
+                    setTimeout(() => {
+                        autoSaveMessage.classList.add('fade-out');
+                        setTimeout(() => {
+                            autoSaveMessage.style.display = 'none';
+                        }, 1500);
+                    }, 1000);
+                }, 100);
+            })
+            .catch(error => {
+                console.error('Auto-save error:', error);
+                autoSaveMessage.classList.add('auto-save-error');
+                document.getElementById('autoSaveText').textContent = 'Auto-save error - using local backup';
+                // Fallback to localStorage
+                localStorage.setItem(`quizProgress_${<?php echo $quiz_id; ?>}`, 
+                    JSON.stringify({
+                        answers: userAnswers,
+                        timer: document.getElementById('timer').textContent,
+                        timestamp: new Date().getTime()
+                    }));
+
+                // Animate the check mark (as error)
+                setTimeout(() => {
+                    checkIcon.querySelector('.check-icon-path').style.animation = 'drawCheck 0.5s ease-in-out forwards';
+                    
+                    // Fade out after showing error
+                    setTimeout(() => {
+                        autoSaveMessage.classList.add('fade-out');
+                        setTimeout(() => {
+                            autoSaveMessage.style.display = 'none';
+                        }, 1500);
+                    }, 1000);
+                }, 100);
+            });
+        }
+
+        // Function to restore saved answers
+        function restoreSavedAnswers() {
+            const loadingMessage = document.getElementById('loadingMessage');
+            const loadingText = document.getElementById('loadingText');
+            const spinner = loadingMessage.querySelector('.loading-spinner');
+            
+            // Show loading message
+            loadingMessage.style.display = 'flex';
+            loadingText.textContent = 'Loading your saved answers...';
+            loadingMessage.classList.remove('success-message', 'fade-out');
+
+            // 1. Get server-side saved answers from PHP
+            const serverAnswers = <?php 
+                // Query fresh answers from database
+                $savedAnswers = [];
+                if (isset($attempt_id)) {
+                    $sql = "SELECT question_id, answer FROM student_answers 
+                            WHERE student_id = ? AND quiz_id = ?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("ii", $student['student_id'], $quiz_id);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    while ($row = $result->fetch_assoc()) {
+                        $savedAnswers[$row['question_id']] = $row['answer'];
+                    }
+                }
+                echo json_encode($savedAnswers); 
+            ?>;
+            
+            // 2. Populate userAnswers with decoded values
+            Object.entries(serverAnswers).forEach(([questionId, answer]) => {
+                try {
+                    // Try to parse JSON answers first
+                    userAnswers[questionId] = typeof answer === 'string' ? 
+                        JSON.parse(answer) : answer;
+                } catch (e) {
+                    // Fallback to raw value if not JSON
+                    userAnswers[questionId] = answer;
+                }
+            });
+            
+            console.log("Restored answers from server:", userAnswers);
+            
+            // 3. Fallback to localStorage if no server answers
+            if (Object.keys(userAnswers).length === 0) {
+                const savedProgress = localStorage.getItem(`quizProgress_${<?php echo $quiz_id; ?>}`);
+                if (savedProgress) {
+                    const progress = JSON.parse(savedProgress);
+                    Object.assign(userAnswers, progress.answers);
+                    console.log("Restored answers from localStorage:", userAnswers);
+                }
+            }
+            
+            // Show success message
+            spinner.style.display = 'none';
+            loadingText.textContent = 'Answers loaded successfully!';
+            loadingMessage.classList.add('success-message');
+            
+            // Apply answers to UI
+            restoreAnswerSelections();
+            
+            // Fade out after 1.5 seconds
+            setTimeout(() => {
+                loadingMessage.classList.add('fade-out');
+                
+                // Remove element after fade out completes
+                setTimeout(() => {
+                    loadingMessage.style.display = 'none';
+                    spinner.style.display = 'block'; // Reset spinner for next time
+                }, 1500);
+            }, 1500);
+
+            // 4. Apply to UI after short delay
+            setTimeout(restoreAnswerSelections, 300);
+        }
+
+        function restoreAnswerSelections() {
+            console.log("Attempting to restore answers to UI...");
+            
+            // Wait for all questions to be fully rendered
+            const questionCheckInterval = setInterval(() => {
+                const renderedQuestions = document.querySelectorAll('.question').length;
+                if (renderedQuestions === questions.length) {
+                    clearInterval(questionCheckInterval);
+                    console.log(`All ${questions.length} questions rendered`);
+                    
+                    // Add small delay to ensure all answer elements are ready
+                    setTimeout(() => {
+                        Object.entries(userAnswers).forEach(([questionId, answer]) => {
+                            const questionDiv = document.querySelector(`div[data-question-id="${questionId}"]`);
+                            if (!questionDiv) {
+                                console.warn(`Question ${questionId} div not found`);
+                                return;
+                            }
+                            
+                            const questionType = questionDiv.dataset.questionType;
+                            console.log(`Restoring ${questionType} answer for Q${questionId}:`, answer);
+                            
+                            switch(questionType) {
+                                case 'multiple_choice':
+                                case 'true_or_false':
+                                    console.log('True/False answer to restore:', answer);
+                                    console.log('Available buttons:', document.querySelectorAll(`[data-question-id="${questionId}"] .answer-button`));
+                                    // Convert answer to string for comparison
+                                    const answerStr = answer.toString();
+                                    
+                                    // First try exact match by answer ID
+                                    const answerById = document.querySelector(
+                                        `[data-question-id="${questionId}"] .answer-button[data-answer-id="${answerStr}"]`
+                                    );
+                                    
+                                    if (answerById) {
+                                        answerById.classList.add('selected');
+                                        console.log(`Matched by exact ID for Q${questionId}`);
+                                        break;
+                                    }
+                                    
+                                    // If no ID match, try matching by text content
+                                    document.querySelectorAll(`[data-question-id="${questionId}"] .answer-button`)
+                                        .forEach(btn => {
+                                            if (btn.textContent.trim().toLowerCase() === answerStr.toLowerCase()) {
+                                                btn.classList.add('selected');
+                                                console.log(`Matched by text for Q${questionId}:`, btn.textContent);
+                                            }
+                                        });
+                                    break;
+                                    
+                                case 'identification':
+                                case 'enumeration':
+                                case 'fill_in_the_blanks':
+                                    const input = questionDiv.querySelector('input');
+                                    if (input) {
+                                        input.value = answer;
+                                        console.log(`Set input value for Q${questionId}`);
+                                    }
+                                    break;
+                                    
+                                case 'drag_and_drop':
+                                    if (Array.isArray(answer) && answer.length > 0) {
+                                        const answerId = answer[0]; // Get first answer ID
+                                        const dragItem = document.querySelector(`[data-answer-id="${answerId}"]`);
+                                        const dropZone = questionDiv.querySelector('.target-zone');
+                                        
+                                        if (dragItem && dropZone) {
+                                            // Clear existing drop zone content
+                                            dropZone.innerHTML = '<h4>Drop Item Here</h4>';
+                                            // Move the item to drop zone
+                                            dropZone.appendChild(dragItem);
+                                            console.log(`Restored drag and drop for Q${questionId}`);
+                                        }
+                                    }
+                                    break;
+                                    
+                                case 'matching_type':
+                                    if (Array.isArray(answer)) {
+                                        // Existing matching type logic remains the same
+                                        // ...
+                                    }
+                                    break;
+                            }
+                        });
+                    }, 300); // Increased delay to ensure UI readiness
+                }
+            }, 100);
+        }
+
         function renderAnswers(data, question, answersDiv, questionType) {
             // Clear any existing answers
             answersDiv.innerHTML = '';
@@ -617,26 +1107,26 @@
             // Render answers based on the specific question type
             switch(questionType) {
                 case 'true_or_false':
-                    // For True/False questions, create both options
-                    ['True', 'False'].forEach((answerText) => {
+                    // Create True and False buttons with proper IDs
+                    const trueFalseOptions = [
+                        { text: 'True', id: 'true_answer' },
+                        { text: 'False', id: 'false_answer' }
+                    ];
+                    
+                    trueFalseOptions.forEach((option) => {
                         const answerButton = document.createElement('button');
-                        answerButton.innerText = answerText;
+                        answerButton.innerText = option.text;
                         answerButton.className = 'answer-button';
+                        answerButton.dataset.answerId = option.id;
                         answerButton.onclick = function() {
-                            // Save both the text and the answer_id if available
-                            const answerObj = data.find(item => 
-                                item.answer_text && item.answer_text.trim().toLowerCase() === answerText.toLowerCase()
-                            );
+                            // Save the answer text (True/False)
+                            saveAnswer(question.question_id, option.text);
                             
-                            if (answerObj) {
-                                saveAnswer(question.question_id, answerObj.answer_id);
-                            } else {
-                                // Fallback to using the text if answer_id not found
-                                saveAnswer(question.question_id, answerText);
-                            }
-                            
-                            answersDiv.querySelectorAll('.answer-button').forEach(btn => btn.classList.remove('selected'));
-                            answerButton.classList.add('selected');
+                            // Update UI
+                            answersDiv.querySelectorAll('.answer-button').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                            this.classList.add('selected');
                         };
                         answersDiv.appendChild(answerButton);
                     });
@@ -668,6 +1158,7 @@
                         const answerButton = document.createElement('button');
                         answerButton.innerText = `${labels[i]}. ${answer.answer_text || 'No text'}`;
                         answerButton.className = 'answer-button';
+                        answerButton.dataset.answerId = answer.answer_id;
                         answerButton.onclick = function() {
                             saveAnswer(question.question_id, answer.answer_id);
                             answersDiv.querySelectorAll('.answer-button').forEach(btn => btn.classList.remove('selected'));
@@ -849,7 +1340,7 @@
                             console.error('Unknown question type:', questionType);
                             answersDiv.innerHTML = `<p>Unable to render answers for question type: ${questionType}</p>`;
                     }
-                }
+        }
 
         function selectMatchItem(item, questionId) {
             const side = item.dataset.side;
@@ -920,45 +1411,44 @@
         }
 
         function updateMatchesDisplay(questionId) {
+            if (!window.matchingData || !window.matchingData[questionId]) return;
+            
             const matchData = window.matchingData[questionId];
-            const pairsList = document.getElementById('pairs-list-' + questionId);
+            const pairsList = document.getElementById(`pairs-list-${questionId}`);
+            
+            if (!pairsList) return;
             
             pairsList.innerHTML = '';
+            
+            if (matchData.matches.length === 0) {
+                pairsList.innerHTML = '<p style="color: #666; font-style: italic;">No matches yet</p>';
+                return;
+            }
             
             matchData.matches.forEach((match, index) => {
                 const pairElement = document.createElement('div');
                 pairElement.className = 'match-pair';
-                pairElement.style.display = 'flex';
-                pairElement.style.justifyContent = 'space-between';
-                pairElement.style.alignItems = 'center';
-                pairElement.style.padding = '8px 12px';
-                pairElement.style.backgroundColor = '#FCEF91';
-                pairElement.style.border = '1px solid #F8B500';
-                pairElement.style.borderRadius = '5px';
-                pairElement.style.marginBottom = '5px';
+                
+                // Use the enhanced text if available
+                const leftText = match.leftText || 
+                    document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.left}"]`)?.textContent || '';
+                
+                const rightText = match.rightText || 
+                    document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.right}"]`)?.textContent || '';
+                
+                // Clean up the text (remove numbering)
+                const cleanLeft = leftText.replace(/^\d+\.\s*/, '').trim();
+                const cleanRight = rightText.replace(/^[A-Z]\.\s*/, '').trim();
                 
                 pairElement.innerHTML = `
-                    <span style="flex: 1; font-weight: 500; color: black;">${match.leftText}</span>
+                    <span style="flex: 1; font-weight: 500; color: black;">${cleanLeft}</span>
                     <span style="margin: 0 10px; font-weight: 500; color: #28a745;">↔</span>
-                    <span style="flex: 1; font-weight: 500; color: black;">${match.rightText}</span>
-                    <button onclick="removeMatch(${questionId}, ${index})" style="
-                        background: #dc3545; 
-                        color: white; 
-                        border: none; 
-                        border-radius: 3px; 
-                        padding: 2px 6px; 
-                        cursor: pointer; 
-                        font-size: 12px;
-                        margin-left: 10px;
-                    ">×</button>
+                    <span style="flex: 1; font-weight: 500; color: black;">${cleanRight}</span>
+                    <button onclick="removeMatch(${questionId}, ${index})" class="remove-match-btn">×</button>
                 `;
                 
                 pairsList.appendChild(pairElement);
             });
-            
-            if (matchData.matches.length === 0) {
-                pairsList.innerHTML = '<p style="color: #666; font-style: italic;">No matches yet</p>';
-            }
         }
 
         function removeMatch(questionId, matchIndex) {
@@ -1005,6 +1495,8 @@
             questions.forEach((question, index) => {
                 const questionDiv = document.createElement('div');
                 questionDiv.className = 'question';
+                questionDiv.dataset.questionId = question.question_id;
+                questionDiv.dataset.questionType = question.question_type;
                 
                 // Question number and text
                 const questionNumberText = document.createElement('p');
@@ -1040,25 +1532,93 @@
         }
 
         function saveAnswer(questionId, answer) {
-            userAnswers[questionId] = answer;
+            // Standardize answer format based on question type
+            const questionDiv = document.querySelector(`[data-question-id="${questionId}"]`);
+            if (!questionDiv) return;
+            
+            const questionType = questionDiv.dataset.questionType;
+            
+            switch(questionType) {
+                case 'multiple_choice':
+                    // Store the answer ID if available, otherwise the text
+                    const selectedButton = questionDiv.querySelector('.answer-button.selected');
+                    userAnswers[questionId] = selectedButton ? 
+                        (selectedButton.dataset.answerId || selectedButton.textContent.trim()) : 
+                        answer;
+                    break;
+                case 'true_or_false':
+                    // Store either answer ID or text
+                    userAnswers[questionId] = answer.toString().trim();
+                    break;
+                    
+                case 'identification':
+                case 'fill_in_the_blanks':
+                case 'enumeration':
+                    // Store as string
+                    userAnswers[questionId] = answer.toString().trim();
+                    break;
+                    
+                case 'matching_type':
+                    // Ensure matches are in consistent format
+                    if (Array.isArray(answer)) {
+                        userAnswers[questionId] = answer.map(match => ({
+                            left: match.left || match.leftText,
+                            right: match.right || match.rightText
+                        }));
+                    }
+                    break;
+                    
+                default:
+                    userAnswers[questionId] = answer;
+            }
         }
 
         function submitQuiz(isForced = false) {
+            console.log("User answers before submission:", userAnswers);
+
+            // Convert answers to consistent format
+            const submissionAnswers = {};
+            Object.entries(userAnswers).forEach(([questionId, answer]) => {
+                const questionDiv = document.querySelector(`[data-question-id="${questionId}"]`);
+                if (!questionDiv) return;
+                
+                const questionType = questionDiv.dataset.questionType;
+                
+                // Standardize answer format for submission
+                if (questionType === 'matching_type' && Array.isArray(answer)) {
+                    submissionAnswers[questionId] = answer.map(m => ({
+                        leftText: m.leftText || document.querySelector(`[data-answer-id="${m.left}"]`)?.textContent || '',
+                        rightText: m.rightText || document.querySelector(`[data-answer-id="${m.right}"]`)?.textContent || ''
+                    }));
+                } else {
+                    submissionAnswers[questionId] = answer;
+                }
+            });
+
+            console.log("Processed answers for submission:", submissionAnswers);
+
             isSubmitting = true;
-            
+            clearInterval(autoSaveInterval);
+            clearSavedProgress();
+
             // Disable the beforeunload handler during submission
             window.onbeforeunload = null;
+            
+            // Ensure we always send at least an empty answers object
+            const submissionData = {
+                answers: Object.keys(userAnswers).length > 0 ? userAnswers : {},
+                quiz_id: <?php echo $quiz_id; ?>,
+                subject_id: <?php echo $subject_id; ?>
+            };
+
+            console.log("Submitting quiz with data:", submissionData); // Debug log
             
             fetch('allZapped_submitQuiz.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ 
-                    answers: userAnswers, 
-                    quiz_id: <?php echo $quiz_id; ?>,
-                    subject_id: <?php echo $subject_id; ?>
-                })
+                body: JSON.stringify(submissionData)
             })
             .then(response => response.json())    
             .then(data => {
@@ -1073,10 +1633,8 @@
                     }));
                     
                     if (isForced) {
-                        // If this was a forced submission due to reload, redirect directly
-                        window.location.href = 'quiz_results.php';
+                        window.location.href = 'quiz_result.php';
                     } else {
-                        // Normal submission flow
                         window.location.href = 'process_quiz_result.php';
                     }
                 } else {
@@ -1091,6 +1649,7 @@
             });   
         }
 
+        /*
         function submitQuiz() {
             fetch('allZapped_submitQuiz.php', {
                 method: 'POST',
@@ -1128,7 +1687,7 @@
                 window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
             });   
         }
-
+        */
         function startTimer(duration) {
             let timer = duration, minutes, seconds;
             const timerInterval = setInterval(function () {
@@ -1142,18 +1701,54 @@
 
                 if (--timer < 0) {
                     clearInterval(timerInterval);
-                    submitQuiz();
+                    submitQuiz(true);
                 }
             }, 1000);
         }
 
+        // Clear saved progress on successful submission
+        function clearSavedProgress() {
+            localStorage.removeItem(`quizProgress_${<?php echo $quiz_id; ?>}`);
+            
+            // Also clear server-side progress
+            fetch('allZapped_clearProgress.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    attempt_id: <?php echo $attempt_id; ?>,
+                    quiz_id: <?php echo $quiz_id; ?>
+                })
+            });
+        }
+
         // Initialize on page load
         window.onload = function() {
+           // Reset loading message state
+        const loadingMessage = document.getElementById('loadingMessage');
+        loadingMessage.style.display = 'flex';
+        loadingMessage.classList.remove('fade-out', 'success-message');
+        loadingMessage.querySelector('.loading-spinner').style.display = 'block';
+        document.getElementById('loadingText').textContent = 'Loading your saved answers...';
+            
             renderQuestions();
-            startTimer(timerDuration);
+            
+            // After questions are rendered, restore answers
+            setTimeout(() => {
+                restoreSavedAnswers();
+                restoreAnswerSelections();
+                
+                // Start auto-save
+                autoSaveInterval = setInterval(autoSaveProgress, AUTO_SAVE_INTERVAL);
+            }, 500);
+            
+            // Start timer with remaining time from PHP
+            startTimer(<?php echo $remaining_time; ?>);
         };
     </script>
     
     <?php endif; ?>
+    <?php $conn->close(); ?>
     </body>
     </html>

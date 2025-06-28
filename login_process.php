@@ -38,11 +38,10 @@ $result = $conn->query($sql);
 if ($result->num_rows > 0) {
     $user = $result->fetch_assoc();
     if (password_verify($password, $user['password'])) {
-        $_SESSION['username'] = $user['username'];
-        $_SESSION['fname'] = $user['fname']; // Store first name in session
         $_SESSION['account_type'] = $account_type;
         $_SESSION['account_number'] = $account_number;
-        setcookie("username", $row["username"], time() + (86400 * 30), "/");
+        $_SESSION['fname'] = $user['fname'];
+        setcookie("account_number", $user["account_number"], time() + (86400 * 30), "/");
         header("Location: dashboard_process.php");
         exit;
     } else {

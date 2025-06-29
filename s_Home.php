@@ -1146,7 +1146,6 @@ window.onclick = function(event) {
                         <h2>Number of Questions: </h2> <span> ${data.num_of_questions} </span> 
                         <h2>Quiz Type: </h2> <span> ${data.quiz_type} </span> 
                         <h2>Time Limit: </h2> <span> ${data.timer} minute/s</span> 
-                        <h2>Attempts Remaining: </h2> <span> ${data.attempts_remaining} / ${data.max_attempts}</span>
                         <h2>Availability: </h2> <span class="availability-span"> ${formatDateRange(data.start_date, data.end_date)} </span>
 
                     `;

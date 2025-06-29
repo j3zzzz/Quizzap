@@ -1,5 +1,14 @@
 <?php
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+    
     session_start();
+    // Check if account_number exists in session and starts with 'S'
+    if (!isset($_SESSION['account_number'])) {
+        header("Location: login.php");
+        exit();
+    }
+
     if (strpos($_SESSION['account_number'], 'S') !== 0) {
         header("Location: login.php");
         exit();
@@ -122,8 +131,8 @@
 
         <div id="reloadConfirmModal" class="modal" style="display: none;">
             <div class="modal-content">
-                <h2>Confirm Page Reload</h2>
-                <p>Are you sure you want to reload this page? Your current quiz attempt will be submitted automatically.</p>
+                <h2>Confirm Page Navigation</h2>
+                <p>Clicking the back/forward button is prohibited. Your current quiz attempt will be submitted automatically.</p>
                 <div class="modal-buttons">
                     <button onclick="confirmReload()" class="modal-confirm-btn">Yes, Submit Quiz</button>
                     <button onclick="cancelReload()" class="modal-cancel-btn">Cancel</button>
@@ -190,67 +199,13 @@
             return true;
         }
 
-        // Override the beforeunload event completely
+        // Only prevent default behavior during submission
         window.addEventListener("beforeunload", function(e) {
-            // Skip if this is a confirmed reload or form submission
-            if (isReloadConfirmed || isSubmitting || isModalShowing) {
-                return;
-            }
-            
-            // Prevent the default browser dialog
-            e.preventDefault();
-            
-            // Show our custom modal instead
-            setTimeout(() => {
-                if (!isModalShowing) {
-                    showReloadConfirmModal();
-                }
-            }, 10);
-            
-            
-            e.returnValue = "";
-            return "";
-        });
-
-        // Handle keyboard shortcuts that trigger reload
-        document.addEventListener("keydown", function(e) {
-            // Skip if already handling or confirmed
-            if (isModalShowing || isReloadConfirmed || isSubmitting) {
-                return;
-            }
-            
-            // List of keys that might trigger reload
-            const reloadKeys = [
-                {key: "F5", ctrl: false, shift: false},
-                {key: "r", ctrl: true, shift: false},
-                {key: "R", ctrl: true, shift: false},
-                {key: "F5", ctrl: true, shift: false}, // Ctrl+F5
-                {key: "r", meta: true, shift: false},  // Cmd+R on Mac
-                {key: "R", meta: true, shift: true}    // Cmd+Shift+R on Mac
-            ];
-
-            // Check if pressed key matches any reload combination
-            const isReloadKey = reloadKeys.some(k => {
-                const keyMatch = e.key === k.key;
-                const ctrlMatch = k.ctrl ? e.ctrlKey : !e.ctrlKey;
-                const metaMatch = k.meta ? e.metaKey : !e.metaKey;
-                const shiftMatch = k.shift ? e.shiftKey : true; // Allow shift for most, require for specific cases
-                
-                return keyMatch && ctrlMatch && metaMatch && shiftMatch && !e.altKey;
-            });
-
-            if (isReloadKey) {
+            if (isSubmitting) {
                 e.preventDefault();
-                e.stopPropagation();
-                showReloadConfirmModal();
-                return false;
+                e.returnValue = "";
+                return "";
             }
-        });
-
-        // Prevent right-click refresh option (optional)
-        document.addEventListener("contextmenu", function(e) {
-            // You can uncomment this if you want to prevent right-click menu entirely
-            // e.preventDefault();
         });
 
         // Handle browser navigation buttons (back/forward)
@@ -342,15 +297,13 @@
     $currentDate = new DateTime('now', new DateTimeZone('Asia/Manila'));
     // Check quiz availability and attempts
     $currentDate = date('Y-m-d H:i:s');
-    $quizQuery = "SELECT q.*, 
-                (SELECT COUNT(*) FROM quiz_attempts WHERE quiz_id = q.quiz_id AND account_number = ?) AS attempts
-                FROM quizzes q WHERE q.quiz_id = ?";
+    $quizQuery = "SELECT q.* FROM quizzes q WHERE q.quiz_id = ?";
     $stmt = $conn->prepare($quizQuery);
     if (!$stmt) {
         // Add error handling to see what's wrong with the query
         die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
     }
-    $stmt->bind_param("si", $student_id, $quiz_id);
+    $stmt->bind_param("i", $quiz_id);
     if (!$stmt->execute()) {
         die("Execute failed: (" . $stmt->errno . ") " . $stmt->error);
     }
@@ -372,9 +325,6 @@
     else if ($quiz['end_date'] && $currentDate > $quiz['end_date']) {
         $error = "This quiz is no longer available. It ended on " . date('M j, Y g:i A', strtotime($quiz['end_date']));
     } 
-    else if ($quiz['attempts'] >= $quiz['max_attempts']) {
-        $error = "You have reached the maximum number of attempts for this quiz.";
-    }
 
     if ($error) {
         // Instead of die(), we'll pass the error to JavaScript
@@ -392,21 +342,61 @@
         $questions[] = $row;
     }
 
-    // In the PHP section where you fetch quiz data, add code to check for existing attempts
+    // First check for existing attempts before creating a new one
     $attemptQuery = "SELECT * FROM quiz_attempts 
-                    WHERE quiz_id = ? AND account_number = ? 
-                    ORDER BY attempt_time DESC LIMIT 1";
+                    WHERE quiz_id = ? AND account_number = ?";
     $stmt = $conn->prepare($attemptQuery);
     if (!$stmt) {
-        die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
+        $error = "Database error: " . $conn->error;
+    } else {
+        $stmt->bind_param("is", $quiz_id, $student_id);
+        if (!$stmt->execute()) {
+            $error = "Database error: " . $stmt->error;
+        } else {
+            $existingAttempt = $stmt->get_result()->fetch_assoc();
+            
+            // Only show error if attempt is completed (add a 'completed' field to your table)
+            if ($existingAttempt && $existingAttempt['completed']) {
+                $error = "You have already taken this quiz. Only one attempt is allowed.";
+                echo '<script>
+                    showAlertModal("Quiz Attempt", "'.addslashes($error).'", "select_quiz.php?subject_id='.$subject_id.'");
+                </script>';    
+            }
+        }
+        $stmt->close();
     }
-    $stmt->bind_param("is", $quiz_id, $student_id);
-    if (!$stmt->execute()) {
-        // Add error handling to see what's wrong with the query
-        die("Prepare failed: (" . $conn->errno . ") " . $conn->error);
+
+    // Only create new attempt if none exists
+    if (!$existingAttempt) {
+        $insertAttempt = "INSERT INTO quiz_attempts (quiz_id, account_number, attempt_time) 
+                        VALUES (?, ?, NOW())";
+        $stmt = $conn->prepare($insertAttempt);
+        $stmt->bind_param("is", $quiz_id, $student_id);
+        $stmt->execute();
+        $attempt_id = $conn->insert_id;
+        $stmt->close();
+    } else {
+        $attempt_id = $existingAttempt['attempt_id'];
+        
+        // Calculate remaining time
+        $start_time = strtotime($existingAttempt['attempt_time']);
+        $elapsed = time() - $start_time;
+        $remaining_time = max(0, ($quiz['timer'] * 60) - $elapsed);
+        
+        // Load saved answers
+        $answersQuery = "SELECT question_id, answer FROM student_answers WHERE quiz_id = ? AND student_id = ?";
+        $stmt = $conn->prepare($answersQuery);
+        $student_id_int = (int) str_replace('S', '', $_SESSION['account_number']);
+        $stmt->bind_param("ii", $quiz_id, $student_id_int);
+        $stmt->execute();
+        $savedAnswers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        
+        // Convert to format expected by frontend
+        $prefilledAnswers = [];
+        foreach ($savedAnswers as $answer) {
+            $prefilledAnswers[$answer['question_id']] = json_decode($answer['answer_data'], true);
+        }
     }
-    $existingAttempt = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
 
     $attempt_id = null;
     $remaining_time = $quiz['timer'] * 60; // Default to full time
@@ -452,7 +442,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" type="text/css" href="font/fontawesome-free-6.5.2-web/css/all.min.css">
+        <link rel="stylesheet" type="text/css" href="other resources/fontawesome-free-6.5.2-web/css/all.min.css">
         <title>Take Quiz</title>
         <style type="text/css">
             * {
@@ -513,6 +503,61 @@
                 vertical-align: middle;
                 align-content: center;
                 border: 2px solid #f8b500;
+            }
+
+            #tts {
+                margin-top: 1%;
+                position: absolute;
+                font-size: 25px;
+                cursor: pointer;
+                padding: 4px 5px;
+                background-color: transparent;
+                transition: 0.3s;
+            }
+
+            #tts:hover {
+                background-color: #f8b500;
+                color: white;
+                border-radius: 5px;
+            }
+
+            .speaker .speaker-tooltip {
+                visibility: hidden;
+                width: 120px;
+                background-color: #f8b500;
+                text-align: center;
+                border-radius: 6px;
+                padding: 5px 0;
+                position: absolute;
+                z-index: 1;
+                top: 37%;
+                left: 12%;
+                color: white;
+            }
+
+            .speaker .speaker-tooltip::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                right: 100%;
+                margin-top: -5%;
+                border-width: 5px;
+                border-style: solid;
+                border-color: transparent #f8b500 transparent transparent;
+            }
+
+            .speaker:hover .speaker-tooltip {
+                visibility: visible;
+            }
+
+            /* Add this to your question-text class to position the TTS button */
+            .question-text {
+                color: black;
+                font-size: 23px;
+                font-weight: 600;
+                margin-bottom: 15px;
+                position: relative; /* Add this */
+                padding-right: 40px; /* Add space for TTS button */
             }
 
             .question {
@@ -813,6 +858,7 @@
             <div id="timer" class="timer"><?php echo $quiz['timer']; ?></div>
         </div><br><br>
 
+
         <div id="quiz-questions">
             <!-- Questions will be dynamically inserted here -->
         </div>
@@ -831,6 +877,119 @@
         // Auto-save interval (every 10 seconds)
         const AUTO_SAVE_INTERVAL = 10000;
         let autoSaveInterval;
+
+        // TTS variables
+        let synth = window.speechSynthesis;
+        let voices = [];
+        let defaultVoice = "Microsoft David - English (United States)"; // Set the default voice name
+
+        function populateVoices() {
+            voices = synth.getVoices();
+            if (voices.length > 0) {
+                // Try to find our preferred voice
+                const preferredVoice = voices.find(voice => voice.name === defaultVoice);
+                if (preferredVoice) {
+                    defaultVoice = preferredVoice.name;
+                }
+            }
+        }
+
+        // Initialize voices when they become available
+        populateVoices();
+        if (speechSynthesis.onvoiceschanged !== undefined) {
+            speechSynthesis.onvoiceschanged = populateVoices;
+        }
+
+        // Function to speak text
+        function speakText(text, questionNumber = null) {
+            // Cancel any ongoing speech
+            synth.cancel();
+            
+            // If we have a question number, speak that first
+            if (questionNumber !== null) {
+                const questionNumSpeech = new SpeechSynthesisUtterance(`Question Number ${questionNumber}`);
+                const questionTextSpeech = new SpeechSynthesisUtterance(text);
+                
+                // Set the voice for both utterances
+                voices.forEach((voice) => {
+                    if (voice.name === defaultVoice) {
+                        questionNumSpeech.voice = voice;
+                        questionTextSpeech.voice = voice;
+                    }
+                });
+                
+                // Queue both to speak in order
+                synth.speak(questionNumSpeech);
+                synth.speak(questionTextSpeech);
+            } else {
+                const utterance = new SpeechSynthesisUtterance(text);
+                
+                // Set the voice
+                voices.forEach((voice) => {
+                    if (voice.name === defaultVoice) {
+                        utterance.voice = voice;
+                    }
+                });
+                
+                synth.speak(utterance);
+            }
+        }
+
+        // Function to create TTS button for a question
+        function createTTSButton(questionId, questionText, questionNumber) {
+            const ttsButton = document.createElement('i');
+            ttsButton.className = 'fa-solid fa-volume-high';
+            ttsButton.id = `tts-${questionId}`;
+            ttsButton.style.position = 'absolute';
+            ttsButton.style.right = '10px';
+            ttsButton.style.top = '0';
+            ttsButton.style.cursor = 'pointer';
+            ttsButton.style.color = '#f8b500';
+            ttsButton.addEventListener('click', () => {
+                // Speak the question text
+                speakText(questionText, questionNumber);
+                
+                // After a short delay, speak the answer options if they exist
+                setTimeout(() => {
+                    const answersDiv = document.getElementById(`answers-${questionId}`);
+                    if (answersDiv) {
+                        const answerTexts = [];
+                        
+                        // Handle different question types
+                        const questionType = document.querySelector(`[data-question-id="${questionId}"]`).dataset.questionType;
+                        
+                        if (questionType === 'multiple_choice' || questionType === 'true_or_false') {
+                            // For multiple choice or true/false, read all options
+                            const answerButtons = answersDiv.querySelectorAll('.answer-button');
+                            answerButtons.forEach(button => {
+                                answerTexts.push(button.textContent.trim());
+                            });
+                        } else if (questionType === 'drag_and_drop') {
+                            // For drag and drop, read the available options
+                            const draggables = answersDiv.querySelectorAll('.drag-item');
+                            if (draggables.length > 0) {
+                                answerTexts.push('Drag and drop options:');
+                                draggables.forEach(item => {
+                                    answerTexts.push(item.textContent.trim());
+                                });
+                            }
+                        } else if (questionType === 'matching_type') {
+                            // For matching type, explain the interface
+                            answerTexts.push('Matching type question. Select items from left and right columns to match them.');
+                        }
+                        
+                        // Speak all answer texts with a small delay between them
+                        answerTexts.forEach((text, index) => {
+                            setTimeout(() => {
+                                speakText(text);
+                            }, index * 1500);
+                        });
+                    }
+                }, 2000);
+            });
+            
+            return ttsButton;
+        }
 
         // Function to save progress to server
         function autoSaveProgress() {
@@ -1085,10 +1244,37 @@
                                     
                                 case 'matching_type':
                                     if (Array.isArray(answer)) {
-                                        // Existing matching type logic remains the same
-                                        // ...
+                                        // Initialize matchingData for this question if not exists
+                                        if (!window.matchingData) window.matchingData = {};
+                                        if (!window.matchingData[questionId]) {
+                                            window.matchingData[questionId] = {
+                                                selectedLeft: null,
+                                                selectedRight: null,
+                                                matches: []
+                                            };
+                                        }
+                                        
+                                        // Restore matches
+                                        window.matchingData[questionId].matches = answer.map(match => ({
+                                            left: match.left,
+                                            right: match.right,
+                                            leftText: document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.left}"]`)?.textContent || '',
+                                            rightText: document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.right}"]`)?.textContent || ''
+                                        }));
+                                        
+                                        // Mark items as matched in UI
+                                        answer.forEach(match => {
+                                            const leftItem = document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.left}"]`);
+                                            const rightItem = document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.right}"]`);
+                                            if (leftItem) leftItem.classList.add('matched');
+                                            if (rightItem) rightItem.classList.add('matched');
+                                        });
+                                        
+                                        // Update matches display
+                                        updateMatchesDisplay(questionId);
                                     }
                                     break;
+
                             }
                         });
                     }, 300); // Increased delay to ensure UI readiness
@@ -1429,16 +1615,9 @@
                 const pairElement = document.createElement('div');
                 pairElement.className = 'match-pair';
                 
-                // Use the enhanced text if available
-                const leftText = match.leftText || 
-                    document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.left}"]`)?.textContent || '';
-                
-                const rightText = match.rightText || 
-                    document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.right}"]`)?.textContent || '';
-                
                 // Clean up the text (remove numbering)
-                const cleanLeft = leftText.replace(/^\d+\.\s*/, '').trim();
-                const cleanRight = rightText.replace(/^[A-Z]\.\s*/, '').trim();
+                const cleanLeft = (match.leftText || '').replace(/^\d+\.\s*/, '').trim();
+                const cleanRight = (match.rightText || '').replace(/^[A-Z]\.\s*/, '').trim();
                 
                 pairElement.innerHTML = `
                     <span style="flex: 1; font-weight: 500; color: black;">${cleanLeft}</span>
@@ -1497,12 +1676,21 @@
                 questionDiv.className = 'question';
                 questionDiv.dataset.questionId = question.question_id;
                 questionDiv.dataset.questionType = question.question_type;
+
+                const questionTextContainer = document.createElement('div');
+                questionTextContainer.style.position = 'relative'; 
                 
                 // Question number and text
                 const questionNumberText = document.createElement('p');
                 questionNumberText.innerText = `${index + 1}. ${question.question_text} `;     
                 questionNumberText.className = 'question-text';
-                questionDiv.appendChild(questionNumberText);
+
+                // Add TTS button to the question text
+                const ttsButton = createTTSButton(question.question_id, question.question_text, index + 1);
+                questionNumberText.appendChild(ttsButton);
+
+                questionTextContainer.appendChild(questionNumberText);
+                questionDiv.appendChild(questionTextContainer);
                 
                 // Answers container
                 const answersDiv = document.createElement('div');
@@ -1561,9 +1749,12 @@
                 case 'matching_type':
                     // Ensure matches are in consistent format
                     if (Array.isArray(answer)) {
+                        // Store both IDs and text content for matching type
                         userAnswers[questionId] = answer.map(match => ({
-                            left: match.left || match.leftText,
-                            right: match.right || match.rightText
+                            left: match.left,
+                            right: match.right,
+                            leftText: document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.left}"]`)?.textContent || '',
+                            rightText: document.querySelector(`[data-question-id="${questionId}"] [data-answer-id="${match.right}"]`)?.textContent || ''
                         }));
                     }
                     break;
@@ -1586,9 +1777,10 @@
                 
                 // Standardize answer format for submission
                 if (questionType === 'matching_type' && Array.isArray(answer)) {
+                    // Prepare matching type answers for submission
                     submissionAnswers[questionId] = answer.map(m => ({
-                        leftText: m.leftText || document.querySelector(`[data-answer-id="${m.left}"]`)?.textContent || '',
-                        rightText: m.rightText || document.querySelector(`[data-answer-id="${m.right}"]`)?.textContent || ''
+                        left: m.leftText.replace(/^\d+\.\s*/, '').trim(),
+                        right: m.rightText.replace(/^[A-Z]\.\s*/, '').trim()
                     }));
                 } else {
                     submissionAnswers[questionId] = answer;
@@ -1649,45 +1841,6 @@
             });   
         }
 
-        /*
-        function submitQuiz() {
-            fetch('allZapped_submitQuiz.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ 
-                    answers: userAnswers, 
-                    quiz_id: <?php echo $quiz_id; ?>,
-                    subject_id: <?php echo $subject_id; ?>
-                })
-            })
-            .then(response => response.json())    
-            .then(data => {
-                if (data.success) {
-                    // Store the result data in sessionStorage temporarily
-                    sessionStorage.setItem('quizResult', JSON.stringify({
-                        score: data.score,
-                        total: data.total,
-                        quiz_id: <?php echo $quiz_id; ?>,
-                        wrong_answers: data.wrong_answers,
-                        subject_id: <?php echo $subject_id; ?>
-                    }));
-                    
-                    // Redirect to a processing page that will set the PHP session
-                    window.location.href = 'process_quiz_result.php';
-                } else {
-                    alert('Error submitting quiz: ' + (data.error || 'Unknown error'));
-                    window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('There was an error submitting your quiz. Please try again.');
-                window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
-            });   
-        }
-        */
         function startTimer(duration) {
             let timer = duration, minutes, seconds;
             const timerInterval = setInterval(function () {
@@ -1725,12 +1878,15 @@
 
         // Initialize on page load
         window.onload = function() {
+            // Initialize matchingData object
+            window.matchingData = {};            
+
            // Reset loading message state
-        const loadingMessage = document.getElementById('loadingMessage');
-        loadingMessage.style.display = 'flex';
-        loadingMessage.classList.remove('fade-out', 'success-message');
-        loadingMessage.querySelector('.loading-spinner').style.display = 'block';
-        document.getElementById('loadingText').textContent = 'Loading your saved answers...';
+            const loadingMessage = document.getElementById('loadingMessage');
+            loadingMessage.style.display = 'flex';
+            loadingMessage.classList.remove('fade-out', 'success-message');
+            loadingMessage.querySelector('.loading-spinner').style.display = 'block';
+            document.getElementById('loadingText').textContent = 'Loading your saved answers...';
             
             renderQuestions();
             

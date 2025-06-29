@@ -667,7 +667,6 @@ $conn->close();
             <div id="questionsContainer"></div>
             <input type="hidden" id="quiz_type" name="quiz_type" value="All Zapped">
             <input type="hidden" name="end_date" value="">
-            <input type="hidden" name="max_attempts" value="1">
             <input type="hidden" name="start_date" value="">
             <input type="submit" name="submit" value="Create Quiz">
             <button type="button" onclick="openQuizSettings()" style="margin-right: 10px;">
@@ -1082,9 +1081,30 @@ $conn->close();
             });
         });
 
-        // Add these functions to your <script> section
         function openQuizSettings() {
-            document.getElementById('quiz-settings-modal').style.display = 'block';
+            const modal = document.getElementById('quiz-settings-modal');
+            modal.style.display = 'block';
+            
+            // Set minimum dates to current date/time
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            document.getElementById('start-date').min = minDateTime;
+            document.getElementById('end-date').min = minDateTime;
+            
+            // Also ensure end date is after start date if start date is set
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            
+            startDateInput.addEventListener('change', function() {
+                endDateInput.min = this.value;
+            });
         }
 
         function closeModal() {
@@ -1093,7 +1113,6 @@ $conn->close();
 
         function setStartDateToday() {
             const now = new Date();
-            // Format the date for datetime-local input
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
             const day = String(now.getDate()).padStart(2, '0');
@@ -1101,6 +1120,21 @@ $conn->close();
             const minutes = String(now.getMinutes()).padStart(2, '0');
             
             document.getElementById('start-date').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            // Also update end date min if needed
+            const endDateInput = document.getElementById('end-date');
+            if (!endDateInput.value || new Date(endDateInput.value) <= now) {
+                // Add 1 hour as default end time
+                now.setHours(now.getHours() + 1);
+                const endYear = now.getFullYear();
+                const endMonth = String(now.getMonth() + 1).padStart(2, '0');
+                const endDay = String(now.getDate()).padStart(2, '0');
+                const endHours = String(now.getHours()).padStart(2, '0');
+                const endMinutes = String(now.getMinutes()).padStart(2, '0');
+                
+                endDateInput.value = `${endYear}-${endMonth}-${endDay}T${endHours}:${endMinutes}`;
+                endDateInput.min = document.getElementById('start-date').value;
+            }
         }
 
         function saveQuizSettings() {
@@ -1166,7 +1200,7 @@ $conn->close();
                         <i class="fas fa-play-circle" style="color: #4CAF50;"></i> Start Date:
                     </label>
                     <div class="input-group">
-                        <input type="datetime-local" id="start-date" name="start_date" class="form-input">
+                        <input type="datetime-local" id="start-date" name="start_date" class="form-input" min="">
                         <button type="button" onclick="setStartDateToday()" class="secondary-btn">
                             <i class="fas fa-clock"></i> Now
                         </button>
@@ -1178,7 +1212,7 @@ $conn->close();
                     <label for="end-date">
                         <i class="fas fa-stop-circle" style="color: #f44336;"></i> End Date:
                     </label>
-                    <input type="datetime-local" id="end-date" name="end_date" class="form-input" required>
+                    <input type="datetime-local" id="end-date" name="end_date" class="form-input" min="" required>
                     <small class="hint">Students won't be able to take the quiz after this date</small>
                 </div>
             </div>

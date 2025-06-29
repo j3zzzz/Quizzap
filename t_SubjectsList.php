@@ -48,12 +48,11 @@ function generateUniqueSubjectCode($conn) {
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $subject_name = $_POST['subject_name'];
-    $class_name = $_POST['class_name'];
     $teacher_account_number = $_SESSION['account_number'];
     $subject_code = generateUniqueSubjectCode($conn);
 
-    $stmt = $conn->prepare("INSERT INTO subjects (subject_name, class_name, teacher_id, subject_code) VALUES (?, ?, ?, ?)");
-    $stmt->bind_param("ssss", $subject_name, $class_name, $teacher_account_number, $subject_code);
+    $stmt = $conn->prepare("INSERT INTO subjects (subject_name, teacher_id, subject_code) VALUES ( ?, ?, ?)");
+    $stmt->bind_param("sss", $subject_name, $teacher_account_number, $subject_code);
     
     if ($stmt->execute()) {
         ?>
@@ -1043,8 +1042,8 @@ $conn->close();
                 <form method="post" action="">
                     <input type="text" name="subject_name" placeholder="Enter Subject" required>
                     <br>
-                    <label for="class_name">Enter Class Name (Optional):</label>
-                    <input type="text" id="class_name" name="class_name">
+                   <!-- <label for="class_name">Enter Class Name (Optional):</label>
+                    <input type="text" id="class_name" name="class_name"> -->
                     <br>
                     <center>
                     <button class="addBtn" type="submit">Create Subject</button>

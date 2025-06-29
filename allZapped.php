@@ -474,8 +474,8 @@ $conn->close();
         }
 
         .modal-content {
-            width: 900px;
-            max-width: 100%;
+            width: 700px; /* Reduced from 900px */
+            max-width: 90%;
             padding: 30px;
             border-radius: 12px;
             background-color: #f9f9f9;
@@ -489,18 +489,20 @@ $conn->close();
         }
         
         .settings-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px 40px;
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
         }
-        
+            
         .setting-group {
             background: #f3f3f3;
             border-radius: 10px;
             padding: 20px;
             border-left: 4px solid #f8b500;
-            height: 100%;
-        }
+            width: 100%;
+    }
         
         .setting-header {
             display: flex;
@@ -568,15 +570,14 @@ $conn->close();
         }
         
         .modal-footer {
-            grid-column: 1 / -1;
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 20px;
-            border-top: 1px solid #eee;
-        }
-        
+        width: 100%;
+        display: flex;
+        justify-content: flex-end;
+        gap: 10px;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
         .save-btn {
             background-color: #4CAF50;
             color: white;
@@ -1105,7 +1106,7 @@ $conn->close();
         function saveQuizSettings() {
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
-            const maxAttempts = document.getElementById('max-attempts').value;
+
             
             // Validate end date is after start date if start date is set
             if (startDate && new Date(endDate) <= new Date(startDate)) {
@@ -1117,7 +1118,7 @@ $conn->close();
             const form = document.getElementById('quiz-form');
             
             // Remove any existing hidden inputs
-            ['start_date', 'end_date', 'max_attempts'].forEach(name => {
+            ['start_date', 'end_date'].forEach(name => {
                 const existing = form.querySelector(`input[name="${name}"]`);
                 if (existing) existing.remove();
             });
@@ -1137,16 +1138,9 @@ $conn->close();
             endInput.value = endDate;
             form.appendChild(endInput);
             
-            const attemptsInput = document.createElement('input');
-            attemptsInput.type = 'hidden';
-            attemptsInput.name = 'max_attempts';
-            attemptsInput.value = maxAttempts;
-            form.appendChild(attemptsInput);
-
             // Update the hidden inputs that already exist
             document.querySelector('input[name="start_date"]').value = startDate;
             document.querySelector('input[name="end_date"]').value = endDate;
-            document.querySelector('input[name="max_attempts"]').value = maxAttempts;
             
             closeModal();
         }
@@ -1160,7 +1154,7 @@ $conn->close();
         <h2 style="color: #f8b500; text-align: center; margin-bottom: 25px;">Quiz Availability Settings</h2>
         
         <div class="settings-container">
-            <!-- Time Settings Column (Left) -->
+            <!-- Single centered Time Settings group -->
             <div class="setting-group">
                 <div class="setting-header">
                     <i class="fas fa-calendar-alt" style="color: #f8b500; margin-right: 10px;"></i>
@@ -1189,26 +1183,7 @@ $conn->close();
                 </div>
             </div>
             
-            <!-- Attempt Settings Column (Right) -->
-            <div class="setting-group">
-                <div class="setting-header">
-                    <i class="fas fa-redo" style="color: #f8b500; margin-right: 10px;"></i>
-                    <h3>Attempt Settings</h3>
-                </div>
-                
-                <div class="form-group">
-                    <label for="max-attempts">
-                        <i class="fas fa-sync-alt"></i> Maximum Attempts:
-                    </label>
-                    <div class="input-group">
-                        <input type="number" id="max-attempts" name="max_attempts" min="1" value="1" class="form-input" required>
-                        <span class="input-addon">times</span>
-                    </div>
-                    <small class="hint">Set to 1 for single attempt, 0 for unlimited</small>
-                </div>
-            </div>
-            
-            <!-- Footer buttons (span both columns) -->
+            <!-- Footer buttons -->
             <div class="modal-footer">
                 <button type="button" onclick="closeModal()" class="cancel-btn">
                     <i class="fas fa-times"></i> Cancel

@@ -294,6 +294,7 @@ $conn->close();
 
                     <div class="name-inputs">
                         <input type="text" id="section" name="section" placeholder="Section" required>
+                        <input type="text" id="school_id" name="school_id" placeholder="School ID" required>
                     </div>
                     
                     <div class="password-inputs">

@@ -51,19 +51,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $lname = mysqli_real_escape_string($conn, $_POST['lname']);
     $glevel = mysqli_real_escape_string($conn, $_POST['glevel']);
     $section = mysqli_real_escape_string($conn, $_POST['section']);
+    $school_id = mysqli_real_escape_string($conn, $_POST['school_id']);
     $strand = isset($_POST['strand']) ? mysqli_real_escape_string($conn, $_POST['strand']) : '';
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash the password
 
     // Prepare SQL statement
-    $sql = "INSERT INTO students (account_number, fname, lname, glevel, section, strand, password) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO students (account_number, fname, lname, glevel, section, strand, password, school_id) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     
     // Create a prepared statement
     $stmt = $conn->prepare($sql);
     
     if ($stmt) {
         // Bind parameters using the dynamically generated account number
-        $stmt->bind_param("sssssss", $account_number, $fname, $lname, $glevel, $section, $strand, $password);
+        $stmt->bind_param("ssssssss", $account_number, $fname, $lname, $glevel, $section, $strand, $password, $school_id);
     
         $check_user_sql = $conn->prepare ("SELECT * FROM students WHERE fname = ? and lname = ?");
         $check_user_sql->bind_param("ss", $fname, $lname);

@@ -39,8 +39,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_fname = $_POST['fname'];
     $new_lname = $_POST['lname'];
     
+    // Handle profile picture removal
+    if (isset($_POST['remove_profile_pic'])) {
+        // Delete the old profile picture if it's not the default
+        if ($profile_pic !== 'default-profile.jpg' && file_exists("uploads/profiles/$profile_pic")) {
+            unlink("uploads/profiles/$profile_pic");
+        }
+        $profile_pic = 'default-profile.jpg';
+    }
     // Handle profile picture upload
-    if ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
+    elseif ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
+        // Delete the old profile picture if it's not the default
+        if ($profile_pic !== 'default-profile.jpg' && file_exists("uploads/profiles/$profile_pic")) {
+            unlink("uploads/profiles/$profile_pic");
+        }
+        
         $target_dir = "uploads/profiles/";
         if (!file_exists($target_dir)) {
             mkdir($target_dir, 0777, true);
@@ -392,16 +405,26 @@ $conn->close();
             animation: fadeIn 0.5s ease-out;
         }
 
-        /* Add some decorative elements */
-        .profile-header::after {
-            content: "";
-            position: absolute;
-            bottom: -10px;
-            left: 0;
-            width: 100%;
-            height: 20px;
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none"><path d="M1200 0L0 0 892.25 114.72 1200 0z" fill="%23fff9ee"></path></svg>');
-            background-size: cover;
+        .remove-photo-btn {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .remove-photo-btn:hover {
+            background-color: #ff5252;
+        }
+        
+        .remove-photo-btn i {
+            font-size: 12px;
         }
     </style>
 </head>
@@ -454,8 +477,12 @@ $conn->close();
                         <button type="button" id="changeProfilePic" class="btn btn-secondary">
                             <i class="fas fa-camera"></i> Change Photo
                         </button>
+                        <?php if ($profile_pic !== 'default-profile.jpg'): ?>
+                        <button type="submit" name="remove_profile_pic" class="remove-photo-btn">
+                            <i class="fas fa-trash-alt"></i> Remove Photo
+                        </button>
+                        <?php endif; ?>
                     </div>
-                    
                     <div class="form-group">
                         <label class="form-label">Account Number</label>
                         <input type="text" class="form-input" value="<?php echo htmlspecialchars($account_number); ?>" disabled>
@@ -524,6 +551,16 @@ $conn->close();
                 toggleEditMode();
             }
         });
+
+                    // Update the preview image when changing or removing profile picture
+                    const form = document.getElementById('editMode');
+            form.addEventListener('submit', function() {
+                // This ensures the preview updates after form submission
+                setTimeout(() => {
+                    const previewImg = document.querySelector('#previewMode .profile-pic');
+                    previewImg.src = 'uploads/profiles/' + '<?php echo $profile_pic; ?>?' + new Date().getTime();
+                }, 100);
+            });
     </script>
 </body>
 </html>

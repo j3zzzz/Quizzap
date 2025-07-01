@@ -23,10 +23,11 @@ $name = "Unknown";
 $lname = "Unknown";
 $glevel = "Unknown";
 $strand = "Unknown";
+$section = "Unknown";
 $profile_pic = 'default-profile.jpg';
 
 // Fetch student data
-$sql = "SELECT fname, lname, account_number, glevel, strand, profile_pic FROM students WHERE account_number = ?";
+$sql = "SELECT fname, lname, account_number, glevel, strand, section, profile_pic FROM students WHERE account_number = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $account_number);
 $stmt->execute();
@@ -38,6 +39,7 @@ if ($result->num_rows > 0) {
     $lname = $row['lname'];
     $glevel = $row['glevel'];
     $strand = $row['strand'];
+    $section = $row['section'];
     $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 }
 
@@ -47,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_lname = $_POST['lname'];
     $new_glevel = $_POST['glevel'];
     $new_strand = $_POST['strand'];
+    $new_section = $_POST['section'];
     
     // Handle profile picture upload
     if ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
@@ -68,9 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     
     // Update database
-    $update_sql = "UPDATE students SET fname = ?, lname = ?, glevel = ?, strand = ?, profile_pic = ? WHERE account_number = ?";
+    $update_sql = "UPDATE students SET fname = ?, lname = ?, glevel = ?, strand = ?, section = ?, profile_pic = ? WHERE account_number = ?";
     $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("ssssss", $new_fname, $new_lname, $new_glevel, $new_strand, $profile_pic, $account_number);
+    $update_stmt->bind_param("sssssss", $new_fname, $new_lname, $new_glevel, $new_strand, $new_section, $profile_pic, $account_number);
     $update_stmt->execute();
     
     // Update session variables
@@ -79,6 +82,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $lname = $new_lname;
     $glevel = $new_glevel;
     $strand = $new_strand;
+    $section = $new_section;
     
     $update_stmt->close();
 }
@@ -93,6 +97,7 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Student Profile | RAWRIT</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #f8b500;
@@ -104,18 +109,23 @@ $conn->close();
             --card-bg: #fff;
             --error: #e74c3c;
             --success: #2ecc71;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Fredoka;
+            font-family: 'Fredoka', sans-serif;
         }
 
         body {
             background-color: var(--light-bg);
             color: var(--text);
+            line-height: 1.6;
         }
 
         header {
@@ -124,15 +134,20 @@ $conn->close();
             align-items: center;
             padding: 15px 5%;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
             position: sticky;
             top: 0;
             z-index: 100;
+            transition: var(--transition);
         }
         
         .logo img {
             height: 40px;
             transition: transform 0.3s;
+        }
+
+        .logo img:hover {
+            transform: scale(1.05);
         }
 
         nav {
@@ -147,21 +162,38 @@ $conn->close();
             font-weight: 500;
             position: relative;
             padding: 5px 0;
-            transition: all 0.3s;
+            transition: var(--transition);
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #000;
+            transition: var(--transition);
         }
         
         nav a:hover {
             color: #000;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        nav a:hover::after {
+            width: 100%;
         }
 
         nav a.active {
             color: #000;
             font-weight: 600;
-            border-bottom: 2px solid #000;
+        }
+        
+        nav a.active::after {
+            width: 100%;
         }
 
-        .logout-btn {
+        .logout-btn, .edit-btn {
             background-color: rgba(0, 0, 0, 0.1);
             color: #000;
             border: none;
@@ -169,16 +201,16 @@ $conn->close();
             border-radius: 30px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.3s;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
-        .logout-btn:hover {
+        .logout-btn:hover, .edit-btn:hover {
             background-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
         }
-
         
         main {
             padding: 40px 5%;
@@ -190,55 +222,89 @@ $conn->close();
         
         .profile-container {
             width: 100%;
-            max-width: 800px;
+            max-width: 900px;
             background: var(--card-bg);
             border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            box-shadow: var(--shadow-lg);
             overflow: hidden;
             border: 1px solid rgba(248, 181, 0, 0.2);
+            transition: var(--transition);
+        }
+        
+        .profile-container:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-5px);
         }
 
         .profile-header {
-            height: 100px;
+            height: 120px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 30px;
+            padding: 0 40px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
         }
 
         .profile-title {
             color: #000;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 600;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .profile-subtitle {
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.7);
+            margin-top: 5px;
+            font-weight: 400;
         }
 
         .profile-content {
-            padding: 30px;
+            padding: 40px;
         }
         
         .profile-preview {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 25px;
         }
         
         .profile-pic-container {
-            width: 150px;
-            height: 150px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             overflow: hidden;
-            border: 5px solid var(--accent);
+            border: 6px solid var(--accent);
             margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.3);
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .profile-pic-container:hover {
+            transform: scale(1.05);
         }
         
         .profile-pic {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: var(--transition);
         }
         
         .profile-info {
@@ -251,122 +317,147 @@ $conn->close();
             color: var(--primary-dark);
             font-weight: 600;
             margin-bottom: 5px;
+            display: inline-block;
+            padding: 5px 15px;
+            background-color: var(--accent);
+            border-radius: 20px;
         }
         
         .full-name {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin: 15px 0;
+            position: relative;
+            display: inline-block;
         }
 
         .student-details {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
             width: 100%;
-            margin-top: 20px;
+            margin-top: 30px;
         }
         
         .detail-group {
             background-color: var(--accent);
-            padding: 10px;
-            border-radius: 8px;
+            padding: 20px;
+            border-radius: 12px;
             text-align: center;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .detail-group:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
         }
         
         .detail-label {
             font-size: 14px;
             color: var(--primary-dark);
             font-weight: 600;
-            margin-bottom: 5px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
         
         .detail-value {
-            font-size: 16px;
+            font-size: 18px;
             color: var(--text);
-            font-family: Fredoka;
+            font-weight: 500;
         }
         
         .profile-form {
             display: grid;
-            gap: 20px;
+            gap: 25px;
         }
         
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
         
         .form-label {
-            font-size: 14px;
+            font-size: 15px;
             color: var(--primary);
             font-weight: 600;
         }
         
         .form-input {
-            padding: 12px 15px;
+            padding: 14px 18px;
             border: 1px solid #ddd;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
-            transition: all 0.3s;
+            transition: var(--transition);
+            background-color: #f9f9f9;
         }
+        
         .form-input:focus {
             border-color: var(--primary);
             outline: none;
             box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.1);
+            background-color: #fff;
         }
 
         .profile-pic-edit {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 15px;
+            margin-bottom: 30px;
         }
         
         .profile-pic-preview {
-            width: 150px;
-            height: 150px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             overflow: hidden;
-            border: 5px solid var(--accent);
+            border: 6px solid var(--accent);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+        
+        .profile-pic-preview:hover {
+            transform: scale(1.05);
         }
         
         .form-actions {
             display: flex;
             justify-content: flex-end;
-            gap: 15px;
-            margin-top: 30px;
+            gap: 20px;
+            margin-top: 40px;
         }
         
         .preview-actions {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 30px;
         }
         
         .btn {
-            padding: 12px 25px;
-            border-radius: 8px;
+            padding: 14px 30px;
+            border-radius: 10px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
             border: none;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            font-size: 16px;
         }
         
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: #000;
-            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.3);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(248, 181, 0, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(248, 181, 0, 0.4);
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
         }
         
@@ -378,30 +469,57 @@ $conn->close();
 
         .btn-secondary:hover {
             background-color: #e1e1e1;
-        }
-                
-        .edit-btn {
-            background-color: rgba(0, 0, 0, 0.1);
-            color: #000;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .edit-btn:hover {
-            background-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-sm);
         }
         
         .hidden {
             display: none;
         }
         
+        /* Success message */
+        .success-message {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            background-color: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .success-message.show {
+            transform: translateX(0);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .profile-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .profile-pic-container {
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        /* Responsive styles */
         @media (max-width: 768px) {
             header {
                 padding: 15px 20px;
@@ -412,34 +530,63 @@ $conn->close();
             }
             
             .profile-content {
-                padding: 20px;
+                padding: 25px;
             }
             
             .profile-header {
-                padding: 0 20px;
+                padding: 0 25px;
+                height: 100px;
             }
-
+            
+            .profile-title {
+                font-size: 24px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .full-name {
+                font-size: 24px;
+            }
+            
             .student-details {
                 grid-template-columns: 1fr;
             }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
         }
-
-        /* Add some subtle animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        
+        @media (max-width: 480px) {
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                justify-content: center;
+                text-align: center;
+                padding: 20px;
+                height: auto;
+            }
         }
-
-        .profile-container {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-      
     </style>
 </head>
 <body>
     <header>                   
-        <div class="logo"> <img src="img/logo4.png" width="110px" height="80px" class="logo-img"></div>
+        <div class="logo">
+            <img src="img/logo4.png" width="110px" height="80px" class="logo-img" alt="RAWRIT Logo">
+        </div>
         <nav>
             <a href="s_Home.php">Home</a>
             <a href="s_Classes.php">Classes</a>
@@ -455,7 +602,9 @@ $conn->close();
     <main>
         <div class="profile-container">
             <div class="profile-header">
-                <h1 class="profile-title">Student Profile</h1>
+                <div>
+                    <h1 class="profile-title">Student Profile</h1>
+                </div>
             </div>
             <div class="profile-content">
                 <!-- Preview Mode -->
@@ -465,8 +614,8 @@ $conn->close();
                     </div>
                     
                     <div class="profile-info">
-                        <div class="account-number">Account #: <?php echo htmlspecialchars($account_number); ?></div>
-                        <div class="full-name"><?php echo htmlspecialchars($name . ' ' . $lname); ?></div>
+                        <div class="account-number"><?php echo htmlspecialchars($account_number); ?></div>
+                        <h2 class="full-name"><?php echo htmlspecialchars($name . ' ' . $lname); ?></h2>
                         
                         <div class="student-details">
                             <div class="detail-group">
@@ -476,6 +625,10 @@ $conn->close();
                             <div class="detail-group">
                                 <div class="detail-label">Strand</div>
                                 <div class="detail-value"><?php echo htmlspecialchars($strand); ?></div>
+                            </div>
+                            <div class="detail-group">
+                                <div class="detail-label">Section</div>
+                                <div class="detail-value"><?php echo htmlspecialchars($section); ?></div>
                             </div>
                         </div>
                     </div>
@@ -523,6 +676,11 @@ $conn->close();
                         <label for="strand" class="form-label">Strand</label>
                         <input type="text" id="strand" name="strand" class="form-input" value="<?php echo htmlspecialchars($strand); ?>" required>
                     </div>
+
+                    <div class="form-group">
+                        <label for="section" class="form-label">Section</label>
+                        <input type="text" id="section" name="section" class="form-input" value="<?php echo htmlspecialchars($section); ?>" required>
+                    </div>
                     
                     <div class="form-actions">
                         <button type="button" id="cancelEdit" class="btn btn-secondary">
@@ -535,6 +693,13 @@ $conn->close();
                 </form>
             </div>
         </div>
+        
+        <?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+        <div id="successMessage" class="success-message">
+            <i class="fas fa-check-circle"></i>
+            <span>Profile updated successfully!</span>
+        </div>
+        <?php endif; ?>
     </main>
     
     <script>
@@ -546,11 +711,20 @@ $conn->close();
             const changeProfilePic = document.getElementById('changeProfilePic');
             const profilePicInput = document.getElementById('profile_pic');
             const profilePicPreview = document.getElementById('profilePicPreview');
+            const successMessage = document.getElementById('successMessage');
             
             // Toggle between preview and edit modes
             function toggleEditMode() {
                 previewMode.classList.toggle('hidden');
                 editMode.classList.toggle('hidden');
+                
+                // Smooth scroll to top when editing
+                if (!editMode.classList.contains('hidden')) {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }
             }
             
             // Event listeners
@@ -572,9 +746,33 @@ $conn->close();
                 }
             });
             
+            // Show success message if form was submitted
+            if (successMessage) {
+                setTimeout(() => {
+                    successMessage.classList.add('show');
+                    
+                    // Hide after 5 seconds
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 5000);
+                }, 300);
+            }
+            
             // If form was submitted with errors, show edit mode
             if (window.location.search.includes('error')) {
                 toggleEditMode();
+            }
+            
+            // Add hover effect to profile picture in preview mode
+            const profilePicContainer = document.querySelector('.profile-pic-container');
+            if (profilePicContainer) {
+                profilePicContainer.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05) rotate(5deg)';
+                });
+                
+                profilePicContainer.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1) rotate(0)';
+                });
             }
         });
     </script>

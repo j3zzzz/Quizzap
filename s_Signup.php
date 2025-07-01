@@ -254,7 +254,6 @@ $conn->close();
 </head>
 <body>
     <div class="container">
-        <!-- Left Side -->
         <div class="left">
             <div class="logo"><img src="img/logo4.png" width="360px" height="130px" alt="QuizZap Logo"></div>
             <div class="signup-form">
@@ -281,7 +280,7 @@ $conn->close();
                         <option value="11">Grade 11</option>
                         <option value="12">Grade 12</option>
                     </select>
-                    
+
                     <div class="strand-container" id="strand-container">
                         <select id="strand" name="strand">
                             <option value="">Select Strand</option>
@@ -291,6 +290,10 @@ $conn->close();
                             <option value="GAS">GAS</option>
                             <option value="TVL">TVL</option>
                         </select>
+                    </div>
+
+                    <div class="name-inputs">
+                        <input type="text" id="section" name="section" placeholder="Section" required>
                     </div>
                     
                     <div class="password-inputs">

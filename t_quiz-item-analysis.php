@@ -83,8 +83,13 @@ if ($result->num_rows > 0) {
     $wrong_students = $wrong_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $wrong_stmt->close();
     
+    // Calculate percentage correct
+    $total_answers = $row['correct_count'] + $row['wrong_count'];
+    $percentage_correct = ($total_answers > 0) ? round(($row['correct_count'] / $total_answers) * 100, 2) : 0;
+    
     $row['correct_students'] = $correct_students;
     $row['wrong_students'] = $wrong_students;
+    $row['percentage_correct'] = $percentage_correct;
     
     $analysis_data[] = $row;
   }
@@ -155,6 +160,21 @@ $conn->close();
         } else {
           details.style.display = 'none';
           btn.innerHTML = '<i class="fa-solid fa-eye"></i> Show Details';
+        }
+      }
+      
+      function toggleView(viewType) {
+        if (viewType === 'chart') {
+          document.getElementById('chart-view').style.display = 'block';
+          document.getElementById('table-view').style.display = 'none';
+          document.getElementById('chart-btn').classList.add('active-view');
+          document.getElementById('table-btn').classList.remove('active-view');
+          drawChart(); // Redraw charts when switching back to chart view
+        } else {
+          document.getElementById('chart-view').style.display = 'none';
+          document.getElementById('table-view').style.display = 'block';
+          document.getElementById('chart-btn').classList.remove('active-view');
+          document.getElementById('table-btn').classList.add('active-view');
         }
       }
     </script>
@@ -440,6 +460,96 @@ $conn->close();
     font-size: 0.9em;
   }
 
+  /* View toggle buttons */
+  .view-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+  }
+  
+  .view-btn {
+    padding: 10px 20px;
+    background-color: #f1f1f1;
+    border: none;
+    cursor: pointer;
+    font-family: Fredoka;
+    font-size: 1rem;
+    transition: all 0.3s;
+  }
+  
+  .view-btn:first-child {
+    border-radius: 5px 0 0 5px;
+  }
+  
+  .view-btn:last-child {
+    border-radius: 0 5px 5px 0;
+  }
+  
+  .view-btn:hover {
+    background-color: #ddd;
+  }
+  
+  .active-view {
+    background-color: #F8B500 !important;
+    color: #000;
+    font-weight: bold;
+  }
+  
+  /* Table view styles */
+  #table-view {
+    display: none;
+    width: 100%;
+    overflow-x: auto;
+  }
+  
+  .analysis-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+  }
+  
+  .analysis-table th, 
+  .analysis-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .analysis-table th {
+    background-color: #F8B500;
+    color: #000;
+    font-weight: bold;
+  }
+  
+  .analysis-table tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+  
+  .analysis-table tr:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .percentage-cell {
+    font-weight: bold;
+  }
+  
+  .high-percentage {
+    color: #4CAF50;
+  }
+  
+  .medium-percentage {
+    color: #FFC107;
+  }
+  
+  .low-percentage {
+    color: #f44336;
+  }
+  
+  .question-text {
+    max-width: 400px;
+    word-wrap: break-word;
+  }
+
   /* Responsive adjustments */
   @media (max-width: 1200px) {
     .side-nav {
@@ -469,6 +579,15 @@ $conn->close();
     
     .student-group {
       min-width: 100%;
+    }
+    
+    .analysis-table {
+      font-size: 0.9rem;
+    }
+    
+    .analysis-table th, 
+    .analysis-table td {
+      padding: 8px 10px;
     }
   }
 </style>
@@ -516,55 +635,109 @@ $conn->close();
       <h3 id="quiz-title"><?php echo $quiz_title; ?></h3> 
     </div>
    
-    <br><br><br>
+    <div class="view-toggle">
+      <button id="chart-btn" class="view-btn active-view" onclick="toggleView('chart')">
+        <i class="fa-solid fa-chart-pie"></i> Chart View
+      </button>
+      <button id="table-btn" class="view-btn" onclick="toggleView('table')">
+        <i class="fa-solid fa-table"></i> Table View
+      </button>
+    </div>
 
-    <div id="graph-area">
-      <?php if (!empty($analysis_data)) {
-        foreach ($analysis_data as $index => $data) { ?>
-          <div class="piechart-container">
-            <div id="piechart<?php echo $index; ?>"></div>
-            
-            <button id="toggle-btn-<?php echo $index; ?>" class="details-btn" onclick="toggleDetails(<?php echo $index; ?>)">
-              <i class="fa-solid fa-eye"></i> Show Details
-            </button>
-            
-            <div id="details-<?php echo $index; ?>" class="details-container" style="display: none;">
-              <h3>Detailed Results for Question <?php echo ($index + 1); ?></h3>
+    <div id="chart-view">
+      <?php if (!empty($analysis_data)) { ?>
+        <div id="graph-area">
+          <?php foreach ($analysis_data as $index => $data) { ?>
+            <div class="piechart-container">
+              <div id="piechart<?php echo $index; ?>"></div>
               
-              <div class="student-list">
-                <div class="student-group">
-                  <h4>Correct Answers (<?php echo $data['correct_count']; ?> students)</h4>
-                  <?php if (!empty($data['correct_students'])): ?>
-                    <?php foreach ($data['correct_students'] as $student): ?>
-                      <div class="student-item correct">
-                        <div class="student-name"><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></div>
-                        <div class="student-id">Account #: <?php echo htmlspecialchars($student['account_number']); ?></div>
-                      </div>
-                    <?php endforeach; ?>
-                  <?php else: ?>
-                    <p>No students answered this question correctly.</p>
-                  <?php endif; ?>
-                </div>
+              <button id="toggle-btn-<?php echo $index; ?>" class="details-btn" onclick="toggleDetails(<?php echo $index; ?>)">
+                <i class="fa-solid fa-eye"></i> Show Details
+              </button>
+              
+              <div id="details-<?php echo $index; ?>" class="details-container" style="display: none;">
+                <h3>Detailed Results for Question <?php echo ($index + 1); ?></h3>
                 
-                <div class="student-group">
-                  <h4>Incorrect Answers (<?php echo $data['wrong_count']; ?> students)</h4>
-                  <?php if (!empty($data['wrong_students'])): ?>
-                    <?php foreach ($data['wrong_students'] as $student): ?>
-                      <div class="student-item wrong">
-                        <div class="student-name"><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></div>
-                        <div class="student-id">Account #: <?php echo htmlspecialchars($student['account_number']); ?></div>
-                      </div>
-                    <?php endforeach; ?>
-                  <?php else: ?>
-                    <p>No students answered this question wrong.</p>
-                  <?php endif; ?>
+                <div class="student-list">
+                  <div class="student-group">
+                    <h4>Correct Answers (<?php echo $data['correct_count']; ?> students)</h4>
+                    <?php if (!empty($data['correct_students'])): ?>
+                      <?php foreach ($data['correct_students'] as $student): ?>
+                        <div class="student-item correct">
+                          <div class="student-name"><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></div>
+                          <div class="student-id">Account #: <?php echo htmlspecialchars($student['account_number']); ?></div>
+                        </div>
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <p>No students answered this question correctly.</p>
+                    <?php endif; ?>
+                  </div>
+                  
+                  <div class="student-group">
+                    <h4>Incorrect Answers (<?php echo $data['wrong_count']; ?> students)</h4>
+                    <?php if (!empty($data['wrong_students'])): ?>
+                      <?php foreach ($data['wrong_students'] as $student): ?>
+                        <div class="student-item wrong">
+                          <div class="student-name"><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></div>
+                          <div class="student-id">Account #: <?php echo htmlspecialchars($student['account_number']); ?></div>
+                        </div>
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <p>No students answered this question wrong.</p>
+                    <?php endif; ?>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        <?php } 
-      } else 
-          echo "<div class='no-data'>No data found</div>"; ?>
+          <?php } ?>
+        </div>
+      <?php } else {
+        echo "<div class='no-data'>No data found</div>";
+      } ?>
+    </div>
+
+    <div id="table-view">
+      <?php if (!empty($analysis_data)) { ?>
+        <table class="analysis-table">
+          <thead>
+            <tr>
+              <th>Question #</th>
+              <th>Question Text</th>
+              <th>Correct Answers</th>
+              <th>Incorrect Answers</th>
+              <th>Total Answers</th>
+              <th>% Correct</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($analysis_data as $index => $data): 
+              $total_answers = $data['correct_count'] + $data['wrong_count'];
+              $percentage_class = '';
+              
+              if ($data['percentage_correct'] >= 70) {
+                $percentage_class = 'high-percentage';
+              } elseif ($data['percentage_correct'] >= 30) {
+                $percentage_class = 'medium-percentage';
+              } else {
+                $percentage_class = 'low-percentage';
+              }
+            ?>
+              <tr>
+                <td><?php echo $index + 1; ?></td>
+                <td class="question-text"><?php echo htmlspecialchars($data['question_text']); ?></td>
+                <td><?php echo $data['correct_count']; ?></td>
+                <td><?php echo $data['wrong_count']; ?></td>
+                <td><?php echo $total_answers; ?></td>
+                <td class="percentage-cell <?php echo $percentage_class; ?>">
+                  <?php echo $data['percentage_correct']; ?>%
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      <?php } else {
+        echo "<div class='no-data'>No data found</div>";
+      } ?>
     </div>
 
   </div>  

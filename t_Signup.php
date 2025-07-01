@@ -25,6 +25,11 @@ if ($max_account_number) {
     $teacher_account_number = 'T001';
 }
 
+// Generate school ID (2 uppercase letters + 2 digits)
+$letters = substr(str_shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 2);
+$numbers = str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
+$school_id = $letters . $numbers;
+
 $conn->close();
 ?>
 
@@ -255,7 +260,10 @@ $conn->close();
             ?>
                 <form method="POST" action="t_Signup_process.php">
                     <input type="text" name="account_number" value="<?php echo $teacher_account_number; ?>" readonly>
-                    
+
+                    <input type="text" name="school_id" value="<?php echo $school_id; ?>" readonly>
+                    <small style="display: block; margin-bottom: 10px; color: #555; font-family: Fredoka;">Your School ID: <?php echo $school_id; ?></small>
+
                     <div class="name-inputs">
                         <input type="text" id="fname" name="fname" placeholder="First name" required>
                         <input type="text" id="lname" name="lname" placeholder="Last name" required>

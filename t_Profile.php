@@ -17,7 +17,7 @@ $account_number = $_SESSION['account_number'];
 $fname = $_SESSION['fname'];
 
 // Fetch teacher data
-$sql = "SELECT fname, lname, account_number, profile_pic FROM teachers WHERE account_number = ?";
+$sql = "SELECT fname, lname, account_number, school_id, profile_pic FROM teachers WHERE account_number = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $account_number);
 $stmt->execute();
@@ -27,6 +27,7 @@ if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
     $name = $row['fname'];
     $lname = $row['lname'];
+    $school_id = $row['school_id'];
     $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 } else {
     $name = "Unknown";
@@ -457,6 +458,7 @@ $conn->close();
                     
                     <div class="profile-info">
                         <div class="account-number">Account #: <?php echo htmlspecialchars($account_number); ?></div>
+                        <div class="account-number">School ID: <?php echo htmlspecialchars($school_id); ?></div>
                         <div class="full-name"><?php echo htmlspecialchars($name . ' ' . $lname); ?></div>
                     </div>
                     

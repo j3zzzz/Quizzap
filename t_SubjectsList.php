@@ -19,7 +19,7 @@ if ($conn->connect_error) {
 $loggedInUser = $_SESSION['account_number'];
 
 //query para sa profile pic
-$sql = "SELECT profile_pic FROM teachers WHERE account_number = ?";
+$sql = "SELECT profile_pic, school_id FROM teachers WHERE account_number = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("s", $loggedInUser);
 $stmt->execute();
@@ -27,6 +27,7 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
+    $school_id = $row['school_id'];
     $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 } else {
     $profile_pic = 'default-profile.jpg';
@@ -46,24 +47,64 @@ function generateUniqueSubjectCode($conn) {
     return $code;
 }
 
+// Handle subject deletion
+if (isset($_POST['delete_subjects'])) {
+    if (!empty($_POST['selected_subjects'])) {
+        foreach ($_POST['selected_subjects'] as $subject_id) {
+            // First delete quizzes related to this subject
+            $delete_quizzes_sql = "DELETE FROM quizzes WHERE subject_id = ?";
+            $stmt = $conn->prepare($delete_quizzes_sql);
+            $stmt->bind_param("i", $subject_id);
+            $stmt->execute();
+            $stmt->close();
+            
+            // Then delete the subject
+            $delete_subject_sql = "DELETE FROM subjects WHERE subject_id = ? AND teacher_id = ?";
+            $stmt = $conn->prepare($delete_subject_sql);
+            $stmt->bind_param("is", $subject_id, $loggedInUser);
+            $stmt->execute();
+            $stmt->close();
+        }
+        echo "<script>alert('Selected subjects and their quizzes have been deleted successfully.'); window.location.href='t_SubjectsList.php';</script>";
+    } else {
+        echo "<script>alert('No subjects selected for deletion.');</script>";
+    }
+}
+
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $subject_name = $_POST['subject_name'];
+    $subject_name = $_POST['subject_name'] ?? null;
+    $grade_level = $_POST['grade_level'] ?? null;
+    $section = $_POST['section'] ?? null;
     $teacher_account_number = $_SESSION['account_number'];
+    $school_id = $row['school_id'];
     $subject_code = generateUniqueSubjectCode($conn);
 
-    $stmt = $conn->prepare("INSERT INTO subjects (subject_name, teacher_id, subject_code) VALUES ( ?, ?, ?)");
-    $stmt->bind_param("sss", $subject_name, $teacher_account_number, $subject_code);
+    // Check if the same class already exists for this teacher
+    $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND section = ? AND teacher_id = ?";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("ssss", $subject_name, $grade_level, $section, $teacher_account_number);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
     
-    if ($stmt->execute()) {
-        ?>
-        <script type="text/javascript">
-        console.log("Subject created successfully with code: $subject_code.");
-        </script>
-        <?php
+    if ($check_result->num_rows > 0) {
+        echo "<script>alert('A class with the same subject, grade level, and section already exists.');</script>";
     } else {
-        echo "Error: " . $stmt->error;
+        $stmt = $conn->prepare("INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, section, school_id) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("ssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $section, $school_id);
+        
+        if ($stmt->execute()) {
+            ?>
+            <script type="text/javascript">
+            console.log("Subject created successfully with code: $subject_code.");
+            </script>
+            <?php
+        } else {
+            echo "Error: " . $stmt->error;
+        }
+        $stmt->close();
     }
-    $stmt->close();
+    $check_stmt->close();
 }
 
 $sql = "SELECT * FROM subjects WHERE teacher_id = '" . $_SESSION['account_number'] . "' ORDER BY subject_id DESC";
@@ -343,6 +384,13 @@ $conn->close();
             font-size: 1.5rem;
         }
 
+        .subjects-container {
+            padding: auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
         .subject-button {
             color: black;
             font-family: Fredoka;
@@ -355,8 +403,7 @@ $conn->close();
             text-decoration: none;
             text-align: left;
             padding: 12px 30px;
-            width: 30%;
-            margin: auto;
+            width: 100%;
             margin-top: 2%;
             margin-bottom: 2%;
             margin-right: 1%;
@@ -411,6 +458,71 @@ $conn->close();
         /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
           background: #f8b500; 
+        }
+
+        .delete-btn {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-right: 1rem;
+            font-family: Fredoka;
+            box-shadow: 0 4px 0 0 #cc0000;
+        }
+
+        .delete-btn:hover {
+            background-color: #cc0000;
+        }
+
+        .delete-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 0 #cc0000;
+        }
+
+        .subject-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            gap: 10px; /* This controls the space between checkbox and subject button */
+        }
+
+        .subject-checkbox {
+            transform: scale(1.5);
+            margin-right: 10px;
+            accent-color: #f8b500;
+        }
+
+        .subject-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .subject-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .select-all-container {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .select-all-checkbox {
+            transform: scale(1.3);
+            margin-right: 10px;
+            accent-color: #f8b500;
+        }
+
+        .select-all-label {
+            font-family: Fredoka;
+            font-size: 16px;
+            color: #555;
         }
 
         .btn{
@@ -491,10 +603,9 @@ $conn->close();
           padding: 15px;
           border: none;
           border-radius: 8px;
-          width: 40%;
+          width: 50%;
           font-family: Fredoka;
           font-size: 25px;
-          color: ;
           -webkit-animation-name: zoom;
           -webkit-animation-duration: 0.6s;
           animation-name: zoom;
@@ -511,9 +622,18 @@ $conn->close();
           to {transform:scale(1)}
         }
 
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 30px 10px 30px;
+            border-bottom: 2px solid #f8b500;
+        }
+
         .modal-body, .modal-dialog, .modal-content{
             background-color: white;
             border-radius: 20px;
+            padding: 20px 30px;
         }
 
         .modal-content{
@@ -524,21 +644,146 @@ $conn->close();
             margin-top: 13%;
         }
 
-        form label{
-            margin-top: 5%;
-            color: #f8b500;
-            font-size: 25px;
-            font-family: Fredoka;
+        .form-group {
+            position: relative;
+            margin-bottom: 25px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-family: 'Fredoka';
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Fredoka';
+            transition: all 0.3s;
+            background-color: #f9f9f9;
+        }
+        
+        .form-group input:focus {
+            border-color: #f8b500;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.2);
+            outline: none;
         }
 
-        form input{
-            margin-top: 2%;
-            padding: 15px;
+        .select-wrapper {
+            position: relative;
+        }
+        
+        .select-wrapper select {
             width: 100%;
-            border-radius: 15px;
-            border: 3px solid #B9B6B6;
+            padding: 15px 15px 15px 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: 'Fredoka';
+            appearance: none;
+            background-color: #f9f9f9;
+            cursor: pointer;
+        }
+        
+        .select-wrapper select:focus {
+            border-color: #f8b500;
+            background-color: #fff;
+            box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.2);
+            outline: none;
+        }
+        
+        .icon {
+            position: absolute;
+            left: 15px;
+            top: 42px;
+            color: #f8b500;
             font-size: 18px;
-            font-family: Fredoka;
+        }
+
+        #grade_level {
+            top: 20px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 15px;
+            margin-top: 30px;
+        }   
+
+        .cancel-btn {
+            padding: 12px 25px;
+            border: 2px solid #f8b500;
+            border-radius: 8px;
+            background-color: transparent;
+            color: #f8b500;
+            font-family: 'Fredoka';
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cancel-btn:hover {
+            background-color: #f8b500;
+            color: white;
+        }
+
+        .submit-btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            background-color: #f8b500;
+            color: white;
+            font-family: 'Fredoka';
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 0 #d89e00;
+        }
+        
+        .submit-btn:hover {
+            background-color: #e6a500;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 0 #d89e00;
+        }
+        
+        .submit-btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 3px 0 0 #d89e00;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 767px) {
+            .modal-content {
+                width: 90%;
+                padding: 15px;
+            }
+            
+            .modal-header {
+                padding: 15px 20px 10px 20px;
+            }
+            
+            .modal-body {
+                padding: 15px 20px;
+            }
+            
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .cancel-btn, .submit-btn {
+                width: 100%;
+            }
         }
 
         #class_name {
@@ -675,7 +920,7 @@ $conn->close();
             }
             
             .modal-content {
-                width: 25%;
+                width: 50%;
             }
         }
 
@@ -720,6 +965,11 @@ $conn->close();
                 width: 45%;
                 font-size: 20px;
                 padding: 10px 20px;
+            }
+
+            .subject-container {
+                padding: 0;
+                margin: 0;
             }
             
             .modal-content {
@@ -993,7 +1243,7 @@ $conn->close();
         <!-- Content Area -->
         <div class="content">
             <div class="content-header">
-                <h1>Subjects</h1><br>
+                <h1>Subjects</h1><br><br>
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
                         <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -1005,23 +1255,41 @@ $conn->close();
                         </div>
                     </div>
                 </div>
+                
+            </div>
+            
+            <div style="margin-top: 1px; background-color:#f8b50052; padding: 10px; border-radius: 8px; width: 60%;">
+            <div style="display: flex; align-items: center; gap: 4px;"><strong>School ID: </strong><p><?php echo htmlspecialchars($school_id); ?></p></div><br>
+                <div><p style="font-size: small; font-style: italic;"><i class="fas fa-lightbulb" style="color: #f8b500; background-color: white; padding: 10px; border-radius: 50%;"></i> School ID is used to distinguish between different teachers and prevents mismatching of students. Please provide this school id to your students upon registration.</p></div>
+            </div>
+            <br><br>
+            <center>
+
+            <div class="subject-header">
+                <div class="add-sub">
+                    <button id="modalbtn">Add Subject</button>
+                </div>
+                
+                <form method="post" action="" onsubmit="return confirm('Are you sure you want to delete the selected subjects? This will also delete all quizzes under these subjects.');">
+                    <div class="subject-actions">
+                        <button type="submit" name="delete_subjects" class="delete-btn">Delete Selected</button>
+                    </div>
+            </div>
+            
+            <div class="select-all-container">
+                <input type="checkbox" id="select-all" class="select-all-checkbox">
+                <label for="select-all" class="select-all-label">Select All</label>
             </div>
             
             <center>
-
-            <div class="add-sub">
-                <button id="modalbtn">Add Subject</button>
-            </div>    
-        
-            <br><br><br>
-            
-            <center>
-
-            <div><br><br>
+            <div class="subjects-container">
                 <?php
                 if ($result->num_rows > 0) {
                     while ($row = $result->fetch_assoc()) {
-                        echo "<a class='subject-button' href='t_quizDash.php?subject_id=" . $row['subject_id'] . "'>" . $row['subject_name'] ."<br><span>". $row['subject_code'] ."</span></a>";
+                        echo '<div class="subject-item">';
+                        echo '<input type="checkbox" name="selected_subjects[]" value="' . $row['subject_id'] . '" class="subject-checkbox">';
+                        echo "<a class='subject-button' href='t_quizDash.php?subject_id=" . $row['subject_id'] . "'>" . $row['subject_name'] . "<br><span>". $row['subject_code'] . " (Grade " . $row['grade_level'] . " - " . $row['section'] . ")</span></a>";
+                        echo '</div>';
                     }
                 } else {
                     echo "<div class='no-quiz-con'>";
@@ -1029,29 +1297,56 @@ $conn->close();
                     echo "</div>";
                 }
                 ?>
+                </form>
             </div>
 
             </center>
 
             <div id="myModal" class="modal">
-
-              <!-- Modal content -->
-              <div class="modal-content">
-                <span class="close">&times;</span>
-                <br>
-                <form method="post" action="">
-                    <input type="text" name="subject_name" placeholder="Enter Subject" required>
-                    <br>
-                   <!-- <label for="class_name">Enter Class Name (Optional):</label>
-                    <input type="text" id="class_name" name="class_name"> -->
-                    <br>
-                    <center>
-                    <button class="addBtn" type="submit">Create Subject</button>
-                    </center>
-                </form><br>
-              </div>
+                <!-- Modal content -->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2 style="color: #f8b500; font-family: 'Fredoka'; font-size: 28px; font-weight: 600;">Create New Class</h2>
+                        <span class="close">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <form method="post" action="">
+                            <div class="form-group">
+                                <label for="subject_name">Subject Name</label>
+                                <input type="text" name="subject_name" placeholder="e.g. Mathematics, Science" required>
+                                <i class="fas fa-book icon"></i>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="grade_level">Grade Level</label>
+                                <div class="select-wrapper">
+                                    <select name="grade_level" required>
+                                        <option value="" disabled selected>Select grade level</option>
+                                        <option value="7">Grade 7</option>
+                                        <option value="8">Grade 8</option>
+                                        <option value="9">Grade 9</option>
+                                        <option value="10">Grade 10</option>
+                                        <option value="11">Grade 11</option>
+                                        <option value="12">Grade 12</option>
+                                    </select>
+                                    <i class="fas fa-chevron-down icon" id="grade_level"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="section">Section</label>
+                                <input type="text" name="section" placeholder="e.g. A, B, Einstein" required>
+                                <i class="fas fa-users icon"></i>
+                            </div>
+                            
+                            <div class="form-actions">
+                                <button type="button" class="cancel-btn" onclick="modal.style.display='none'">Cancel</button>
+                                <button type="submit" class="submit-btn">Create Subject</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
-        </center>
         
         </div>
     </div>        
@@ -1082,24 +1377,34 @@ $conn->close();
                 localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
             });
         }
+
+        const selectAllCheckbox = document.getElementById('select-all');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.subject-checkbox');
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = selectAllCheckbox.checked;
+                });
+            });
+        }
     });
 
     function profileDropdown() {
-    document.getElementById("dropdown").classList.toggle("show");
-}
+        document.getElementById("dropdown").classList.toggle("show");
+    }
 
-// Close the dropdown if clicked outside
-window.onclick = function(event) {
-    if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
-        var dropdowns = document.getElementsByClassName("dropdown-content");
-        for (var i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
-            if (openDropdown.classList.contains('show')) {
-                openDropdown.classList.remove('show');
+    // Close the dropdown if clicked outside
+    window.onclick = function(event) {
+        if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
             }
         }
     }
-}
 
     // Get the modal
     var modal = document.getElementById("myModal");
@@ -1122,10 +1427,20 @@ window.onclick = function(event) {
 
     // When the user clicks anywhere outside of the modal, close it
     window.onclick = function(event) {
-      if (event.target == modal) {
-        modal.style.display = "none";
-      }
+        if (event.target == document.getElementById("myModal")) {
+            document.getElementById("myModal").style.display = "none";
+            document.querySelector(".modal-content").classList.remove("modal-open");
+        }
     }
+
+    sdocument.querySelectorAll('select').forEach(select => {
+        select.addEventListener('focus', function() {
+            this.nextElementSibling.style.transform = 'rotate(180deg)';
+        });
+        select.addEventListener('blur', function() {
+            this.nextElementSibling.style.transform = 'rotate(0deg)';
+        });
+    });
 </script>
 
 </body>

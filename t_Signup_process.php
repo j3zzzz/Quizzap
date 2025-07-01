@@ -50,12 +50,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $lname = mysqli_real_escape_string($conn, $_POST['lname']);
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
 
-    $sql = "INSERT INTO teachers (account_number, fname, lname, password) VALUES (?, ?, ?, ?)";
+    // Generate school ID (same as in signup form)
+    $letters = substr(str_shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 2);
+    $numbers = str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
+    $school_id = $letters . $numbers;
+
+    $fname = mysqli_real_escape_string($conn, $_POST['fname']);
+    $lname = mysqli_real_escape_string($conn, $_POST['lname']);
+    $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
+    $school_id = $_POST['school_id'];
+
+
+    $sql = "INSERT INTO teachers (account_number, school_id, fname, lname, password) VALUES (?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        $stmt->bind_param("ssss", $account_number, $fname, $lname, $password);
+        $stmt->bind_param("sssss", $account_number, $school_id, $fname, $lname, $password);
 
         $check_user_sql = $conn->prepare ("SELECT * FROM teachers WHERE fname = ? and lname = ?");
         $check_user_sql->bind_param("ss", $fname, $lname);

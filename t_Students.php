@@ -32,17 +32,36 @@ if (isset($_GET['download_template']) && $subject_id) {
     $verify_result = $verify_stmt->get_result();
     
     if ($verify_result->num_rows > 0) {
+        // Get subject details (grade level and section)
+        $subject_details_sql = "SELECT grade_level, section FROM subjects WHERE subject_id = ?";
+        $subject_details_stmt = $conn->prepare($subject_details_sql);
+        $subject_details_stmt->bind_param("i", $subject_id);
+        $subject_details_stmt->execute();
+        $subject_details = $subject_details_stmt->get_result()->fetch_assoc();
+        $subject_details_stmt->close();
+        
+        $subject_grade_level = $subject_details['grade_level'];
+        $subject_section = $subject_details['section'];
+        
         // Fetch students not enrolled in the selected subject
         $csv_query = "SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand, s.section
-                     FROM students s
-                     WHERE NOT EXISTS (
-                         SELECT 1 FROM enrollments e 
-                         WHERE e.student_id = s.student_id 
-                         AND e.subject_id = ?
-                     )
-                     ORDER BY s.lname, s.fname";
+                    FROM students s
+                    WHERE NOT EXISTS (
+                        SELECT 1 FROM enrollments e 
+                        JOIN subjects sub ON e.subject_id = sub.subject_id
+                        WHERE e.student_id = s.student_id 
+                        AND sub.subject_name = (SELECT subject_name FROM subjects WHERE subject_id = ?)
+                        AND sub.grade_level = (SELECT grade_level FROM subjects WHERE subject_id = ?)
+                        AND sub.section = (SELECT section FROM subjects WHERE subject_id = ?)
+                        AND sub.school_id = (SELECT school_id FROM subjects WHERE subject_id = ?)
+                    )
+                    AND s.school_id = (SELECT school_id FROM subjects WHERE subject_id = ?)
+                    AND s.glevel = (SELECT grade_level FROM subjects WHERE subject_id = ?)
+                    AND (s.section = (SELECT section FROM subjects WHERE subject_id = ?) 
+                        OR (SELECT section FROM subjects WHERE subject_id = ?) IS NULL)
+                    ORDER BY s.lname, s.fname";
         $csv_stmt = $conn->prepare($csv_query);
-        $csv_stmt->bind_param("i", $subject_id);
+        $csv_stmt->bind_param("iiiiiiii", $subject_id, $subject_id, $subject_id, $subject_id, $subject_id, $subject_id, $subject_id, $subject_id);
         $csv_stmt->execute();
         $csv_result = $csv_stmt->get_result();
         
@@ -396,16 +415,24 @@ if (isset($_POST['enroll_students'])) {
 // Fetch all registered students (not yet enrolled in the selected subject)
 if ($selected_subject) {
     $all_students_query = "SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand, s.section 
-                          FROM students s
-                          WHERE NOT EXISTS (
-                              SELECT 1 FROM enrollments e 
-                              JOIN subjects sub ON e.subject_id = sub.subject_id
-                              WHERE e.student_id = s.student_id 
-                              AND sub.subject_id = ? 
-                              AND sub.teacher_id = ?
-                          )";
+                        FROM students s
+                        WHERE NOT EXISTS (
+                            SELECT 1 FROM enrollments e 
+                            JOIN subjects sub ON e.subject_id = sub.subject_id
+                            WHERE e.student_id = s.student_id 
+                            AND sub.subject_id = ? 
+                            AND sub.teacher_id = ?
+                        )
+                        AND s.glevel = (
+                            SELECT grade_level FROM subjects WHERE subject_id = ?
+                        )
+                        AND (s.section = (
+                            SELECT section FROM subjects WHERE subject_id = ?
+                        ) OR (
+                            SELECT section FROM subjects WHERE subject_id = ?
+                        ) IS NULL)";
     $all_students_stmt = $conn->prepare($all_students_query);
-    $all_students_stmt->bind_param("is", $selected_subject, $teacher_id);
+    $all_students_stmt->bind_param("isiii", $selected_subject, $teacher_id, $selected_subject, $selected_subject, $selected_subject);
     $all_students_stmt->execute();
     $all_students_result = $all_students_stmt->get_result();
 }

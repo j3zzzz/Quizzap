@@ -5,7 +5,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
 $conn = mysqli_connect("localhost","root","","rawrit");
 if ($conn->connect_error) {
   die("Connection failed: " . $conn->connect_error);
@@ -33,8 +32,8 @@ if (!$subject_id) {
     $subject_stmt->close();
 }
 
-//to fetch the number of students na nag answer nang correct
-$correctWrongCNT = "SELECT q.title, qs.question_text,
+//to fetch the number of students who answered correct/wrong
+$correctWrongCNT = "SELECT q.title, qs.question_id, qs.question_text,
     SUM(sa.is_correct = 1) AS correct_count,
     SUM(sa.is_correct = 0) AS wrong_count
 FROM student_answers sa
@@ -53,7 +52,6 @@ $stmt->bind_param("i", $quiz_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
-
 $analysis_data = [];
 $quiz_title = '';
 
@@ -62,6 +60,32 @@ if ($result->num_rows > 0) {
     if (empty($quiz_title)) {
         $quiz_title = $row['title'];
     }
+    
+    // Get student details for correct answers - using account_number instead of student_number
+    $correct_students_sql = "SELECT s.account_number, s.fname, s.lname 
+                            FROM student_answers sa
+                            JOIN students s ON sa.student_id = s.student_id
+                            WHERE sa.quiz_id = ? AND sa.question_id = ? AND sa.is_correct = 1";
+    $correct_stmt = $conn->prepare($correct_students_sql);
+    $correct_stmt->bind_param("ii", $quiz_id, $row['question_id']);
+    $correct_stmt->execute();
+    $correct_students = $correct_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $correct_stmt->close();
+    
+    // Get student details for wrong answers - using account_number instead of student_number
+    $wrong_students_sql = "SELECT s.account_number, s.fname, s.lname 
+                          FROM student_answers sa
+                          JOIN students s ON sa.student_id = s.student_id
+                          WHERE sa.quiz_id = ? AND sa.question_id = ? AND sa.is_correct = 0";
+    $wrong_stmt = $conn->prepare($wrong_students_sql);
+    $wrong_stmt->bind_param("ii", $quiz_id, $row['question_id']);
+    $wrong_stmt->execute();
+    $wrong_students = $wrong_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $wrong_stmt->close();
+    
+    $row['correct_students'] = $correct_students;
+    $row['wrong_students'] = $wrong_students;
+    
     $analysis_data[] = $row;
   }
 }
@@ -121,12 +145,21 @@ $conn->close();
           } ?>
 
       }
+      
+      function toggleDetails(questionIndex) {
+        const details = document.getElementById(`details-${questionIndex}`);
+        const btn = document.getElementById(`toggle-btn-${questionIndex}`);
+        if (details.style.display === 'none') {
+          details.style.display = 'block';
+          btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i> Hide Details';
+        } else {
+          details.style.display = 'none';
+          btn.innerHTML = '<i class="fa-solid fa-eye"></i> Show Details';
+        }
+      }
     </script>
 
 <style type="text/css">
-
-<style type="text/css">
-
 *{
   font-family:Fredoka;
 }
@@ -331,6 +364,81 @@ $conn->close();
     max-width: 600px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   }
+  
+  .details-btn {
+    background-color: #F8B500;
+    color: #000;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-family: Fredoka;
+    margin: 10px 0;
+    transition: all 0.3s;
+  }
+  
+  .details-btn:hover {
+    background-color: #FCD058;
+  }
+  
+  .details-container {
+    display: none;
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    border-left: 4px solid #F8B500;
+    height: 400px;
+    overflow: auto;
+  }
+
+  .details-container h4{
+    font-weight: 500;
+  }
+  
+  .student-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-top: 10px;
+  }
+  
+  .student-group {
+    flex: 1;
+    min-width: 300px;
+  }
+  
+  .student-group h4 {
+    margin-bottom: 10px;
+    color: #333;
+    border-bottom: 2px solid #F8B500;
+    padding-bottom: 5px;
+  }
+  
+  .student-item {
+    background-color: white;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 5px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  
+  .student-item.correct {
+    border-left: 3px solid #4CAF50;
+  }
+  
+  .student-item.wrong {
+    border-left: 3px solid #f44336;
+  }
+  
+  .student-name {
+    font-weight: bold;
+  }
+  
+  .student-id {
+    color: #666;
+    font-size: 0.9em;
+  }
 
   /* Responsive adjustments */
   @media (max-width: 1200px) {
@@ -357,6 +465,10 @@ $conn->close();
     }
     #main {
       margin-left: 0;
+    }
+    
+    .student-group {
+      min-width: 100%;
     }
   }
 </style>
@@ -409,7 +521,47 @@ $conn->close();
     <div id="graph-area">
       <?php if (!empty($analysis_data)) {
         foreach ($analysis_data as $index => $data) { ?>
-          <div id="piechart<?php echo $index; ?>"></div>
+          <div class="piechart-container">
+            <div id="piechart<?php echo $index; ?>"></div>
+            
+            <button id="toggle-btn-<?php echo $index; ?>" class="details-btn" onclick="toggleDetails(<?php echo $index; ?>)">
+              <i class="fa-solid fa-eye"></i> Show Details
+            </button>
+            
+            <div id="details-<?php echo $index; ?>" class="details-container" style="display: none;">
+              <h3>Detailed Results for Question <?php echo ($index + 1); ?></h3>
+              
+              <div class="student-list">
+                <div class="student-group">
+                  <h4>Correct Answers (<?php echo $data['correct_count']; ?> students)</h4>
+                  <?php if (!empty($data['correct_students'])): ?>
+                    <?php foreach ($data['correct_students'] as $student): ?>
+                      <div class="student-item correct">
+                        <div class="student-name"><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></div>
+                        <div class="student-id">Account #: <?php echo htmlspecialchars($student['account_number']); ?></div>
+                      </div>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <p>No students answered this question correctly.</p>
+                  <?php endif; ?>
+                </div>
+                
+                <div class="student-group">
+                  <h4>Incorrect Answers (<?php echo $data['wrong_count']; ?> students)</h4>
+                  <?php if (!empty($data['wrong_students'])): ?>
+                    <?php foreach ($data['wrong_students'] as $student): ?>
+                      <div class="student-item wrong">
+                        <div class="student-name"><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></div>
+                        <div class="student-id">Account #: <?php echo htmlspecialchars($student['account_number']); ?></div>
+                      </div>
+                    <?php endforeach; ?>
+                  <?php else: ?>
+                    <p>No students answered this question wrong.</p>
+                  <?php endif; ?>
+                </div>
+              </div>
+            </div>
+          </div>
         <?php } 
       } else 
           echo "<div class='no-data'>No data found</div>"; ?>

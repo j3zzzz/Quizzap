@@ -89,6 +89,7 @@ $quiz_type_stmt->close();
 
 // Calculate total scores based on correct answers
 $total_correct_answers = 0;
+$matching_questions = [];
 
 if ($quiz_type) {
     if ($quiz_type === 'Enumeration') {
@@ -133,6 +134,10 @@ if ($quiz_type) {
                 if ($row['question_type'] === 'enumeration') {
                     $correct_answers = explode(',', $row['answer_text']);
                     $total_correct_answers += count($correct_answers);
+                } elseif ($row['question_type'] === 'matching_type') {
+                    // For matching type, count each correct pair as 1 point
+                    $total_correct_answers++;
+                    $matching_questions[$row['question_id']] = $row['answer_text'];
                 } else {
                     $total_correct_answers++;
                 }
@@ -142,7 +147,39 @@ if ($quiz_type) {
     }
 }
 
-$display_score = ($quiz_type === 'Enumeration') ? $adjusted_score : $score; 
+// Calculate display score based on correct pairs for matching questions
+$display_score = ($quiz_type === 'Enumeration') ? $adjusted_score : $score;
+
+// If there are matching questions, adjust the score based on correct pairs
+if (!empty($matching_questions) && isset($wrong_answers)) {
+    $matching_score = 0;
+    
+    foreach ($matching_questions as $question_id => $correct_answer) {
+        if (isset($wrong_answers[$question_id])) {
+            $wrong_data = $wrong_answers[$question_id];
+            if (isset($wrong_data['correct_matches']) && isset($wrong_data['submitted_matches'])) {
+                $correct_pairs = 0;
+                foreach ($wrong_data['submitted_matches'] as $submitted_match) {
+                    foreach ($wrong_data['correct_matches'] as $correct_match) {
+                        if (strcasecmp($submitted_match['left'], $correct_match['left']) === 0 && 
+                            strcasecmp($submitted_match['right'], $correct_match['right']) === 0) {
+                            $correct_pairs++;
+                            break;
+                        }
+                    }
+                }
+                $matching_score += $correct_pairs;
+            }
+        } else {
+            // If not in wrong_answers, all pairs were correct
+            $matching_score += count(explode('|', $correct_answer));
+        }
+    }
+    
+    // Adjust the display score by replacing the matching portion
+    $non_matching_score = $display_score - (count($matching_questions) * 1); // Remove old matching score (1 per question)
+    $display_score = $non_matching_score + $matching_score;
+}
 
 $sql = "SELECT * FROM questions WHERE quiz_id = ?";
 $stmt = $conn->prepare($sql);
@@ -165,6 +202,9 @@ while ($row = $result->fetch_assoc()) {
         if (in_array($quiz_type, ['Multiple Choice', 'True or False', 'Drag & Drop'])) {
             $cleaned_answer = preg_replace('/^[\[\]"\']+|[\[\]"\']+$/', '', $answer_row['answer_text']);
             $answer_row['individual_answer'] = trim($cleaned_answer);
+            $answers[] = $answer_row;
+        } elseif ($row['question_type'] === 'matching_type') {
+            $answer_row['individual_answer'] = $answer_row['answer_text'];
             $answers[] = $answer_row;
         } else {
             $cleaned_answer = preg_replace('/^[\[\]"\']+|[\[\]"\']+$/', '', $answer_row['answer_text']);
@@ -498,6 +538,20 @@ if (!$subject_id) {
                                 echo "</div>";
                             }
                             echo "</div>";
+                            
+                            // Show matching statistics
+                            $total_pairs = count($wrong_data['correct_matches']);
+                            $correct_pairs = 0;
+                            foreach ($wrong_data['submitted_matches'] as $submitted_match) {
+                                foreach ($wrong_data['correct_matches'] as $correct_match) {
+                                    if (strcasecmp($submitted_match['left'], $correct_match['left']) === 0 && 
+                                        strcasecmp($submitted_match['right'], $correct_match['right']) === 0) {
+                                        $correct_pairs++;
+                                        break;
+                                    }
+                                }
+                            }
+                            echo "<div class='match-stats'>You matched $correct_pairs out of $total_pairs pairs correctly.</div>";
                         } else {
                             // User got all matches correct
                             $correct_matches_sql = "SELECT answer_text FROM answers WHERE question_id = ? AND is_correct = 1";
@@ -517,7 +571,19 @@ if (!$subject_id) {
                             }
                             echo "</div>";
                             
+                            // Show perfect match message
+                            $total_pairs_sql = "SELECT COUNT(*) as total FROM answers WHERE question_id = ? AND is_correct = 1";
+                            $total_pairs_stmt = $conn->prepare($total_pairs_sql);
+                            $total_pairs_stmt->bind_param("i", $question['question_id']);
+                            $total_pairs_stmt->execute();
+                            $total_pairs_result = $total_pairs_stmt->get_result();
+                            $total_pairs_row = $total_pairs_result->fetch_assoc();
+                            $total_pairs = $total_pairs_row['total'];
+                            
+                            echo "<div class='match-stats'>You matched all $total_pairs pairs correctly!</div>";
+                            
                             $correct_matches_stmt->close();
+                            $total_pairs_stmt->close();
                         }
                         ?>
                     </div>

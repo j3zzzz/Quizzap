@@ -22,6 +22,59 @@ if ($conn->connect_error) {
 $teacher_id = $_SESSION['account_number'];
 $subject_id = isset($_GET['subject']) ? intval($_GET['subject']) : null;
 
+// Handle CSV template download
+if (isset($_GET['download_template']) && $subject_id) {
+    // Verify the subject belongs to the current teacher
+    $verify_subject_sql = "SELECT 1 FROM subjects WHERE subject_id = ? AND teacher_id = ?";
+    $verify_stmt = $conn->prepare($verify_subject_sql);
+    $verify_stmt->bind_param("is", $subject_id, $teacher_id);
+    $verify_stmt->execute();
+    $verify_result = $verify_stmt->get_result();
+    
+    if ($verify_result->num_rows > 0) {
+        // Fetch students not enrolled in the selected subject
+        $csv_query = "SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand 
+                     FROM students s
+                     WHERE NOT EXISTS (
+                         SELECT 1 FROM enrollments e 
+                         WHERE e.student_id = s.student_id 
+                         AND e.subject_id = ?
+                     )
+                     ORDER BY s.lname, s.fname";
+        $csv_stmt = $conn->prepare($csv_query);
+        $csv_stmt->bind_param("i", $subject_id);
+        $csv_stmt->execute();
+        $csv_result = $csv_stmt->get_result();
+        
+        // Set headers for download
+        header('Content-Type: text/csv');
+        header('Content-Disposition: attachment; filename="student_enrollment.csv"');
+        
+        // Open output stream
+        $output = fopen('php://output', 'w');
+        
+        // Write CSV headers
+        fputcsv($output, ['Account Number', 'First Name', 'Last Name', 'Grade Level', 'Strand']);
+        
+        // Write student data
+        while ($student = $csv_result->fetch_assoc()) {
+            fputcsv($output, [
+                $student['account_number'],
+                $student['fname'],
+                $student['lname'],
+                $student['glevel'],
+                $student['strand'] ?? ''
+            ]);
+        }
+        
+        fclose($output);
+        $csv_stmt->close();
+        $verify_stmt->close();
+        exit();
+    }
+    $verify_stmt->close();
+}
+
 // Fetch profile pic
 $loggedInUser = $_SESSION['account_number'];
 $sql = "SELECT profile_pic FROM teachers WHERE account_number = ?";
@@ -39,6 +92,165 @@ if ($result->num_rows > 0) {
 
 $stmt->close();
 
+// ==================== CSV IMPORT FUNCTIONALITY ====================
+if (isset($_POST['import_csv'])) {
+    $file = $_FILES['csv_file'];
+    $allowed_ext = ['csv'];
+    $filename = $file['name'];
+    $file_ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+
+    if (in_array($file_ext, $allowed_ext)) {
+        $file_tmp = $file['tmp_name'];
+        $handle = fopen($file_tmp, "r");
+        
+        // Read the header row
+        $header = fgetcsv($handle);
+        $header = array_map(function($column) {
+            return strtolower(trim($column));
+        }, $header);
+        
+        // Find the indices of required columns
+        $account_number_index = array_search('account number', $header);
+        $fname_index = array_search('first name', $header);
+        $lname_index = array_search('last name', $header);
+        $glevel_index = array_search('grade level', $header);
+        $strand_index = array_search('strand', $header);
+
+        // Validate mandatory columns
+        if ($account_number_index === false || $fname_index === false || 
+            $lname_index === false || $glevel_index === false) {
+            $message = "Error: CSV file must contain 'Account Number', 'First Name', 'Last Name', and 'Grade Level' columns.";
+        } else {
+            $imported_count = 0;
+            $updated_count = 0;
+            $skipped_count = 0;
+            $conn->begin_transaction();
+            
+            // First, verify the subject belongs to the current teacher
+            $verify_subject_sql = "SELECT 1 FROM subjects WHERE subject_id = ? AND teacher_id = ?";
+            $verify_stmt = $conn->prepare($verify_subject_sql);
+            $verify_stmt->bind_param("is", $subject_id, $teacher_id);
+            $verify_stmt->execute();
+            $verify_result = $verify_stmt->get_result();
+            
+            if ($verify_result->num_rows == 0) {
+                $message = "You should select a subject first in the subject filters.";
+                $conn->rollback();
+            } else {
+                try {
+                    while (($data = fgetcsv($handle)) !== FALSE) {
+                        // Skip empty rows
+                        if (empty(array_filter($data))) {
+                            continue;
+                        }
+                        
+                        // Extract required fields
+                        $account_number = trim($data[$account_number_index]);
+                        $fname = trim($data[$fname_index]);
+                        $lname = trim($data[$lname_index]);
+                        $glevel = intval(trim($data[$glevel_index]));
+                    
+                        // Handle optional strand
+                        $strand = null;
+                        if ($strand_index !== false && isset($data[$strand_index])) {
+                            $strand_value = trim($data[$strand_index]);
+                            // Only set strand for grades 11 and 12
+                            if (in_array($glevel, [11, 12]) && !empty($strand_value)) {
+                                $strand = $strand_value;
+                            }
+                        }
+
+                        // Validate mandatory fields
+                        if (empty($account_number) || empty($fname) || empty($lname) || empty($glevel)) {
+                            $skipped_count++;
+                            continue;
+                        }
+
+                        // Check if the student is already registered in the system
+                        $check_student_sql = "SELECT student_id FROM students WHERE account_number = ?";
+                        $check_student_stmt = $conn->prepare($check_student_sql);
+                        $check_student_stmt->bind_param("s", $account_number);
+                        $check_student_stmt->execute();
+                        $check_student_result = $check_student_stmt->get_result();
+
+                        // If student is not registered, skip this record
+                        if ($check_student_result->num_rows == 0) {
+                            $skipped_count++;
+                            $check_student_stmt->close();
+                            continue;
+                        }
+                        
+                        $student_id = $check_student_result->fetch_assoc()['student_id'];
+                        $check_student_stmt->close();
+
+                        // Check if already enrolled in this subject
+                        $check_enrollment_sql = "SELECT 1 FROM enrollments WHERE student_id = ? AND subject_id = ?";
+                        $check_enrollment_stmt = $conn->prepare($check_enrollment_sql);
+                        $check_enrollment_stmt->bind_param("ii", $student_id, $subject_id);
+                        $check_enrollment_stmt->execute();
+                        $check_enrollment_result = $check_enrollment_stmt->get_result();
+                        
+                        if ($check_enrollment_result->num_rows > 0) {
+                            $skipped_count++;
+                            $check_enrollment_stmt->close();
+                            continue;
+                        }
+                        $check_enrollment_stmt->close();
+
+                        // Insert enrollment
+                        $enrollment_sql = "INSERT INTO enrollments (student_id, subject_id) VALUES (?, ?)";
+                        $enrollment_stmt = $conn->prepare($enrollment_sql);
+                        $enrollment_stmt->bind_param("ii", $student_id, $subject_id);
+
+                        if ($enrollment_stmt->execute()) {
+                            $imported_count++;
+                        }
+                        
+                        $enrollment_stmt->close();
+                    }
+                
+                    $conn->commit();
+                    fclose($handle);
+
+                    // Fetch the actual subject name
+                    $subject_name_sql = "SELECT subject_name FROM subjects WHERE subject_id = ? AND teacher_id = ?";
+                    $subject_name_stmt = $conn->prepare($subject_name_sql);
+                    $subject_name_stmt->bind_param("is", $subject_id, $teacher_id);
+                    $subject_name_stmt->execute();
+                    $subject_name_result = $subject_name_stmt->get_result();
+                    $subject_name = $subject_name_result->fetch_assoc()['subject_name'] ?? 'Unknown Subject';
+                    $subject_name_stmt->close();
+
+                    // Count total enrolled students for this subject
+                    $count_sql = "SELECT COUNT(*) as count FROM enrollments WHERE subject_id = ?";
+                    $count_stmt = $conn->prepare($count_sql);
+                    $count_stmt->bind_param("i", $subject_id);
+                    $count_stmt->execute();
+                    $count_result = $count_stmt->get_result();
+                    $total_students = $count_result->fetch_assoc()['count'];
+                    $count_stmt->close();
+
+                    $_SESSION['enroll_message'] = "Import completed for subject: {$subject_name}.
+                        Total students imported: $imported_count.
+                        Skipped students (already enrolled or invalid): $skipped_count.
+                        Total students in subject: $total_students.";
+
+                    header("Location: t_Students.php?subject=$subject_id");
+                    exit();
+
+                } catch (Exception $e) {
+                    $conn->rollback();
+                    $message = "Error: " . $e->getMessage();
+                }
+            }
+            $verify_stmt->close();
+        }    
+    } else {
+        $message = "Invalid file format. Please upload a CSV file.";
+    }
+}
+
+// ==================== INDIVIDUAL ENROLLMENT FUNCTIONALITY ====================
 // Handle enrollment removal
 if (isset($_POST['remove_student'])) {
     $student_account = $_POST['student_account'];
@@ -937,6 +1149,248 @@ if (isset($_SESSION['enroll_message'])) {
         border: 2px solid #f8b500;
     }
 
+    /* CSV Upload Styles */
+    .csv-upload-section {
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        border: 1px solid #eee;
+    }
+
+    .upload-header {
+        margin-bottom: 25px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .upload-header h2 {
+        color: #333;
+        font-size: 1.5rem;
+        margin-bottom: 5px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .upload-header p {
+        color: #666;
+        font-size: 0.95rem;
+    }
+
+    .upload-steps {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        margin-bottom: 25px;
+    }
+
+    .step {
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .step-number {
+        background-color: #f8b500;
+        color: white;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        flex-shrink: 0;
+        margin-top: 3px;
+    }
+
+    .step-content {
+        flex-grow: 1;
+    }
+
+    .step-content h3 {
+        color: #333;
+        font-size: 1.1rem;
+        margin-bottom: 8px;
+    }
+
+    .step-content p {
+        color: #555;
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+    }
+
+    .step-button {
+        background-color: #f8b500;
+        color: white;
+        border: none;
+        padding: 10px 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: 'Fredoka';
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.3s;
+    }
+
+    .step-button:hover {
+        background-color: #e5941f;
+    }
+
+    .hint-box {
+        background-color: #fff8e1;
+        border-left: 4px solid #ffc107;
+        padding: 10px 15px;
+        border-radius: 4px;
+        font-size: 0.9rem;
+        color: #5d4037;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .upload-form {
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        flex-wrap: wrap;
+    }
+
+    .file-upload-wrapper {
+        position: relative;
+        flex-grow: 1;
+    }
+
+    .file-upload-label {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 15px;
+        background-color: white;
+        border: 2px dashed #f8b500;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-width: 250px;
+    }
+
+    .file-upload-label:hover {
+        background-color: #fffdf6;
+        border-color: #e5941f;
+    }
+
+    #csv-upload {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0,0,0,0);
+        border: 0;
+    }
+
+    .upload-button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: 'Fredoka';
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transition: background-color 0.3s;
+    }
+
+    .upload-button:hover {
+        background-color: #3d8b40;
+    }
+
+    .upload-notes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.9rem;
+        color: #555;
+        background-color: #f5f5f5;
+        padding: 10px 15px;
+        border-radius: 5px;
+    }
+
+    .note i {
+        color: #f8b500;
+    }
+
+    /* Bulk Enrollment Toggle Styles */
+    .bulk-enrollment-toggle {
+        margin-bottom: 15px;
+    }
+
+    .toggle-bulk-btn {
+        background-color: #f8b500;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 5px;
+        cursor: pointer;
+        font-family: 'Fredoka';
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s;
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .toggle-bulk-btn:hover {
+        background-color: #e5941f;
+    }
+
+    .toggle-bulk-btn i:first-child {
+        margin-right: 8px;
+    }
+
+    /* Animation for the chevron icon */
+    #toggleIcon {
+        transition: transform 0.3s ease;
+    }
+
+    /* When section is visible */
+    .bulk-visible #toggleIcon {
+        transform: rotate(180deg);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .upload-form {
+            flex-direction: column;
+            align-items: stretch;
+        }
+        
+        .file-upload-label {
+            justify-content: center;
+        }
+        
+        .upload-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
     </style>
 </head>
 <body>
@@ -992,6 +1446,78 @@ if (isset($_SESSION['enroll_message'])) {
                 </div>
             <?php endif; ?>
 
+            <!-- Bulk Enrollment Toggle Button -->
+            <div class="bulk-enrollment-toggle">
+                <button id="toggleBulkEnrollment" class="toggle-bulk-btn">
+                    <i class="fas fa-users"></i> 
+                    <span id="toggleText">Bulk Enrollment Options</span>
+                    <i class="fas fa-chevron-down" id="toggleIcon"></i>
+                </button>
+            </div>
+
+            <!-- Bulk Enrollment Section -->
+            <div id="bulkEnrollmentSection" class="csv-upload-section" style="display: none;">
+                <div class="upload-header">
+                    <h2><i class="fas fa-file-import"></i> Bulk Student Enrollment</h2>
+                    <p>Easily enroll multiple students at once using a CSV file</p>
+                </div>
+                
+                <div class="upload-steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Download the Template</h3>
+                            <p>Get our pre-formatted CSV file containing all registered students not yet enrolled in your selected subject.</p>
+                            <button id="downloadButton" class="step-button">
+                                <i class="fas fa-download"></i> Download Student List
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Select Students to Enroll</h3>
+                            <p>Open the CSV file and keep only the rows of students you want to enroll (don't modify the column headers).</p>
+                            <div class="hint-box">
+                                <i class="fas fa-lightbulb"></i> Tip: You can delete rows for students you don't want to enroll
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Upload Your File</h3>
+                            <p>Select your modified CSV file and click "Import Students" to complete the enrollment.</p>
+                            <form method="POST" enctype="multipart/form-data" class="upload-form">
+                                <div class="file-upload-wrapper">
+                                    <label for="csv-upload" class="file-upload-label">
+                                        <i class="fas fa-cloud-upload-alt"></i>
+                                        <span id="file-name">Choose your CSV file</span>
+                                        <input type="file" id="csv-upload" name="csv_file" accept=".csv" required>
+                                    </label>
+                                </div>
+                                <button type="submit" name="import_csv" class="upload-button">
+                                    <i class="fas fa-users"></i> Import Students
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="upload-notes">
+                    <div class="note">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <p>Only CSV files downloaded from this system will be accepted</p>
+                    </div>
+                    <div class="note">
+                        <i class="fas fa-check-circle"></i>
+                        <p>The system will automatically skip students already enrolled in this subject</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="filter-container">
                 <label for="subject-filter">Select Subject:</label>
                 <select id="subject-filter" onchange="filterSubject()">
@@ -1027,38 +1553,29 @@ if (isset($_SESSION['enroll_message'])) {
                                 </div>
                                 <?php if ($all_students_result->num_rows > 0): ?>
                                     <table class="student-table" id="available-students-table">
-    <thead>
-        <tr>
-            <th>Select</th>
-            <th>Name</th>
-            <th>Account Number</th>
-            <th>Grade Level</th>
-            <th>Strand</th>
-        </tr>
-    </thead>
-    <tbody>
-        <?php if ($all_students_result->num_rows > 0): ?>
-            <?php 
-            $all_students_result->data_seek(0); // Reset pointer
-            while ($student = $all_students_result->fetch_assoc()): ?>
-                <tr>
-                    <td><input type="checkbox" name="students[]" value="<?php echo htmlspecialchars($student['account_number']); ?>"></td>
-                    <td><?php echo htmlspecialchars($student['lname'] . ', ' . $student['fname']); ?></td>
-                    <td><?php echo htmlspecialchars($student['account_number']); ?></td>
-                    <td><?php echo htmlspecialchars($student['glevel']); ?></td>
-                    <td><?php echo htmlspecialchars($student['strand'] ?? '-'); ?></td>
-                </tr>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <tr class="no-results-row">
-                <td colspan="5" class="empty-message">No students available to enroll.</td>
-            </tr>
-        <?php endif; ?>
-        <tr class="search-no-results" style="display: none;">
-            <td colspan="5" class="empty-message">No matching students found.</td>
-        </tr>
-    </tbody>
-</table>
+                                        <thead>
+                                            <tr>
+                                                <th>Select</th>
+                                                <th>Name</th>
+                                                <th>Account Number</th>
+                                                <th>Grade Level</th>
+                                                <th>Strand</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php 
+                                            $all_students_result->data_seek(0); // Reset pointer
+                                            while ($student = $all_students_result->fetch_assoc()): ?>
+                                                <tr>
+                                                    <td><input type="checkbox" name="students[]" value="<?php echo htmlspecialchars($student['account_number']); ?>"></td>
+                                                    <td><?php echo htmlspecialchars($student['lname'] . ', ' . $student['fname']); ?></td>
+                                                    <td><?php echo htmlspecialchars($student['account_number']); ?></td>
+                                                    <td><?php echo htmlspecialchars($student['glevel']); ?></td>
+                                                    <td><?php echo htmlspecialchars($student['strand'] ?? '-'); ?></td>
+                                                </tr>
+                                            <?php endwhile; ?>
+                                        </tbody>
+                                    </table>
                                 <?php else: ?>
                                     <p>No students available to enroll.</p>
                                 <?php endif; ?>
@@ -1080,67 +1597,55 @@ if (isset($_SESSION['enroll_message'])) {
                 <!-- Enrolled Students Table -->
                 <div class="student-table-container">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                    <h3 style="margin: 0;"><?php echo $selected_subject ? 'Currently Enrolled Students' : 'All Enrolled Students'; ?></h3>
-                    <div>
-                        <input type="text" id="enrolled-search" placeholder="Search enrolled students..." style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd; width: 250px;">
+                        <h3 style="margin: 0;"><?php echo $selected_subject ? 'Currently Enrolled Students' : 'All Enrolled Students'; ?></h3>
+                        <div>
+                            <input type="text" id="enrolled-search" placeholder="Search enrolled students..." style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd; width: 250px;">
+                        </div>
                     </div>
-                </div>
-                <?php if ($enrolled_students_result->num_rows > 0): ?>
-                    
+                    <?php if ($enrolled_students_result->num_rows > 0): ?>
                         <table class="student-table" id="enrolled-students-table">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Account Number</th>
-            <th>Grade Level</th>
-            <th>Strand</th>
-            <?php if (!$selected_subject): ?>
-                <th>Subject</th>
-            <?php endif; ?>
-            <?php if ($selected_subject): ?>
-                <th>Action</th>
-            <?php endif; ?>
-        </tr>
-    </thead>
-    <tbody>
-        <?php if ($enrolled_students_result->num_rows > 0): ?>
-            <?php 
-            $enrolled_students_result->data_seek(0);
-            while ($student = $enrolled_students_result->fetch_assoc()): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($student['lname'] . ', ' . $student['fname']); ?></td>
-                    <td><?php echo htmlspecialchars($student['account_number']); ?></td>
-                    <td><?php echo htmlspecialchars($student['glevel']); ?></td>
-                    <td><?php echo htmlspecialchars($student['strand'] ?? '-'); ?></td>
-                    <?php if (!$selected_subject): ?>
-                        <td><?php echo htmlspecialchars($student['subject_name']); ?></td>
-                    <?php endif; ?>
-                    <?php if ($selected_subject): ?>
-                        <td>
-                            <form method="POST" style="display: inline;">
-                                <input type="hidden" name="student_account" value="<?php echo htmlspecialchars($student['account_number']); ?>">
-                                <input type="hidden" name="subject_id" value="<?php echo $selected_subject; ?>">
-                                <button type="submit" name="remove_student" class="remove-btn" 
-                                    onclick="return confirm('Are you sure you want to remove this student from the subject?')">
-                                    <i class="fas fa-user-minus"></i> Remove
-                                </button>
-                            </form>
-                        </td>
-                    <?php endif; ?>
-                </tr>
-            <?php endwhile; ?>
-        <?php else: ?>
-            <tr class="no-results-row">
-                <td colspan="<?php echo $selected_subject ? '5' : '6'; ?>" class="empty-message">
-                    <?php echo $selected_subject ? 'No students enrolled in this subject yet.' : 'No students enrolled in any of your subjects yet.'; ?>
-                </td>
-            </tr>
-        <?php endif; ?>
-        <tr class="search-no-results" style="display: none;">
-            <td colspan="<?php echo $selected_subject ? '5' : '6'; ?>" class="empty-message">No matching students found.</td>
-        </tr>
-    </tbody>
-</table>
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Account Number</th>
+                                    <th>Grade Level</th>
+                                    <th>Strand</th>
+                                    <?php if (!$selected_subject): ?>
+                                        <th>Subject</th>
+                                    <?php endif; ?>
+                                    <?php if ($selected_subject): ?>
+                                        <th>Action</th>
+                                    <?php endif; ?>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php 
+                                $enrolled_students_result->data_seek(0);
+                                while ($student = $enrolled_students_result->fetch_assoc()): ?>
+                                    <tr>
+                                        <td><?php echo htmlspecialchars($student['lname'] . ', ' . $student['fname']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['account_number']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['glevel']); ?></td>
+                                        <td><?php echo htmlspecialchars($student['strand'] ?? '-'); ?></td>
+                                        <?php if (!$selected_subject): ?>
+                                            <td><?php echo htmlspecialchars($student['subject_name']); ?></td>
+                                        <?php endif; ?>
+                                        <?php if ($selected_subject): ?>
+                                            <td>
+                                                <form method="POST" style="display: inline;">
+                                                    <input type="hidden" name="student_account" value="<?php echo htmlspecialchars($student['account_number']); ?>">
+                                                    <input type="hidden" name="subject_id" value="<?php echo $selected_subject; ?>">
+                                                    <button type="submit" name="remove_student" class="remove-btn" 
+                                                        onclick="return confirm('Are you sure you want to remove this student from the subject?')">
+                                                        <i class="fas fa-user-minus"></i> Remove
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        <?php endif; ?>
+                                    </tr>
+                                <?php endwhile; ?>
+                            </tbody>
+                        </table>
                     <?php else: ?>
                         <p><?php echo $selected_subject ? 'No students enrolled in this subject yet.' : 'No students enrolled in any of your subjects yet.'; ?></p>
                     <?php endif; ?>
@@ -1175,80 +1680,102 @@ if (isset($_SESSION['enroll_message'])) {
             });
         }
 
+        // Bulk Enrollment Toggle Functionality
+        const bulkToggleBtn = document.getElementById('toggleBulkEnrollment');
+        const bulkSection = document.getElementById('bulkEnrollmentSection');
+        const toggleText = document.getElementById('toggleText');
+        const toggleIcon = document.getElementById('toggleIcon');
+        
+        // Check if state is saved in localStorage
+        const isBulkVisible = localStorage.getItem('bulkEnrollmentVisible') === 'true';
+        
+        // Set initial state
+        if (isBulkVisible) {
+            bulkSection.style.display = 'block';
+            toggleText.textContent = 'Hide Bulk Enrollment Options';
+            bulkToggleBtn.classList.add('bulk-visible');
+        }
+        
+        bulkToggleBtn.addEventListener('click', function() {
+            if (bulkSection.style.display === 'none') {
+                // Show section
+                bulkSection.style.display = 'block';
+                toggleText.textContent = 'Hide Bulk Enrollment Options';
+                bulkToggleBtn.classList.add('bulk-visible');
+                localStorage.setItem('bulkEnrollmentVisible', 'true');
+            } else {
+                // Hide section
+                bulkSection.style.display = 'none';
+                toggleText.textContent = 'Show Bulk Enrollment Options';
+                bulkToggleBtn.classList.remove('bulk-visible');
+                localStorage.setItem('bulkEnrollmentVisible', 'false');
+            }
+        });
+
+        // File name display for CSV upload
+        document.getElementById('csv-upload').addEventListener('change', function(e) {
+            const fileName = e.target.files[0] ? e.target.files[0].name : 'Choose your CSV file';
+            document.getElementById('file-name').textContent = fileName;
+        });
+
         // Search functionality for available students
         const availableSearch = document.getElementById('available-search');
-if (availableSearch) {
-    availableSearch.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#available-students-table tbody tr:not(.no-results-row):not(.search-no-results)');
-        const noResultsRow = document.querySelector('#available-students-table .search-no-results');
-        let hasVisibleRows = false;
-        
-        rows.forEach(row => {
-            const name = row.cells[1].textContent.toLowerCase();
-            const accountNumber = row.cells[2].textContent.toLowerCase();
-            const gradeLevel = row.cells[3].textContent.toLowerCase();
-            const strand = row.cells[4].textContent.toLowerCase();
-            
-            if (name.includes(searchTerm) || 
-                accountNumber.includes(searchTerm) || 
-                gradeLevel.includes(searchTerm) || 
-                strand.includes(searchTerm)) {
-                row.style.display = '';
-                hasVisibleRows = true;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        // Show/hide no results message
-        if (hasVisibleRows || searchTerm === '') {
-            noResultsRow.style.display = 'none';
-        } else {
-            noResultsRow.style.display = '';
-        }
-    });
-}
-
-// Search functionality for enrolled students
-const enrolledSearch = document.getElementById('enrolled-search');
-if (enrolledSearch) {
-    enrolledSearch.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        const rows = document.querySelectorAll('#enrolled-students-table tbody tr:not(.no-results-row):not(.search-no-results)');
-        const noResultsRow = document.querySelector('#enrolled-students-table .search-no-results');
-        let hasVisibleRows = false;
-        
-        rows.forEach(row => {
-            let found = false;
-            // Check each cell in the row (except the action cell if it exists)
-            for (let i = 0; i < row.cells.length; i++) {
-                // Skip the action column if it exists
-                if (row.cells[i].querySelector('.remove-btn')) continue;
+        if (availableSearch) {
+            availableSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#available-students-table tbody tr');
+                let hasVisibleRows = false;
                 
-                const cellText = row.cells[i].textContent.toLowerCase();
-                if (cellText.includes(searchTerm)) {
-                    found = true;
-                    break;
-                }
-            }
-            
-            if (found) {
-                row.style.display = '';
-                hasVisibleRows = true;
-            } else {
-                row.style.display = 'none';
-            }
-        });
-        
-        // Show/hide no results message
-        if (hasVisibleRows || searchTerm === '') {
-            noResultsRow.style.display = 'none';
-        } else {
-            noResultsRow.style.display = '';
+                rows.forEach(row => {
+                    const name = row.cells[1].textContent.toLowerCase();
+                    const accountNumber = row.cells[2].textContent.toLowerCase();
+                    const gradeLevel = row.cells[3].textContent.toLowerCase();
+                    const strand = row.cells[4].textContent.toLowerCase();
+                    
+                    if (name.includes(searchTerm) || 
+                        accountNumber.includes(searchTerm) || 
+                        gradeLevel.includes(searchTerm) || 
+                        strand.includes(searchTerm)) {
+                        row.style.display = '';
+                        hasVisibleRows = true;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
         }
-    });
-}
+
+        // Search functionality for enrolled students
+        const enrolledSearch = document.getElementById('enrolled-search');
+        if (enrolledSearch) {
+            enrolledSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('#enrolled-students-table tbody tr');
+                let hasVisibleRows = false;
+                
+                rows.forEach(row => {
+                    let found = false;
+                    // Check each cell in the row (except the action cell if it exists)
+                    for (let i = 0; i < row.cells.length; i++) {
+                        // Skip the action column if it exists
+                        if (row.cells[i].querySelector('.remove-btn')) continue;
+                        
+                        const cellText = row.cells[i].textContent.toLowerCase();
+                        if (cellText.includes(searchTerm)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    
+                    if (found) {
+                        row.style.display = '';
+                        hasVisibleRows = true;
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+        }
 
         // Toggle available students table
         const enrollNewBtn = document.getElementById('enroll-new-btn');
@@ -1278,31 +1805,41 @@ if (enrolledSearch) {
                 });
             }
         }
+
+        // Add download event listener
+        document.getElementById('downloadButton').addEventListener('click', function() {
+            const selectedSubject = document.getElementById('subject-filter').value;
+            if (!selectedSubject) {
+                alert('Please select a subject first');
+                return;
+            }
+            window.location.href = `t_Students.php?download_template=1&subject=${selectedSubject}`;
+        });
     });
 
     function profileDropdown() {
-    document.getElementById("dropdown").classList.toggle("show");
-}
+        document.getElementById("dropdown").classList.toggle("show");
+    }
 
-// Close the dropdown if clicked outside
-window.onclick = function(event) {
-    if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
-        var dropdowns = document.getElementsByClassName("dropdown-content");
-        for (var i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
-            if (openDropdown.classList.contains('show')) {
-                openDropdown.classList.remove('show');
+    // Close the dropdown if clicked outside
+    window.onclick = function(event) {
+        if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
+                }
             }
         }
     }
-}
 
     // Subject filter function
     function filterSubject() {
         const selectedSubject = document.getElementById('subject-filter').value;
         window.location.href = `t_Students.php?subject=${selectedSubject}`;
     }
-</script>
+    </script>
 </body>
 </html>
 

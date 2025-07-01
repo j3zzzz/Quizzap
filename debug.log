@@ -1,0 +1,45 @@
+[21-Jun-2025 16:56:42 Europe/Berlin] Session account_number: T006
+[21-Jun-2025 16:56:42 Europe/Berlin] Database connection successful
+[21-Jun-2025 16:56:42 Europe/Berlin] POST data received: Array
+(
+    [subject_id] => 100
+    [quiz_type] => Matching Words
+    [title] => match
+    [timer] => 1
+    [questions] => Array
+        (
+            [0] => try
+        )
+
+    [left_items] => Array
+        (
+            [0] => Array
+                (
+                    [0] => ans1
+                    [1] => left
+                )
+
+        )
+
+    [right_items] => Array
+        (
+            [0] => Array
+                (
+                    [0] => ans2
+                    [1] => right
+                )
+
+        )
+
+)
+
+[21-Jun-2025 16:56:42 Europe/Berlin] Subject ID: 100
+[21-Jun-2025 16:56:42 Europe/Berlin] Quiz Title: match
+[21-Jun-2025 16:56:42 Europe/Berlin] Timer: 1
+[21-Jun-2025 16:56:42 Europe/Berlin] Quiz Type: Matching Words
+[21-Jun-2025 16:56:42 Europe/Berlin] Questions count: 1
+[21-Jun-2025 16:56:42 Europe/Berlin] Quiz inserted successfully with ID: 543
+[21-Jun-2025 16:56:42 Europe/Berlin] Processing question 1: try
+[21-Jun-2025 16:56:42 Europe/Berlin] Question inserted with ID: 676
+[21-Jun-2025 16:56:42 Europe/Berlin] No answers found for question at index 0
+[21-Jun-2025 16:56:42 Europe/Berlin] All questions inserted successfully

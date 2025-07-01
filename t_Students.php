@@ -33,7 +33,7 @@ if (isset($_GET['download_template']) && $subject_id) {
     
     if ($verify_result->num_rows > 0) {
         // Fetch students not enrolled in the selected subject
-        $csv_query = "SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand 
+        $csv_query = "SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand, s.section
                      FROM students s
                      WHERE NOT EXISTS (
                          SELECT 1 FROM enrollments e 
@@ -54,7 +54,7 @@ if (isset($_GET['download_template']) && $subject_id) {
         $output = fopen('php://output', 'w');
         
         // Write CSV headers
-        fputcsv($output, ['Account Number', 'First Name', 'Last Name', 'Grade Level', 'Strand']);
+        fputcsv($output, ['Account Number', 'First Name', 'Last Name', 'Grade Level', 'Strand', 'Section']);
         
         // Write student data
         while ($student = $csv_result->fetch_assoc()) {
@@ -63,7 +63,8 @@ if (isset($_GET['download_template']) && $subject_id) {
                 $student['fname'],
                 $student['lname'],
                 $student['glevel'],
-                $student['strand'] ?? ''
+                $student['strand'] ?? '',
+                $student['section'] ?? ''
             ]);
         }
         
@@ -115,6 +116,7 @@ if (isset($_POST['import_csv'])) {
         $lname_index = array_search('last name', $header);
         $glevel_index = array_search('grade level', $header);
         $strand_index = array_search('strand', $header);
+        $section_index = array_search('section', $header);
 
         // Validate mandatory columns
         if ($account_number_index === false || $fname_index === false || 
@@ -157,6 +159,15 @@ if (isset($_POST['import_csv'])) {
                             // Only set strand for grades 11 and 12
                             if (in_array($glevel, [11, 12]) && !empty($strand_value)) {
                                 $strand = $strand_value;
+                            }
+                        }
+                        
+                        // Handle optional section
+                        $section = null;
+                        if ($section_index !== false && isset($data[$section_index])) {
+                            $section_value = trim($data[$section_index]);
+                            if (!empty($section_value)) {
+                                $section = $section_value;
                             }
                         }
 
@@ -384,7 +395,7 @@ if (isset($_POST['enroll_students'])) {
 
 // Fetch all registered students (not yet enrolled in the selected subject)
 if ($selected_subject) {
-    $all_students_query = "SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand 
+    $all_students_query = "SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand, s.section 
                           FROM students s
                           WHERE NOT EXISTS (
                               SELECT 1 FROM enrollments e 
@@ -403,7 +414,7 @@ if ($selected_subject) {
 if ($selected_subject) {
     // Query for specific subject (no subject column needed)
     $enrolled_students_query = "
-        SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand
+        SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand, s.section
         FROM students s
         JOIN enrollments e ON s.student_id = e.student_id
         JOIN subjects sub ON sub.subject_id = e.subject_id
@@ -415,7 +426,7 @@ if ($selected_subject) {
 } else {
     // Query for all subjects (include subject column)
     $enrolled_students_query = "
-        SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand, sub.subject_name
+        SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand, s.section, sub.subject_name
         FROM students s
         JOIN enrollments e ON s.student_id = e.student_id
         JOIN subjects sub ON sub.subject_id = e.subject_id
@@ -1560,6 +1571,7 @@ if (isset($_SESSION['enroll_message'])) {
                                                 <th>Account Number</th>
                                                 <th>Grade Level</th>
                                                 <th>Strand</th>
+                                                <th>Section</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -1572,6 +1584,7 @@ if (isset($_SESSION['enroll_message'])) {
                                                     <td><?php echo htmlspecialchars($student['account_number']); ?></td>
                                                     <td><?php echo htmlspecialchars($student['glevel']); ?></td>
                                                     <td><?php echo htmlspecialchars($student['strand'] ?? '-'); ?></td>
+                                                    <td><?php echo htmlspecialchars($student['section'] ?? '-'); ?></td>
                                                 </tr>
                                             <?php endwhile; ?>
                                         </tbody>
@@ -1610,6 +1623,7 @@ if (isset($_SESSION['enroll_message'])) {
                                     <th>Account Number</th>
                                     <th>Grade Level</th>
                                     <th>Strand</th>
+                                    <th>Section</th>
                                     <?php if (!$selected_subject): ?>
                                         <th>Subject</th>
                                     <?php endif; ?>
@@ -1627,6 +1641,7 @@ if (isset($_SESSION['enroll_message'])) {
                                         <td><?php echo htmlspecialchars($student['account_number']); ?></td>
                                         <td><?php echo htmlspecialchars($student['glevel']); ?></td>
                                         <td><?php echo htmlspecialchars($student['strand'] ?? '-'); ?></td>
+                                        <td><?php echo htmlspecialchars($student['section'] ?? '-'); ?></td>
                                         <?php if (!$selected_subject): ?>
                                             <td><?php echo htmlspecialchars($student['subject_name']); ?></td>
                                         <?php endif; ?>
@@ -1731,11 +1746,13 @@ if (isset($_SESSION['enroll_message'])) {
                     const accountNumber = row.cells[2].textContent.toLowerCase();
                     const gradeLevel = row.cells[3].textContent.toLowerCase();
                     const strand = row.cells[4].textContent.toLowerCase();
+                    const section = row.cells[5].textContent.toLowerCase();
                     
                     if (name.includes(searchTerm) || 
                         accountNumber.includes(searchTerm) || 
                         gradeLevel.includes(searchTerm) || 
-                        strand.includes(searchTerm)) {
+                        strand.includes(searchTerm) ||
+                        section.includes(searchTerm)) {
                         row.style.display = '';
                         hasVisibleRows = true;
                     } else {

@@ -77,13 +77,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $question_type = $_POST['question_type'][$i];
             $question_text = trim($conn->real_escape_string($question_text));
             
-            // Insert question
-            $stmt = $conn->prepare("INSERT INTO questions (quiz_id, question_type, question_text) VALUES (?, ?, ?)");
+            // Get instructions if they exist
+            $instructions = isset($_POST['instructions'][$i]) ? trim($conn->real_escape_string($_POST['instructions'][$i])) : null;
+            
+            // Insert question with instructions
+            $stmt = $conn->prepare("INSERT INTO questions (quiz_id, question_type, question_text, instructions) VALUES (?, ?, ?, ?)");
             if (!$stmt) {
                 throw new Exception("Prepare failed: " . $conn->error);
             }
             
-            $stmt->bind_param("iss", $quiz_id, $question_type, $question_text);
+            $stmt->bind_param("isss", $quiz_id, $question_type, $question_text, $instructions);
             
             if (!$stmt->execute()) {
                 throw new Exception("Error creating question: " . $stmt->error);
@@ -152,24 +155,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     break;
                     
-                    case 'enumeration':
-                        if (empty($_POST['correct_option'][$i])) {
-                            throw new Exception("Missing correct answers for enumeration question " . ($i + 1));
-                        }
+                case 'enumeration':
+                    if (empty($_POST['correct_option'][$i])) {
+                        throw new Exception("Missing correct answers for enumeration question " . ($i + 1));
+                    }
+                    
+                    // Save all enumeration answers as a single comma-separated string
+                    $answers = $_POST['correct_option'][$i];
+                    $answer_text = trim($conn->real_escape_string($answers));
+                    
+                    if (!empty($answer_text)) {
+                        $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
+                        $stmt->bind_param("is", $question_id, $answer_text);
                         
-                        // Save all enumeration answers as a single comma-separated string
-                        $answers = $_POST['correct_option'][$i];
-                        $answer_text = trim($conn->real_escape_string($answers));
-                        
-                        if (!empty($answer_text)) {
-                            $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
-                            $stmt->bind_param("is", $question_id, $answer_text);
-                            
-                            if (!$stmt->execute()) {
-                                throw new Exception("Error saving enumeration answer: " . $stmt->error);
-                            }
+                        if (!$stmt->execute()) {
+                            throw new Exception("Error saving enumeration answer: " . $stmt->error);
                         }
-                        break;
+                    }
+                    break;
                     
                 case 'drag_and_drop':
                     if (empty($_POST['answers'][$i]) || !is_array($_POST['answers'][$i])) {
@@ -196,52 +199,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                     break;
                     
-                    case 'matching_type':
-                        if (empty($_POST['left_items'][$i]) || empty($_POST['right_items'][$i]) || 
-                            !is_array($_POST['left_items'][$i]) || !is_array($_POST['right_items'][$i])) {
-                            throw new Exception("Missing left or right items for matching question " . ($i + 1));
+                case 'matching_type':
+                    if (empty($_POST['left_items'][$i]) || empty($_POST['right_items'][$i]) || 
+                        !is_array($_POST['left_items'][$i]) || !is_array($_POST['right_items'][$i])) {
+                        throw new Exception("Missing left or right items for matching question " . ($i + 1));
+                    }
+                    
+                    if (count($_POST['left_items'][$i]) !== count($_POST['right_items'][$i])) {
+                        throw new Exception("Number of left and right items don't match for question " . ($i + 1));
+                    }
+                    
+                    // Prepare arrays for left and right items
+                    $left_items = [];
+                    $right_items = [];
+                    
+                    foreach ($_POST['left_items'][$i] as $pair_index => $left_item) {
+                        if (!isset($_POST['right_items'][$i][$pair_index])) continue;
+                        
+                        $left_item = trim($conn->real_escape_string($left_item));
+                        $right_item = trim($conn->real_escape_string($_POST['right_items'][$i][$pair_index]));
+                        
+                        if (empty($left_item) || empty($right_item)) {
+                            continue; // Skip empty pairs
                         }
                         
-                        if (count($_POST['left_items'][$i]) !== count($_POST['right_items'][$i])) {
-                            throw new Exception("Number of left and right items don't match for question " . ($i + 1));
+                        $left_items[] = $left_item;
+                        $right_items[] = $right_item;
+                        
+                        // Changed from " - " to "|"
+                        $answer_text = "$left_item|$right_item";
+                        
+                        $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
+                        $stmt->bind_param("is", $question_id, $answer_text);
+                        
+                        if (!$stmt->execute()) {
+                            throw new Exception("Error saving matching pair: " . $stmt->error);
                         }
-                        
-                        // Prepare arrays for left and right items
-                        $left_items = [];
-                        $right_items = [];
-                        
-                        foreach ($_POST['left_items'][$i] as $pair_index => $left_item) {
-                            if (!isset($_POST['right_items'][$i][$pair_index])) continue;
-                            
-                            $left_item = trim($conn->real_escape_string($left_item));
-                            $right_item = trim($conn->real_escape_string($_POST['right_items'][$i][$pair_index]));
-                            
-                            if (empty($left_item) || empty($right_item)) {
-                                continue; // Skip empty pairs
-                            }
-                            
-                            $left_items[] = $left_item;
-                            $right_items[] = $right_item;
-                            
-                            // Changed from " - " to "|"
-                            $answer_text = "$left_item|$right_item";
-                            
-                            $stmt = $conn->prepare("INSERT INTO answers (question_id, answer_text, is_correct) VALUES (?, ?, 1)");
-                            $stmt->bind_param("is", $question_id, $answer_text);
-                            
-                            if (!$stmt->execute()) {
-                                throw new Exception("Error saving matching pair: " . $stmt->error);
-                            }
-                        }
-                        
-                        // Update the question with left and right items as JSON
-                        $left_json = json_encode($left_items);
-                        $right_json = json_encode($right_items);
-                        
-                        $update_stmt = $conn->prepare("UPDATE questions SET left_items = ?, right_items = ? WHERE question_id = ?");
-                        $update_stmt->bind_param("ssi", $left_json, $right_json, $question_id);
-                        $update_stmt->execute();
-                        break;
+                    }
+                    
+                    // Update the question with left and right items as JSON
+                    $left_json = json_encode($left_items);
+                    $right_json = json_encode($right_items);
+                    
+                    $update_stmt = $conn->prepare("UPDATE questions SET left_items = ?, right_items = ? WHERE question_id = ?");
+                    $update_stmt->bind_param("ssi", $left_json, $right_json, $question_id);
+                    $update_stmt->execute();
+                    break;
             }
         }
         

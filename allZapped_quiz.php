@@ -334,7 +334,7 @@
     }    
 
     // Limit to 10 questions
-    $sql = "SELECT question_id, question_text, question_type, left_items, right_items FROM questions WHERE quiz_id = $quiz_id";
+    $sql = "SELECT question_id, question_text, question_type, left_items, right_items, instructions FROM questions WHERE quiz_id = $quiz_id";
     $result = $conn->query($sql);
 
     $questions = [];
@@ -823,6 +823,20 @@
             /* Error state for auto-save */
             .auto-save-error .check-icon-path {
                 stroke: #dc3545;
+            }
+
+            .instruction-label {
+                font-weight: 500;
+                color: black;
+                margin-bottom: 3px;
+            }
+
+            .instruction-text {
+                color: #555;
+                font-size: 15px;
+                margin-bottom: 15px;
+                padding: 8px;
+                border-radius: 0 4px 4px 0;
             }
             
         </style>
@@ -1669,56 +1683,66 @@
 
         // Modify fetch to add error handling
         function renderQuestions() {
-            const quizQuestionsDiv = document.getElementById('quiz-questions');
+    const quizQuestionsDiv = document.getElementById('quiz-questions');
+    
+    questions.forEach((question, index) => {
+        const questionDiv = document.createElement('div');
+        questionDiv.className = 'question';
+        questionDiv.dataset.questionId = question.question_id;
+        questionDiv.dataset.questionType = question.question_type;
+
+        const questionContent = document.createElement('div');
+        questionContent.style.position = 'relative';
+
+        // Add instructions if they exist (before the question)
+        if (question.instructions && question.instructions.trim() !== '') {
+            const instructionContainer = document.createElement('div');
+            instructionContainer.className = 'instruction-container';
             
-            questions.forEach((question, index) => {
-                const questionDiv = document.createElement('div');
-                questionDiv.className = 'question';
-                questionDiv.dataset.questionId = question.question_id;
-                questionDiv.dataset.questionType = question.question_type;
-
-                const questionTextContainer = document.createElement('div');
-                questionTextContainer.style.position = 'relative'; 
-                
-                // Question number and text
-                const questionNumberText = document.createElement('p');
-                questionNumberText.innerText = `${index + 1}. ${question.question_text} `;     
-                questionNumberText.className = 'question-text';
-
-                // Add TTS button to the question text
-                const ttsButton = createTTSButton(question.question_id, question.question_text, index + 1);
-                questionNumberText.appendChild(ttsButton);
-
-                questionTextContainer.appendChild(questionNumberText);
-                questionDiv.appendChild(questionTextContainer);
-                
-                // Answers container
-                const answersDiv = document.createElement('div');
-                answersDiv.className = 'answers';
-                answersDiv.id = `answers-${question.question_id}`;
-                
-                // Fetch and render answers for this question
-                fetch(`allZapped_getAnswer.php?question_id=${question.question_id}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.json();
-                    })
-                    .then(data => {
-                        // Pass the question_type from the current question
-                        renderAnswers(data, question, answersDiv, question.question_type);
-                    })
-                    .catch(error => {
-                        console.error('Error fetching answers:', error);
-                        answersDiv.innerHTML = `<p>Error loading answers: ${error.message}</p>`;
-                    });
-                
-                questionDiv.appendChild(answersDiv);
-                quizQuestionsDiv.appendChild(questionDiv);
-            });
+            const instructionLabel = document.createElement('div');
+            instructionLabel.className = 'instruction-label';
+            instructionLabel.textContent = 'Instruction:';
+            
+            const instructionText = document.createElement('div');
+            instructionText.className = 'instruction-text';
+            instructionText.textContent = question.instructions;
+            
+            instructionContainer.appendChild(instructionLabel);
+            instructionContainer.appendChild(instructionText);
+            questionContent.appendChild(instructionContainer);
         }
 
+        // Question number and text
+        const questionNumberText = document.createElement('p');
+        questionNumberText.innerText = `${index + 1}. ${question.question_text}`;     
+        questionNumberText.className = 'question-text';
+
+        // Add TTS button to the question text
+        const ttsButton = createTTSButton(question.question_id, question.question_text, index + 1);
+        questionNumberText.appendChild(ttsButton);
+
+        questionContent.appendChild(questionNumberText);
+        questionDiv.appendChild(questionContent);
+        
+        // Answers container
+        const answersDiv = document.createElement('div');
+        answersDiv.className = 'answers';
+        answersDiv.id = `answers-${question.question_id}`;
+        
+        fetch(`allZapped_getAnswer.php?question_id=${question.question_id}`)
+            .then(response => response.json())
+            .then(data => {
+                renderAnswers(data, question, answersDiv, question.question_type);
+            })
+            .catch(error => {
+                console.error('Error fetching answers:', error);
+                answersDiv.innerHTML = `<p>Error loading answers: ${error.message}</p>`;
+            });
+        
+        questionDiv.appendChild(answersDiv);
+        quizQuestionsDiv.appendChild(questionDiv);
+    });
+}
         function saveAnswer(questionId, answer) {
             // Standardize answer format based on question type
             const questionDiv = document.querySelector(`[data-question-id="${questionId}"]`);

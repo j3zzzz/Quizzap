@@ -724,104 +724,147 @@ $conn->close();
         }
 
         function getQuestionTemplate(questType, index) {
-            switch (questType) {
-                case "multiple_choice":
-                    return `
-                    <h4>Multiple Choice</h4>
-                        <div class="question-container">
-                        <label>Question: </label>
-                        <input type="text" name="questions[]" required>
-                            <input type="radio" name="correct[${index}]" value="0" required>
-                            <label for="answer-${index}-1">Answer 1 : </label>
-                            <input type="text" id="answer-${index}-1" name="answers[${index}][]" required>
-                            
-                            <input type="radio" name="correct[${index}]" value="1">
-                            <label for="answer-${index}-2">Answer 2 : </label>
-                            <input type="text" id="answer-${index}-2" name="answers[${index}][]" required>
-                            
-                            <input type="radio" name="correct[${index}]" value="2">
-                            <label for="answer-${index}-3">Answer 3 : </label>
-                            <input type="text" id="answer-${index}-3" name="answers[${index}][]" required>
-                            
-                            <input type="radio" name="correct[${index}]" value="3">
-                            <label for="answer-${index}-4">Answer 4 : </label>
-                            <input type="text" id="answer-${index}-4" name="answers[${index}][]" required>
-                        </div>`;
-                case "true_or_false":
-                    return `
-                        <h4>True or False</h4>
-                        <label>Question: </label>
-                        <input type="text" name="questions[]" required>
-                        <label>Correct Answer: </label>
-                        <select name="correct_option[${index}]">
-                            <option value="True">True</option>
-                            <option value="False">False</option>
-                        </select>`;
-                case "enumeration":
-                    return `
-                        <h4>Enumeration</h4>
-                        <label>Question: </label>
-                        <input type="text" name="questions[]" required>
-                        <label>Correct Answers (comma separated): </label>
-                        <input type="text" name="correct_option[${index}]" placeholder="e.g. answer1, answer2, answer3" required>`;
-                case "identification":
-                    return `
-                        <h4>Identification</h4>
-                        <label>Question: </label>
-                        <input type="text" name="questions[]" required>
-                        <label>Correct Answer: </label>
-                        <input type="text" name="correct_option[${index}]" required>`;
-                case "fill_in_the_blanks":
-                    return `
-                        <h4>Fill in the Blanks</h4>
-                        <label>Question (use '_____' for the blank): </label>
-                        <input type="text" name="questions[]" required>
-                        <label>Correct Answer: </label>
-                        <input type="text" name="correct_option[${index}]" required>`;
-                case "drag_and_drop":
-                    return `
-                        <h4>Drag and Drop</h4>
-                        <label for="question">Question:</label>
-                        <input type="text" name="questions[]" required>
-                        <br><br>
-                        <label>Choices:</label>
-                        <div class="answers-container" id="answers-container-${index}">
-                            <div class="answer-wrapper">
-                                <input type="radio" name="correct_answer[${index}]" value="0">
-                                <input type="text" class="drag-input" name="answers[${index}][]" required placeholder="Answer 1">
+    switch (questType) {
+        case "multiple_choice":
+            return `
+            <h4>Multiple Choice</h4>
+            <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
+                Enter the question and provide 4 answer options. Select the correct answer by clicking the radio button.
+            </p>
+            <div class="question-container">
+                <label>Instructions (optional): </label>
+                <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                <label>Question: </label>
+                <input type="text" name="questions[]" required>
+                <input type="radio" name="correct[${index}]" value="0" required>
+                <label for="answer-${index}-1">Answer 1 : </label>
+                <input type="text" id="answer-${index}-1" name="answers[${index}][]" required>
+                
+                <input type="radio" name="correct[${index}]" value="1">
+                <label for="answer-${index}-2">Answer 2 : </label>
+                <input type="text" id="answer-${index}-2" name="answers[${index}][]" required>
+                
+                <input type="radio" name="correct[${index}]" value="2">
+                <label for="answer-${index}-3">Answer 3 : </label>
+                <input type="text" id="answer-${index}-3" name="answers[${index}][]" required>
+                
+                <input type="radio" name="correct[${index}]" value="3">
+                <label for="answer-${index}-4">Answer 4 : </label>
+                <input type="text" id="answer-${index}-4" name="answers[${index}][]" required>
+            </div>`;
+        case "true_or_false":
+            return `
+                <h4>True or False</h4>
+                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                    <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
+                    Enter a statement that can be answered with either True or False.
+                </p>
+                <label>Instructions (optional): </label>
+                <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                <label>Question: </label>
+                <input type="text" name="questions[]" required>
+                <label>Correct Answer: </label>
+                <select name="correct_option[${index}]">
+                    <option value="True">True</option>
+                    <option value="False">False</option>
+                </select>`;
+        case "enumeration":
+            return `
+                <h4>Enumeration</h4>
+                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                    <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
+                    Enter a question that requires listing multiple answers. Separate correct answers with commas.
+                </p>
+                <label>Instructions (optional): </label>
+                <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                <label>Question: </label>
+                <input type="text" name="questions[]" required>
+                <label>Correct Answers (comma separated): </label>
+                <input type="text" name="correct_option[${index}]" placeholder="e.g. answer1, answer2, answer3" required>`;
+        case "identification":
+            return `
+                <h4>Identification</h4>
+                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                    <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
+                    Enter a question that requires a specific word or phrase as the answer.
+                </p>
+                <label>Instructions (optional): </label>
+                <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                <label>Question: </label>
+                <input type="text" name="questions[]" required>
+                <label>Correct Answer: </label>
+                <input type="text" name="correct_option[${index}]" required>`;
+        case "fill_in_the_blanks":
+            return `
+                <h4>Fill in the Blanks</h4>
+                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                    <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
+                    Enter a sentence with '_____' where the blank should be. Provide the correct word/phrase for the blank.
+                </p>
+                <label>Instructions (optional): </label>
+                <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                <label>Question (use '_____' for the blank): </label>
+                <input type="text" name="questions[]" required>
+                <label>Correct Answer: </label>
+                <input type="text" name="correct_option[${index}]" required>`;
+        case "drag_and_drop":
+            return `
+                <h4>Drag and Drop</h4>
+                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                    <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
+                    Enter a question and provide answer choices. Students will drag the correct answer to match the question.
+                </p>
+                <label>Instructions (optional): </label>
+                <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                <label for="question">Question:</label>
+                <input type="text" name="questions[]" required>
+                <br><br>
+                <label>Choices:</label>
+                <div class="answers-container" id="answers-container-${index}">
+                    <div class="answer-wrapper">
+                        <input type="radio" name="correct_answer[${index}]" value="0">
+                        <input type="text" class="drag-input" name="answers[${index}][]" required placeholder="Answer 1">
+                    </div>
+                    <span class="add-answer" onclick="addAnswer(${index})">&#43;</span>
+                    <span class="remove-answer" onclick="removeAnswer(${index})" style="display: none;">&#8722;</span>
+                </div>`;
+        case "matching_type":
+            return `
+                <h4>Matching Type</h4>
+                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                    <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
+                    Enter pairs of items that need to be matched. Students will connect items from the left column to the right column.
+                </p>
+                <label>Instructions (optional): </label>
+                <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                <label>Question:</label>
+                <input type="text" name="questions[]" required>
+                <div class="matching-pairs-section">
+                    <label>Matching Pairs:</label>
+                    <div class="matching-pairs-container" id="matching-pairs-${index}">
+                        <div class="matching-pair">
+                            <div class="pair-number">1</div>
+                            <div class="matching-column">
+                                <input type="text" name="left_items[${index}][]" required placeholder="Left item">
                             </div>
-                            <span class="add-answer" onclick="addAnswer(${index})">&#43;</span>
-                            <span class="remove-answer" onclick="removeAnswer(${index})" style="display: none;">&#8722;</span>
-                        </div>`;
-                case "matching_type":
-                    return `
-                        <h4>Matching Type</h4>
-                        <label>Question:</label>
-                        <input type="text" name="questions[]" required>
-                        <div class="matching-pairs-section">
-                            <label>Matching Pairs:</label>
-                            <div class="matching-pairs-container" id="matching-pairs-${index}">
-                                <div class="matching-pair">
-                                    <div class="pair-number">1</div>
-                                    <div class="matching-column">
-                                        <input type="text" name="left_items[${index}][]" required placeholder="Left item">
-                                    </div>
-                                    <div class="matching-column">
-                                        <input type="text" name="right_items[${index}][]" required placeholder="Right item">
-                                    </div>
-                                    <button type="button" class="remove-pair" onclick="removeMatchingPair(this, ${index})">
-                                        Remove
-                                    </button>
-                                </div>
+                            <div class="matching-column">
+                                <input type="text" name="right_items[${index}][]" required placeholder="Right item">
                             </div>
-                            <button type="button" class="add-pair" onclick="addMatchingPair(${index})">
-                                Add Another Pair
+                            <button type="button" class="remove-pair" onclick="removeMatchingPair(this, ${index})">
+                                Remove
                             </button>
-                        </div>`;
-                    default:
-                        return '';
-            }
-        }
+                        </div>
+                    </div>
+                    <button type="button" class="add-pair" onclick="addMatchingPair(${index})">
+                        Add Another Pair
+                    </button>
+                </div>`;
+        default:
+            return '';
+    }
+}
+
 
         function addAnswer(questionIndex) {
             const answersContainer = document.getElementById(`answers-container-${questionIndex}`);

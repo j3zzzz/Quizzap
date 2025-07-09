@@ -35,12 +35,82 @@ if ($result->num_rows > 0) {
 
 $stmt->close();
 
+if (isset($_POST['add_teacher'])) {
+    $account_number = $_POST['account_number'];
+    $fname = $_POST['fname'];
+    $lname = $_POST['lname'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $school_id = $_POST['school_id'] ?? '';
+    
+    // Check if account number already exists
+    $checkSql = "SELECT * FROM teachers WHERE account_number = ?";
+    $checkStmt = $conn->prepare($checkSql);
+    $checkStmt->bind_param("s", $account_number);
+    $checkStmt->execute();
+    $checkResult = $checkStmt->get_result();
+    
+    if ($checkResult->num_rows > 0) {
+        $error_message = "Error: A teacher with this account number already exists.";
+    } else {
+        $sql = "INSERT INTO teachers (account_number, fname, lname, password, school_id) VALUES (?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssss", $account_number, $fname, $lname, $password, $school_id);
+        
+        if ($stmt->execute()) {
+            $success_message = "Teacher added successfully!";
+            // Redirect to avoid form resubmission
+            header("Location: a_Teachers.php");
+            exit();
+        } else {
+            $error_message = "Error adding teacher: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+    $checkStmt->close();
+}
+
+// Handle Delete Action
+if (isset($_GET['delete'])) {
+    $account_number = $_GET['delete'];
+    $sql = "DELETE FROM teachers WHERE account_number = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $account_number);
+    if ($stmt->execute()) {
+        $success_message = "Teacher deleted successfully!";
+    } else {
+        $error_message = "Error deleting teacher: " . $stmt->error;
+    }
+    $stmt->close();
+}
+
+// Handle Edit Form Submission
+if (isset($_POST['update'])) {
+    $account_number = $_POST['account_number'];
+    $fname = $_POST['fname'];
+    $lname = $_POST['lname'];
+    $school_id = $_POST['school_id'];
+    
+    $sql = "UPDATE teachers SET fname=?, lname=?, school_id=? WHERE account_number=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssss", $fname, $lname, $school_id, $account_number);
+    
+    if ($stmt->execute()) {
+        $success_message = "Teacher updated successfully!";
+        // Redirect to avoid form resubmission
+        header("Location: a_Teachers.php");
+        exit();
+    } else {
+        $error_message = "Error updating teacher: " . $stmt->error;
+    }
+    $stmt->close();
+}
+
 // Search functionality
 $search = '';
 $whereClause = '';
 if (isset($_GET['search'])) {
     $search = $_GET['search'];
-    $whereClause = "WHERE fname LIKE '%$search%' OR lname LIKE '%$search%' OR account_number LIKE '%$search%' OR email LIKE '%$search%'";
+    $whereClause = "WHERE fname LIKE '%$search%' OR lname LIKE '%$search%' OR account_number LIKE '%$search%' OR school_id LIKE '%$search%'";
 }
 
 // Fetch all teachers
@@ -53,6 +123,18 @@ $teacherCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM teachers");
 $teacherCountQuery->execute();
 $teacherCountResult = $teacherCountQuery->get_result();
 $teacherCount = $teacherCountResult->fetch_assoc()['count'];
+
+// Fetch single teacher for view/edit
+$teacherToView = null;
+if (isset($_GET['view']) || isset($_GET['edit'])) {
+    $account_number = $_GET['view'] ?? $_GET['edit'];
+    $stmt = $conn->prepare("SELECT * FROM teachers WHERE account_number = ?");
+    $stmt->bind_param("s", $account_number);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $teacherToView = $result->fetch_assoc();
+    $stmt->close();
+}
 ?>
 
 <!DOCTYPE html>
@@ -480,6 +562,104 @@ $teacherCount = $teacherCountResult->fetch_assoc()['count'];
             border: 2px solid #f8b500;
         }
 
+        .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0,0,0,0.4);
+}
+
+.modal-content {
+    background-color: #fefefe;
+    margin: 10% auto;
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%;
+    max-width: 600px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close:hover {
+    color: black;
+}
+
+.modal-header {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.modal-body {
+    padding: 10px 0;
+}
+
+.modal-footer {
+    padding: 10px 0;
+    border-top: 1px solid #eee;
+    margin-top: 20px;
+    text-align: right;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Fredoka';
+}
+
+.btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Fredoka';
+    margin-right: 10px;
+}
+
+.btn-primary {
+    background-color: #f8b500;
+    color: white;
+}
+
+.btn-secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
+
         /* Responsive adjustments */
         @media (max-width: 1200px) {
             .sidebar {
@@ -882,6 +1062,121 @@ $teacherCount = $teacherCountResult->fetch_assoc()['count'];
                 padding: 0.75rem;
             }
         }
+        
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .modal-header {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
+
+        .modal-body {
+            padding: 10px 0;
+        }
+
+        .modal-footer {
+            padding: 10px 0;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Fredoka';
+        }
+
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            margin-right: 10px;
+        }
+
+        .btn-primary {
+            background-color: #f8b500;
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
+
+        .alert {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
     </style>
 </head>
 <body>
@@ -938,16 +1233,52 @@ $teacherCount = $teacherCountResult->fetch_assoc()['count'];
                 </div>
             </div>
 
-            <!-- Teacher Count Card -->
+            <!-- Add New Teacher Button -->
             <div style="margin-bottom: 1.5rem;">
-                <a href="a_addTeacher.php" class="add-new-btn"><i class="fa-solid fa-plus"></i> Add New Teacher</a>
+                <button onclick="openAddTeacherModal()" class="add-new-btn"><i class="fa-solid fa-plus"></i> Add New Teacher</button>
             </div>
 
+            <div id="addTeacherModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close" onclick="closeAddTeacherModal()">&times;</span>
+        <div class="modal-header">
+            <h2>Add New Teacher</h2>
+        </div>
+        <div class="modal-body">
+            <form id="addTeacherForm" method="POST" action="a_Teachers.php">
+                <div class="form-group">
+                    <label for="add_account_number">Account Number</label>
+                    <input type="text" id="add_account_number" name="account_number" placeholder="e.g., T001" required>
+                </div>
+                <div class="form-group">
+                    <label for="add_fname">First Name</label>
+                    <input type="text" id="add_fname" name="fname" required>
+                </div>
+                <div class="form-group">
+                    <label for="add_lname">Last Name</label>
+                    <input type="text" id="add_lname" name="lname" required>
+                </div>
+                <div class="form-group">
+                    <label for="add_password">Password</label>
+                    <input type="password" id="add_password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="add_school_id">School ID</label>
+                    <input type="text" id="add_school_id" name="school_id">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="closeAddTeacherModal()">Cancel</button>
+                    <button type="submit" name="add_teacher" class="btn btn-primary">Add Teacher</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
             <!-- Search Container -->
             <div class="search-container">
                 <form method="GET" action="a_Teachers.php" style="display: flex; width: 100%; gap: 10px;">
-                    <input type="text" name="search" placeholder="Search teachers by name, ID, or email..." value="<?php echo htmlspecialchars($search); ?>">
+                    <input type="text" name="search" placeholder="Search teachers by name, ID, or school ID..." value="<?php echo htmlspecialchars($search); ?>">
                     <button type="submit"><i class="fas fa-search"></i> Search</button>
                     <?php if (!empty($search)): ?>
                         <a href="a_Teachers.php" class="add-new-btn" style="background-color: #dc3545;"><i class="fas fa-times"></i> Clear</a>
@@ -955,68 +1286,137 @@ $teacherCount = $teacherCountResult->fetch_assoc()['count'];
                 </form>
             </div>
 
-            <!-- Teachers Table -->
-            <div class="table-responsive">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Teacher</th>
-                <th>Account Number</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if ($teachersResult->num_rows > 0): ?>
-                <?php 
-                $counter = 1;
-                while ($teacher = $teachersResult->fetch_assoc()): 
-                ?>
-                    <tr>
-                        <td data-label="#"><?php echo $counter++; ?></td>
-                        <td data-label="Teacher">
-                            <div class="teacher-name">
-                                <img src="uploads/<?php echo htmlspecialchars($teacher['profile_pic']); ?>" alt="Profile" class="teacher-avatar" onerror="this.src='uploads/default_profile.png'">
-                                <div>
-                                    <strong><?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname']); ?></strong>
-                                </div>
-                            </div>
-                        </td>
-                        <td data-label="Account Number"><?php echo htmlspecialchars($teacher['account_number']); ?></td>
-                        <td data-label="Status">
-                            <span class="status-badge active">
-                                Active
-                            </span>
-                        </td>
-                        <td data-label="Actions" class="action-btns">
-                            <div class="action-buttons">
-                                <a href="a_editTeacher.php?account_number=<?php echo $teacher['account_number']; ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
-                                <a href="a_deleteTeacher.php?account_number=<?php echo $teacher['account_number']; ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this teacher?');"><i class="fas fa-trash-alt"></i></a>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="5">
-                        <div class="empty-state">
-                            <i class="fas fa-chalkboard-teacher"></i>
-                            <h3>No teachers found</h3>
-                            <?php if (!empty($search)): ?>
-                                <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
-                                <a href="a_Teachers.php" class="add-new-btn">View All Teachers</a>
-                            <?php else: ?>
-                                <p>No teachers registered yet</p>
-                                <a href="a_addTeacher.php" class="add-new-btn">Add First Teacher</a>
-                            <?php endif; ?>
+            <!-- View/Edit Modal -->
+            <?php if (isset($_GET['view']) || isset($_GET['edit'])): ?>
+                <div class="modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+                    <div style="background: white; padding: 2rem; border-radius: 10px; width: 80%; max-width: 600px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h2><?php echo isset($_GET['edit']) ? 'Edit Teacher' : 'Teacher Details'; ?></h2>
+                            <button onclick="window.location.href='a_Teachers.php'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
                         </div>
-                    </td>
-                </tr>
+                        
+                        <?php if ($teacherToView): ?>
+                            <form method="POST" action="a_Teachers.php">
+                                <input type="hidden" name="account_number" value="<?php echo htmlspecialchars($teacherToView['account_number']); ?>">
+                                
+                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                                    <div style="flex: 1;">
+                                        <label style="display: block; margin-bottom: 0.5rem;">First Name</label>
+                                        <input type="text" name="fname" value="<?php echo htmlspecialchars($teacherToView['fname']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;" required>
+                                    </div>
+                                    <div style="flex: 1;">
+                                        <label style="display: block; margin-bottom: 0.5rem;">Last Name</label>
+                                        <input type="text" name="lname" value="<?php echo htmlspecialchars($teacherToView['lname']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;" required>
+                                    </div>
+                                </div>
+                                
+                                <div style="margin-bottom: 1rem;">
+                                    <label style="display: block; margin-bottom: 0.5rem;">School ID</label>
+                                    <input type="text" name="school_id" value="<?php echo htmlspecialchars($teacherToView['school_id']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
+                                </div>
+                                
+                                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                                    <?php if (isset($_GET['edit'])): ?>
+                                        <button type="submit" name="update" style="background-color: #f8b500; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">Save Changes</button>
+                                    <?php else: ?>
+                                        <a href="a_Teachers.php?edit=<?php echo htmlspecialchars($teacherToView['account_number']); ?>" style="background-color: #f8b500; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none; text-align: center;">Edit</a>
+                                    <?php endif; ?>
+                                    <a href="a_Teachers.php" style="background-color: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none; text-align: center;">Close</a>
+                                </div>
+                            </form>
+                        <?php else: ?>
+                            <p>Teacher not found.</p>
+                            <a href="a_Teachers.php" style="background-color: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none; text-align: center; display: inline-block; margin-top: 1rem;">Close</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
             <?php endif; ?>
-        </tbody>
-    </table>
-</div>
+
+            <!-- Success/Error Messages -->
+            <?php if (isset($success_message)): ?>
+                <div style="background-color: #d4edda; color: #155724; padding: 1rem; margin-bottom: 1rem; border-radius: 5px;">
+                    <?php echo htmlspecialchars($success_message); ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (isset($error_message)): ?>
+                <div style="background-color: #f8d7da; color: #721c24; padding: 1rem; margin-bottom: 1rem; border-radius: 5px;">
+                    <?php echo htmlspecialchars($error_message); ?>
+                </div>
+            <?php endif; ?>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Teacher</th>
+                            <th>Account Number</th>
+                            <th>School ID</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($teachersResult->num_rows > 0): ?>
+                            <?php 
+                            $counter = 1;
+                            while ($teacher = $teachersResult->fetch_assoc()): 
+                            ?>
+                                <tr>
+                                    <td data-label="#"><?php echo $counter++; ?></td>
+                                    <td data-label="Teacher">
+                                        <div class="teacher-name">
+                                            <img src="uploads/<?php echo htmlspecialchars($teacher['profile_pic']); ?>" alt="Profile" class="teacher-avatar" onerror="this.src='uploads/default_profile.png'">
+                                            <div>
+                                                <strong><?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname']); ?></strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td data-label="Account Number"><?php echo htmlspecialchars($teacher['account_number']); ?></td>
+                                    <td data-label="School ID">
+                                        <?php if (!empty($teacher['school_id'])): ?>
+                                            <span class="badge badge-section">
+                                                <?php echo htmlspecialchars($teacher['school_id']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge">N/A</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td data-label="Status">
+                                        <span class="status-badge active">
+                                            Active
+                                        </span>
+                                    </td>
+                                    <td data-label="Actions" class="action-btns">
+                                        <div class="action-buttons">
+                                            <a href="a_Teachers.php?view=<?php echo urlencode($teacher['account_number']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
+                                            <a href="a_Teachers.php?edit=<?php echo urlencode($teacher['account_number']); ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
+                                            <a href="a_Teachers.php?delete=<?php echo urlencode($teacher['account_number']); ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this teacher?');"><i class="fas fa-trash-alt"></i></a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="6">
+                                    <div class="empty-state">
+                                        <i class="fas fa-chalkboard-teacher"></i>
+                                        <h3>No teachers found</h3>
+                                        <?php if (!empty($search)): ?>
+                                            <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
+                                            <a href="a_Teachers.php" class="add-new-btn">View All Teachers</a>
+                                        <?php else: ?>
+                                            <p>No teachers registered yet</p>
+                                            <a href="a_addTeacher.php" class="add-new-btn">Add First Teacher</a>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -1041,6 +1441,33 @@ $teacherCount = $teacherCountResult->fetch_assoc()['count'];
                 });
             }
         });
+
+        function openAddTeacherModal() {
+            document.getElementById('addTeacherModal').style.display = 'block';
+        }
+
+        function closeAddTeacherModal() {
+            document.getElementById('addTeacherModal').style.display = 'none';
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            var modal = document.getElementById('addTeacherModal');
+            if (event.target == modal) {
+                closeAddTeacherModal();
+            }
+            
+            // Keep the existing profile dropdown functionality
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
+            }
+        }
 
         function profileDropdown() {
             document.getElementById("dropdown").classList.toggle("show");

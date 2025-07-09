@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['account_number']) || strpos($_SESSION['account_number'], 'A') !== 0) {
-    header("Location: login.php");
+    header("Location: admin_login.php");
     exit();
 }
 
@@ -15,6 +15,81 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
+}
+
+// Handle Delete Action
+if (isset($_GET['delete'])) {
+    $account_number = $_GET['delete'];
+    $sql = "DELETE FROM students WHERE account_number = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("s", $account_number);
+    if ($stmt->execute()) {
+        $success_message = "Student deleted successfully!";
+    } else {
+        $error_message = "Error deleting student: " . $stmt->error;
+    }
+    $stmt->close();
+}
+
+// Handle Edit Form Submission
+if (isset($_POST['update'])) {
+    $account_number = $_POST['account_number'];
+    $fname = $_POST['fname'];
+    $lname = $_POST['lname'];
+    $glevel = $_POST['glevel'];
+    $strand = $_POST['strand'];
+    $section = $_POST['section'];
+    
+    $sql = "UPDATE students SET fname=?, lname=?, glevel=?, strand=?, section=? WHERE account_number=?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssss", $fname, $lname, $glevel, $strand, $section, $account_number);
+    
+    if ($stmt->execute()) {
+        $success_message = "Student updated successfully!";
+        // Redirect to avoid form resubmission
+        header("Location: a_Students.php");
+        exit();
+    } else {
+        $error_message = "Error updating student: " . $stmt->error;
+    }
+    $stmt->close();
+}
+
+// Handle Add Student Form Submission
+if (isset($_POST['add_student'])) {
+    $account_number = $_POST['account_number'];
+    $fname = $_POST['fname'];
+    $lname = $_POST['lname'];
+    $glevel = $_POST['glevel'];
+    $strand = $_POST['strand'];
+    $section = $_POST['section'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash the password
+    
+    // Check if account number already exists
+    $check_sql = "SELECT * FROM students WHERE account_number = ?";
+    $check_stmt = $conn->prepare($check_sql);
+    $check_stmt->bind_param("s", $account_number);
+    $check_stmt->execute();
+    $check_result = $check_stmt->get_result();
+    
+    if ($check_result->num_rows > 0) {
+        $error_message = "Account number already exists!";
+    } else {
+        $sql = "INSERT INTO students (account_number, fname, lname, glevel, strand, section, password, profile_pic) VALUES (?, ?, ?, ?, ?, ?, ?, 'default_profile.png')";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("sssssss", $account_number, $fname, $lname, $glevel, $strand, $section, $password);
+        
+        if ($stmt->execute()) {
+            $success_message = "Student added successfully!";
+            // Redirect to avoid form resubmission
+            header("Location: a_Students.php");
+            exit();
+        } else {
+            $error_message = "Error adding student: " . $stmt->error;
+        }
+        $stmt->close();
+    }
+    $check_stmt->close();
 }
 
 $loggedInUser = $_SESSION['account_number'];
@@ -53,6 +128,18 @@ $studentCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM students");
 $studentCountQuery->execute();
 $studentCountResult = $studentCountQuery->get_result();
 $studentCount = $studentCountResult->fetch_assoc()['count'];
+
+// Fetch single student for view/edit
+$studentToView = null;
+if (isset($_GET['view']) || isset($_GET['edit'])) {
+    $account_number = $_GET['view'] ?? $_GET['edit'];
+    $stmt = $conn->prepare("SELECT * FROM students WHERE account_number = ?");
+    $stmt->bind_param("s", $account_number);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $studentToView = $result->fetch_assoc();
+    $stmt->close();
+}
 ?>
 
 <!DOCTYPE html>
@@ -957,12 +1044,6 @@ $studentCount = $studentCountResult->fetch_assoc()['count'];
     flex-direction: column;
 }
 
-.student-email {
-    font-size: 0.8rem;
-    color: #666;
-    margin-top: 2px;
-}
-
 .badge-section {
     background-color: #e2d4f0;
     color: #4a2d7a;
@@ -1021,6 +1102,141 @@ $studentCount = $studentCountResult->fetch_assoc()['count'];
 .data-table td {
     padding: 0.5rem 0.75rem !important;
 }
+
+ .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            transform: translateY(-20px);
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-family: 'Fredoka';
+        }
+        
+        .form-row {
+            display: flex;
+            gap: 1rem;
+        }
+        
+        .form-row .form-group {
+            flex: 1;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            font-size: 1rem;
+            transition: all 0.3s;
+            text-decoration: none;
+            text-align: center;
+        }
+        
+        .btn-primary {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background-color: #e5941f;
+        }
+        
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+        }
+        
+        .btn-secondary:hover {
+            background-color: #5a6268;
+        }
+        
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+        }
+        
+        .btn-danger:hover {
+            background-color: #c82333;
+        }
 
         @media (max-width: 1200px) {
             .data-table {
@@ -1089,7 +1305,6 @@ $studentCount = $studentCountResult->fetch_assoc()['count'];
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar (same as before) -->
         <div class="sidebar" id="sidebar">
             <header>
                 <button id="toggleSidebar" class="toggle-btn">
@@ -1123,143 +1338,290 @@ $studentCount = $studentCountResult->fetch_assoc()['count'];
 
         <!-- Content Area -->
         <div class="content">
-    <div class="content-header">
-        <div>
-            <h1>Manage Students</h1>
-            <p>View, edit, and manage student accounts</p>
-        </div>
-        <div class="actions">
-            <div class="profile" onclick="profileDropdown()">
-                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                <div id="dropdown" class="dropdown-content">
-                    <button onclick="window.location.href='a_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                    <form action="logout.php" method="POST">
-                        <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+            <div class="content-header">
+                <div>
+                    <h1>Manage Students</h1>
+                    <p>View, edit, and manage student accounts</p>
+                </div>
+                <div class="actions">
+                    <div class="profile" onclick="profileDropdown()">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <div id="dropdown" class="dropdown-content">
+                            <button onclick="window.location.href='a_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                            <form action="logout.php" method="POST">
+                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Add New Student Button -->
+            <div style="margin-bottom: 1.5rem;">
+                <button id="addStudentBtn" class="add-new-btn"><i class="fa-solid fa-plus"></i> Add New Student</button>
+            </div>
+
+            <!-- Search Container -->
+            <div class="search-container">
+                <form method="GET" action="a_Students.php" style="display: flex; width: 100%; gap: 10px;">
+                    <input type="text" name="search" placeholder="Search students by name, ID, grade, or strand..." value="<?php echo htmlspecialchars($search); ?>">
+                    <button type="submit"><i class="fas fa-search"></i> Search</button>
+                    <?php if (!empty($search)): ?>
+                        <a href="a_Students.php" class="add-new-btn" style="background-color: #dc3545;"><i class="fas fa-times"></i> Clear</a>
+                    <?php endif; ?>
+                </form>
+            </div>
+
+            <!-- Add Student Modal -->
+            <div id="addStudentModal" class="modal-overlay">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>Add New Student</h2>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <form method="POST" action="a_Students.php">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="account_number">Account Number</label>
+                                <input type="text" id="account_number" name="account_number" placeholder="e.g., S001" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="fname">First Name</label>
+                                <input type="text" id="fname" name="fname" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="lname">Last Name</label>
+                                <input type="text" id="lname" name="lname" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="password">Password</label>
+                                <input type="password" id="password" name="password" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="glevel">Grade Level</label>
+                                <select id="glevel" name="glevel" required>
+                                    <option value="">Select Grade</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
+                                    <option value="10">Grade 10</option>
+                                    <option value="11">Grade 11</option>
+                                    <option value="12">Grade 12</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="strand">Strand</label>
+                                <select id="strand" name="strand">
+                                    <option value="">Select Strand</option>
+                                    <option value="TVL">TVL</option>
+                                    <option value="ABM">ABM</option>
+                                    <option value="HUMSS">HUMSS</option>
+                                    <option value="STEM">STEM</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="section">Section</label>
+                            <input type="text" id="section" name="section">
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-secondary close-modal">Cancel</button>
+                            <button type="submit" name="add_student" class="btn btn-primary">Add Student</button>
+                        </div>
                     </form>
                 </div>
+            </div>
+
+            <!-- View/Edit Modal -->
+            <?php if (isset($_GET['view']) || isset($_GET['edit'])): ?>
+                <div class="modal-overlay active" id="viewEditModal">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h2><?php echo isset($_GET['edit']) ? 'Edit Student' : 'Student Details'; ?></h2>
+                            <button onclick="window.location.href='a_Students.php'" class="close-modal">&times;</button>
+                        </div>
+                        
+                        <?php if ($studentToView): ?>
+                            <form method="POST" action="a_Students.php">
+                                <input type="hidden" name="account_number" value="<?php echo htmlspecialchars($studentToView['account_number']); ?>">
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>First Name</label>
+                                        <input type="text" name="fname" value="<?php echo htmlspecialchars($studentToView['fname']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Last Name</label>
+                                        <input type="text" name="lname" value="<?php echo htmlspecialchars($studentToView['lname']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> required>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Grade Level</label>
+                                        <select name="glevel" <?php echo !isset($_GET['edit']) ? 'disabled' : ''; ?> required>
+                                            <option value="">Select Grade</option>
+                                            <option value="7" <?php echo ($studentToView['glevel'] == '7') ? 'selected' : ''; ?>>Grade 7</option>
+                                            <option value="8" <?php echo ($studentToView['glevel'] == '8') ? 'selected' : ''; ?>>Grade 8</option>
+                                            <option value="9" <?php echo ($studentToView['glevel'] == '9') ? 'selected' : ''; ?>>Grade 9</option>
+                                            <option value="10" <?php echo ($studentToView['glevel'] == '10') ? 'selected' : ''; ?>>Grade 10</option>
+                                            <option value="11" <?php echo ($studentToView['glevel'] == '11' || $studentToView['glevel'] == 'G11') ? 'selected' : ''; ?>>Grade 11</option>
+                                            <option value="12" <?php echo ($studentToView['glevel'] == '12' || $studentToView['glevel'] == 'G12') ? 'selected' : ''; ?>>Grade 12</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Strand</label>
+                                        <select name="strand" <?php echo !isset($_GET['edit']) ? 'disabled' : ''; ?>>
+                                            <option value="">Select Strand</option>
+                                            <option value="TVL" <?php echo ($studentToView['strand'] == 'TVL') ? 'selected' : ''; ?>>TVL</option>
+                                            <option value="ABM" <?php echo ($studentToView['strand'] == 'ABM') ? 'selected' : ''; ?>>ABM</option>
+                                            <option value="HUMSS" <?php echo ($studentToView['strand'] == 'HUMSS') ? 'selected' : ''; ?>>HUMSS</option>
+                                            <option value="STEM" <?php echo ($studentToView['strand'] == 'STEM') ? 'selected' : ''; ?>>STEM</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                
+                                <div class="form-group">
+                                    <label>Section</label>
+                                    <input type="text" name="section" value="<?php echo htmlspecialchars($studentToView['section']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?>>
+                                </div>
+                                
+                                <div class="form-actions">
+                                    <?php if (isset($_GET['edit'])): ?>
+                                        <button type="submit" name="update" class="btn btn-primary">Save Changes</button>
+                                    <?php else: ?>
+                                        <a href="a_Students.php?edit=<?php echo htmlspecialchars($studentToView['account_number']); ?>" class="btn btn-primary">Edit</a>
+                                    <?php endif; ?>
+                                    <a href="a_Students.php" class="btn btn-danger">Close</a>
+                                </div>
+                            </form>
+                        <?php else: ?>
+                            <p>Student not found.</p>
+                            <div class="form-actions">
+                                <a href="a_Students.php" class="btn btn-danger">Close</a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <!-- Success/Error Messages -->
+            <?php if (isset($success_message)): ?>
+                <div style="background-color: #d4edda; color: #155724; padding: 1rem; margin-bottom: 1rem; border-radius: 5px;">
+                    <?php echo htmlspecialchars($success_message); ?>
+                </div>
+            <?php endif; ?>
+            
+            <?php if (isset($error_message)): ?>
+                <div style="background-color: #f8d7da; color: #721c24; padding: 1rem; margin-bottom: 1rem; border-radius: 5px;">
+                    <?php echo htmlspecialchars($error_message); ?>
+                </div>
+            <?php endif; ?>
+
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Student</th>
+                            <th>Account Number</th>
+                            <th>Grade Level</th>
+                            <th>Strand</th>
+                            <th>Section</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($studentsResult->num_rows > 0): ?>
+                            <?php 
+                            $counter = 1;
+                            while ($student = $studentsResult->fetch_assoc()): 
+                            ?>
+                                <tr>
+                                    <td data-label="#"><?php echo $counter++; ?></td>
+                                    <td data-label="Student">
+                                        <div class="student-name">
+                                            <img src="uploads/<?php echo htmlspecialchars($student['profile_pic']); ?>" alt="Profile" class="student-avatar" onerror="this.src='uploads/default_profile.png'">
+                                            <div>
+                                                <strong><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></strong>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td data-label="Account Number"><?php echo htmlspecialchars($student['account_number']); ?></td>
+                                    <td data-label="Grade Level">
+                                        <span class="badge badge-<?php echo strtolower($student['glevel']); ?>">
+                                            <?php echo htmlspecialchars($student['glevel']); ?>
+                                        </span>
+                                    </td>
+                                    <td data-label="Strand">
+                                        <?php if (!empty($student['strand'])): ?>
+                                            <span class="badge badge-<?php echo strtolower($student['strand']); ?>">
+                                                <?php echo htmlspecialchars($student['strand']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge">N/A</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td data-label="Section">
+                                        <?php if (!empty($student['section'])): ?>
+                                            <span class="badge badge-section">
+                                                <?php echo htmlspecialchars($student['section']); ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="badge">N/A</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td data-label="Status">
+                                        <span class="status-badge <?php echo ($student['status'] ?? 'active') === 'active' ? 'active' : 'inactive'; ?>">
+                                            <?php echo ucfirst($student['status'] ?? 'active'); ?>
+                                        </span>
+                                    </td>
+                                    <td data-label="Actions" class="action-btns">
+                                        <div class="action-buttons">
+                                            <a href="a_Students.php?view=<?php echo urlencode($student['account_number']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
+                                            <a href="a_Students.php?edit=<?php echo urlencode($student['account_number']); ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
+                                            <a href="a_Students.php?delete=<?php echo urlencode($student['account_number']); ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this student?');"><i class="fas fa-trash-alt"></i></a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="8">
+                                    <div class="empty-state">
+                                        <i class="fas fa-user-graduate"></i>
+                                        <h3>No students found</h3>
+                                        <?php if (!empty($search)): ?>
+                                            <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
+                                            <a href="a_Students.php" class="add-new-btn">View All Students</a>
+                                        <?php else: ?>
+                                            <p>No students registered yet</p>
+                                            <button id="addFirstStudentBtn" class="add-new-btn">Add First Student</button>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    <!-- Add New Student Button -->
-    <div style="margin-bottom: 1.5rem;">
-        <a href="a_addStudent.php" class="add-new-btn"><i class="fa-solid fa-plus"></i> Add New Student</a>
-    </div>
-
-    <!-- Search Container -->
-    <div class="search-container">
-        <form method="GET" action="a_Students.php" style="display: flex; width: 100%; gap: 10px;">
-            <input type="text" name="search" placeholder="Search students by name, ID, grade, or strand..." value="<?php echo htmlspecialchars($search); ?>">
-            <button type="submit"><i class="fas fa-search"></i> Search</button>
-            <?php if (!empty($search)): ?>
-                <a href="a_Students.php" class="add-new-btn" style="background-color: #dc3545;"><i class="fas fa-times"></i> Clear</a>
-            <?php endif; ?>
-        </form>
-    </div>
-
-            <div class="table-responsive">
-    <table class="data-table">
-        <thead>
-            <tr>
-                <th>#</th>
-                <th>Student</th>
-                <th>Account Number</th>
-                <th>Grade Level</th>
-                <th>Strand</th>
-                <th>Section</th>
-                <th>Status</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php if ($studentsResult->num_rows > 0): ?>
-                <?php 
-                $counter = 1;
-                while ($student = $studentsResult->fetch_assoc()): 
-                ?>
-                    <tr>
-                        <td data-label="#"><?php echo $counter++; ?></td>
-                        <td data-label="Student">
-                            <div class="student-name">
-                                <img src="uploads/<?php echo htmlspecialchars($student['profile_pic']); ?>" alt="Profile" class="student-avatar" onerror="this.src='uploads/default_profile.png'">
-                                <div>
-                                    <strong><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></strong>
-                                    <div class="student-email"><?php echo htmlspecialchars($student['email'] ?? 'N/A'); ?></div>
-                                </div>
-                            </div>
-                        </td>
-                        <td data-label="Account Number"><?php echo htmlspecialchars($student['account_number']); ?></td>
-                        <td data-label="Grade Level">
-                            <span class="badge badge-<?php echo strtolower($student['glevel']); ?>">
-                                <?php echo htmlspecialchars($student['glevel']); ?>
-                            </span>
-                        </td>
-                        <td data-label="Strand">
-                            <?php if (!empty($student['strand'])): ?>
-                                <span class="badge badge-<?php echo strtolower($student['strand']); ?>">
-                                    <?php echo htmlspecialchars($student['strand']); ?>
-                                </span>
-                            <?php else: ?>
-                                <span class="badge">N/A</span>
-                            <?php endif; ?>
-                        </td>
-                        <td data-label="Section">
-                            <?php if (!empty($student['section'])): ?>
-                                <span class="badge badge-section">
-                                    <?php echo htmlspecialchars($student['section']); ?>
-                                </span>
-                            <?php else: ?>
-                                <span class="badge">N/A</span>
-                            <?php endif; ?>
-                        </td>
-                        <td data-label="Status">
-                            <span class="status-badge <?php echo ($student['status'] ?? 'active') === 'active' ? 'active' : 'inactive'; ?>">
-                                <?php echo ucfirst($student['status'] ?? 'active'); ?>
-                            </span>
-                        </td>
-                        <td data-label="Actions" class="action-btns">
-                            <div class="action-buttons">
-                                <a href="a_viewStudent.php?account_number=<?php echo $student['account_number']; ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
-                                <a href="a_editStudent.php?account_number=<?php echo $student['account_number']; ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
-                                <a href="a_deleteStudent.php?account_number=<?php echo $student['account_number']; ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this student?');"><i class="fas fa-trash-alt"></i></a>
-                            </div>
-                        </td>
-                    </tr>
-                <?php endwhile; ?>
-            <?php else: ?>
-                <tr>
-                    <td colspan="8">
-                        <div class="empty-state">
-                            <i class="fas fa-user-graduate"></i>
-                            <h3>No students found</h3>
-                            <?php if (!empty($search)): ?>
-                                <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
-                                <a href="a_Students.php" class="add-new-btn">View All Students</a>
-                            <?php else: ?>
-                                <p>No students registered yet</p>
-                                <a href="a_addStudent.php" class="add-new-btn">Add First Student</a>
-                            <?php endif; ?>
-                        </div>
-                    </td>
-                </tr>
-            <?php endif; ?>
-        </tbody>
-    </table>
-</div>
-
-            <!-- Pagination would go here if implemented -->
-            <!-- <div class="pagination">
-                <a href="#">&laquo;</a>
-                <a href="#" class="active">1</a>
-                <a href="#">2</a>
-                <a href="#">3</a>
-                <a href="#">&raquo;</a>
-            </div> -->
-        </div>
-    </div>
-
     <script>
-        // JavaScript remains the same as before
+        // JavaScript for sidebar and profile dropdown remains the same
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.querySelector('.sidebar');
             const content = document.querySelector('.content');
@@ -1296,6 +1658,39 @@ $studentCount = $studentCountResult->fetch_assoc()['count'];
                 }
             }
         }
+        
+        // New JavaScript for modal functionality
+        const addStudentBtn = document.getElementById('addStudentBtn');
+        const addFirstStudentBtn = document.getElementById('addFirstStudentBtn');
+        const addStudentModal = document.getElementById('addStudentModal');
+        const closeModalBtns = document.querySelectorAll('.close-modal');
+        
+        if (addStudentBtn) {
+            addStudentBtn.addEventListener('click', function() {
+                addStudentModal.classList.add('active');
+            });
+        }
+        
+        if (addFirstStudentBtn) {
+            addFirstStudentBtn.addEventListener('click', function() {
+                addStudentModal.classList.add('active');
+            });
+        }
+        
+        closeModalBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.modal-overlay').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+            });
+        });
+        
+        // Close modal when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target.classList.contains('modal-overlay')) {
+                event.target.classList.remove('active');
+            }
+        });
     </script>
 </body>
 </html>

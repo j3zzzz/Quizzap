@@ -136,10 +136,10 @@ $difficultQuizQuery = $conn->prepare("SELECT
     q.title, 
     sub.subject_name,
     COUNT(DISTINCT sa.student_id) as total_students,
-    SUM(CASE WHEN sa.is_correct = 1 THEN 1 ELSE 0 END) as correct_answers,
-    COUNT(DISTINCT sa.student_id) - SUM(CASE WHEN sa.is_correct = 1 THEN 1 ELSE 0 END) as incorrect_answers,
+    COUNT(DISTINCT CASE WHEN sa.is_correct = 1 THEN sa.student_id END) as correct_answers,
+    COUNT(DISTINCT sa.student_id) - COUNT(DISTINCT CASE WHEN sa.is_correct = 1 THEN sa.student_id END) as incorrect_answers,
     ROUND(
-        (COUNT(DISTINCT sa.student_id) - SUM(CASE WHEN sa.is_correct = 1 THEN 1 ELSE 0 END)) * 100.0 / 
+        (COUNT(DISTINCT sa.student_id) - COUNT(DISTINCT CASE WHEN sa.is_correct = 1 THEN sa.student_id END)) * 100.0 / 
         COUNT(DISTINCT sa.student_id), 
         2
     ) as difficulty_percentage
@@ -155,9 +155,8 @@ $difficultQuizQuery = $conn->prepare("SELECT
         q.quiz_id, 
         q.title, 
         sub.subject_name
-       
     ORDER BY 
-        difficulty_percentage DESC  -- Sort by the highest percentage of incorrect answers
+        difficulty_percentage DESC
     LIMIT 3");  // Fetch top 3 most difficult quizzes
 
 $difficultQuizQuery->bind_param("s", $loggedInUser);

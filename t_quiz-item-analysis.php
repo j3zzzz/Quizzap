@@ -34,8 +34,8 @@ if (!$subject_id) {
 
 //to fetch the number of students who answered correct/wrong
 $correctWrongCNT = "SELECT q.title, qs.question_id, qs.question_text,
-    SUM(sa.is_correct = 1) AS correct_count,
-    SUM(sa.is_correct = 0) AS wrong_count
+    COUNT(DISTINCT CASE WHEN sa.is_correct = 1 THEN sa.student_id END) AS correct_count,
+    COUNT(DISTINCT CASE WHEN sa.is_correct = 0 THEN sa.student_id END) AS wrong_count
 FROM student_answers sa
 JOIN questions qs ON sa.question_id = qs.question_id
 JOIN quizzes q ON qs.quiz_id = q.quiz_id
@@ -62,7 +62,7 @@ if ($result->num_rows > 0) {
     }
     
     // Get student details for correct answers - using account_number instead of student_number
-    $correct_students_sql = "SELECT s.account_number, s.fname, s.lname 
+    $correct_students_sql = "SELECT DISTINCT s.account_number, s.fname, s.lname 
                             FROM student_answers sa
                             JOIN students s ON sa.student_id = s.student_id
                             WHERE sa.quiz_id = ? AND sa.question_id = ? AND sa.is_correct = 1";
@@ -73,7 +73,7 @@ if ($result->num_rows > 0) {
     $correct_stmt->close();
     
     // Get student details for wrong answers - using account_number instead of student_number
-    $wrong_students_sql = "SELECT s.account_number, s.fname, s.lname 
+    $wrong_students_sql = "SELECT DISTINCT s.account_number, s.fname, s.lname 
                           FROM student_answers sa
                           JOIN students s ON sa.student_id = s.student_id
                           WHERE sa.quiz_id = ? AND sa.question_id = ? AND sa.is_correct = 0";

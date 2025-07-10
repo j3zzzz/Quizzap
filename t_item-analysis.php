@@ -71,10 +71,6 @@ if ($result->num_rows > 0) {
     ];
   }
 } 
-
-if (empty($quizResults)) {
-  echo "<div id='no-data'>No avarage score data available for this Subject</div>";
-}
 }
 
 $qType = "
@@ -136,8 +132,6 @@ if ($result->num_rows > 0) {
             'lowest_score' => $row['lowest_score']
         ];
     }
-} else {
-    echo "<div id='no-data'> No quiz types data available for this Subject.</div>";
 }
 
 $stmt->close();
@@ -172,6 +166,12 @@ $conn->close();
         }  
 
       function studPerfChart() {
+        var container = document.getElementById('columnchart_material');
+        <?php if (empty($quizResults)): ?>
+          container.innerHTML = '<div class="no-data-message">No average score data available for this Subject</div>';
+          return;
+        <?php endif; ?>
+        
         var googleData = google.visualization.arrayToDataTable([
           ['Quiz Title', 'Average Score', 'High Score', 'Low Score'],
             <?php 
@@ -185,7 +185,7 @@ $conn->close();
           ]);
 
         var options = {
-           colors: ['#e4a600', '#F8B500', '#FCD058'],
+           colors: ['#4CAF50', '#2196F3', '#F44336'],
            fontName: 'Fredoka',
            fontSize: 15,
            height: 500,
@@ -235,6 +235,12 @@ $conn->close();
       }
 
       function quizTypeChart() {
+        var container = document.getElementById('columnchart');
+        <?php if (empty($quiz_type_data)): ?>
+          container.innerHTML = '<div class="no-data-message">No quiz types data available for this Subject</div>';
+          return;
+        <?php endif; ?>
+        
         var data = google.visualization.arrayToDataTable([
           ['Quiz Type', 'Total Attempts', 'Average Scores', 'Highest Scores', 'Lowest Scores'],
           <?php foreach ($quiz_type_data as $data) { ?>
@@ -247,7 +253,7 @@ $conn->close();
         ]);
 
         var options = {
-          colors: ['#e4a600', '#F8B500', '#FCD058'],
+          colors: ['#9C27B0', '#FF9800', '#4CAF50', '#2196F3'],
           fontName: 'Fredoka',
           fontSize: 15,
            height: 500,
@@ -635,6 +641,18 @@ $conn->close();
 
   .side-nav::-webkit-scrollbar-thumb {
     background: #F8B500;
+  }
+
+  .no-data-message {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+    font-style: italic;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
   }
 </style>
 

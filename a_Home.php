@@ -1,7 +1,7 @@
 <?php
 session_start();
 if (!isset($_SESSION['account_number']) || strpos($_SESSION['account_number'], 'A') !== 0) {
-    header("Location: login.php");
+    header("Location: admin_login.php");
     exit();
 }
 
@@ -781,9 +781,9 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>Teachers</span>
                 </a>
-                <a href="a_Settings.php" title="Settings">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Settings</span>
+                <a href="a_Classes.php" title="Classes">
+                    <i class="fa-solid fa-list"></i>
+                    <span>Classes</span>
                 </a>
             </div>
         </div>

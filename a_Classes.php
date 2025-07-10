@@ -35,72 +35,160 @@ if ($result->num_rows > 0) {
 
 $stmt->close();
 
-if (isset($_POST['add_teacher'])) {
-    $account_number = $_POST['account_number'];
-    $fname = $_POST['fname'];
-    $lname = $_POST['lname'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
-    $school_id = $_POST['school_id'] ?? '';
+// Function to generate unique subject code
+function generateUniqueSubjectCode($conn) {
+    $characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $digits = '0123456789';
+    do {
+        $code = $characters[rand(0, 25)] . $characters[rand(0, 25)] . $digits[rand(0, 9)] . $digits[rand(0, 9)];
+        $sql = "SELECT * FROM subjects WHERE subject_code = '$code'";
+        $result = $conn->query($sql);
+    } while ($result->num_rows > 0);
+    return $code;
+}
+
+// Handle Add Class Action
+if (isset($_POST['add_class'])) {
+    $subject_name = $_POST['subject_name'];
+    $grade_level = $_POST['grade_level'];
+    $section = $_POST['section'];
+    $teacher_account_number = $_POST['teacher_id'];
+    $subject_code = generateUniqueSubjectCode($conn);
     
-    // Check if account number already exists
-    $checkSql = "SELECT * FROM teachers WHERE account_number = ?";
-    $checkStmt = $conn->prepare($checkSql);
-    $checkStmt->bind_param("s", $account_number);
-    $checkStmt->execute();
-    $checkResult = $checkStmt->get_result();
+    // Get teacher's school_id
+    $teacher_sql = "SELECT school_id FROM teachers WHERE account_number = ?";
+    $teacher_stmt = $conn->prepare($teacher_sql);
+    $teacher_stmt->bind_param("s", $teacher_account_number);
+    $teacher_stmt->execute();
+    $teacher_result = $teacher_stmt->get_result();
     
-    if ($checkResult->num_rows > 0) {
-        $error_message = "Error: A teacher with this account number already exists.";
-    } else {
-        $sql = "INSERT INTO teachers (account_number, fname, lname, password, school_id) VALUES (?, ?, ?, ?, ?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssss", $account_number, $fname, $lname, $password, $school_id);
+    if ($teacher_result->num_rows > 0) {
+        $teacher_row = $teacher_result->fetch_assoc();
+        $school_id = $teacher_row['school_id'];
         
-        if ($stmt->execute()) {
-            $success_message = "Teacher added successfully!";
-            // Redirect to avoid form resubmission
-            header("Location: a_Teachers.php");
-            exit();
+        // Check if class already exists for this teacher
+        $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND section = ? AND teacher_id = ?";
+        $check_stmt = $conn->prepare($check_sql);
+        $check_stmt->bind_param("ssss", $subject_name, $grade_level, $section, $teacher_account_number);
+        $check_stmt->execute();
+        $check_result = $check_stmt->get_result();
+        
+        if ($check_result->num_rows > 0) {
+            $error_message = "Error: A class with the same subject, grade level, and section already exists for this teacher.";
         } else {
-            $error_message = "Error adding teacher: " . $stmt->error;
+            $sql = "INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, section, school_id, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("ssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $section, $school_id);
+            
+            if ($stmt->execute()) {
+                $success_message = "Class created successfully!";
+                // Redirect to avoid form resubmission
+                header("Location: a_Classes.php");
+                exit();
+            } else {
+                $error_message = "Error adding class: " . $stmt->error;
+            }
+            $stmt->close();
         }
-        $stmt->close();
+        $check_stmt->close();
+    } else {
+        $error_message = "Error: Selected teacher not found.";
     }
-    $checkStmt->close();
+    $teacher_stmt->close();
 }
 
 // Handle Delete Action
 if (isset($_GET['delete'])) {
-    $account_number = $_GET['delete'];
-    $sql = "DELETE FROM teachers WHERE account_number = ?";
+    $subject_id = $_GET['delete'];
+    
+    // First delete all quizzes related to this subject
+    $delete_quizzes_sql = "DELETE FROM quizzes WHERE subject_id = ?";
+    $stmt = $conn->prepare($delete_quizzes_sql);
+    $stmt->bind_param("i", $subject_id);
+    $stmt->execute();
+    $stmt->close();
+    
+    // Then delete the subject
+    $sql = "DELETE FROM subjects WHERE subject_id = ?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("s", $account_number);
+    $stmt->bind_param("i", $subject_id);
+    
     if ($stmt->execute()) {
-        $success_message = "Teacher deleted successfully!";
+        $success_message = "Class deleted successfully!";
     } else {
-        $error_message = "Error deleting teacher: " . $stmt->error;
+        $error_message = "Error deleting class: " . $stmt->error;
+    }
+    $stmt->close();
+}
+
+// Handle Deactivate Action (unenroll all students)
+if (isset($_GET['deactivate'])) {
+    $subject_id = $_GET['deactivate'];
+    
+    // Start transaction
+    $conn->begin_transaction();
+    
+    try {
+        // Delete all student enrollments for this subject
+        $deleteEnrollmentsSql = "DELETE FROM enrollments WHERE subject_id = ?";
+        $deleteStmt = $conn->prepare($deleteEnrollmentsSql);
+        $deleteStmt->bind_param("i", $subject_id);
+        $deleteStmt->execute();
+        $deleteStmt->close();
+        
+        // Update the class status to 'Deactivated'
+        $updateSql = "UPDATE subjects SET status = 'Deactivated' WHERE subject_id = ?";
+        $updateStmt = $conn->prepare($updateSql);
+        $updateStmt->bind_param("i", $subject_id);
+        $updateStmt->execute();
+        $updateStmt->close();
+        
+        $conn->commit();
+        $success_message = "Class deactivated successfully! All students have been unenrolled.";
+    } catch (Exception $e) {
+        $conn->rollback();
+        $error_message = "Error deactivating class: " . $e->getMessage();
+    }
+}
+
+// Handle Activate Action
+if (isset($_GET['activate'])) {
+    $subject_id = $_GET['activate'];
+    
+    $sql = "UPDATE subjects SET status = 'Active' WHERE subject_id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $subject_id);
+    
+    if ($stmt->execute()) {
+        $success_message = "Class activated successfully!";
+        // Redirect to avoid form resubmission
+        header("Location: a_Classes.php");
+        exit();
+    } else {
+        $error_message = "Error activating class: " . $stmt->error;
     }
     $stmt->close();
 }
 
 // Handle Edit Form Submission
 if (isset($_POST['update'])) {
-    $account_number = $_POST['account_number'];
-    $fname = $_POST['fname'];
-    $lname = $_POST['lname'];
-    $school_id = $_POST['school_id'];
+    $subject_id = $_POST['subject_id'];
+    $subject_name = $_POST['subject_name'];
+    $grade_level = $_POST['grade_level'];
+    $section = $_POST['section'];
+    $teacher_account_number = $_POST['teacher_id'];
     
-    $sql = "UPDATE teachers SET fname=?, lname=?, school_id=? WHERE account_number=?";
+    $sql = "UPDATE subjects SET subject_name=?, grade_level=?, section=?, teacher_id=? WHERE subject_id=?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssss", $fname, $lname, $school_id, $account_number);
+    $stmt->bind_param("ssssi", $subject_name, $grade_level, $section, $teacher_account_number, $subject_id);
     
     if ($stmt->execute()) {
-        $success_message = "Teacher updated successfully!";
+        $success_message = "Class updated successfully!";
         // Redirect to avoid form resubmission
-        header("Location: a_Teachers.php");
+        header("Location: a_Classes.php");
         exit();
     } else {
-        $error_message = "Error updating teacher: " . $stmt->error;
+        $error_message = "Error updating class: " . $stmt->error;
     }
     $stmt->close();
 }
@@ -110,30 +198,50 @@ $search = '';
 $whereClause = '';
 if (isset($_GET['search'])) {
     $search = $_GET['search'];
-    $whereClause = "WHERE fname LIKE '%$search%' OR lname LIKE '%$search%' OR account_number LIKE '%$search%' OR school_id LIKE '%$search%'";
+    $whereClause = "WHERE (s.subject_name LIKE '%$search%' OR s.section LIKE '%$search%' 
+                   OR s.subject_code LIKE '%$search%' OR s.status LIKE '%$search%'
+                   OR CONCAT(t.fname, ' ', t.lname) LIKE '%$search%' OR s.grade_level LIKE '%$search%')";
 }
 
-// Fetch all teachers
-$teachersQuery = $conn->prepare("SELECT * FROM teachers $whereClause ORDER BY teacher_id DESC");
-$teachersQuery->execute();
-$teachersResult = $teachersQuery->get_result();
+// Fetch all classes with teacher information
+$classesQuery = $conn->prepare("
+    SELECT s.*, t.fname as teacher_fname, t.lname as teacher_lname, t.account_number as teacher_account 
+    FROM subjects s 
+    LEFT JOIN teachers t ON s.teacher_id = t.account_number 
+    $whereClause 
+    ORDER BY s.subject_id DESC
+");
+$classesQuery->execute();
+$classesResult = $classesQuery->get_result();
 
-// Count total teachers
-$teacherCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM teachers");
-$teacherCountQuery->execute();
-$teacherCountResult = $teacherCountQuery->get_result();
-$teacherCount = $teacherCountResult->fetch_assoc()['count'];
+// Count total classes
+$classCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM subjects");
+$classCountQuery->execute();
+$classCountResult = $classCountQuery->get_result();
+$classCount = $classCountResult->fetch_assoc()['count'];
 
-// Fetch single teacher for view/edit
-$teacherToView = null;
+// Fetch single class for view/edit
+$classToView = null;
 if (isset($_GET['view']) || isset($_GET['edit'])) {
-    $account_number = $_GET['view'] ?? $_GET['edit'];
-    $stmt = $conn->prepare("SELECT * FROM teachers WHERE account_number = ?");
-    $stmt->bind_param("s", $account_number);
+    $subject_id = $_GET['view'] ?? $_GET['edit'];
+    $stmt = $conn->prepare("
+        SELECT s.*, t.fname as teacher_fname, t.lname as teacher_lname 
+        FROM subjects s 
+        LEFT JOIN teachers t ON s.teacher_id = t.account_number 
+        WHERE s.subject_id = ?
+    ");
+    $stmt->bind_param("i", $subject_id);
     $stmt->execute();
     $result = $stmt->get_result();
-    $teacherToView = $result->fetch_assoc();
+    $classToView = $result->fetch_assoc();
     $stmt->close();
+}
+
+// Fetch all teachers for dropdown
+$teachersQuery = $conn->query("SELECT account_number, fname, lname FROM teachers ORDER BY lname, fname");
+$teachers = [];
+while ($row = $teachersQuery->fetch_assoc()) {
+    $teachers[] = $row;
 }
 ?>
 
@@ -145,7 +253,7 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="other resources/fontawesome-free-6.5.2-web/css/all.min.css">
     <title>Manage Teachers</title>
-    <style>
+     <style>
         * {
             margin: 0;
             padding: 0;
@@ -563,102 +671,110 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
         }
 
         .modal {
-    display: none;
-    position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background-color: rgba(0,0,0,0.4);
-}
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
 
-.modal-content {
-    background-color: #fefefe;
-    margin: 10% auto;
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%;
-    max-width: 600px;
-    border-radius: 10px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
 
-.close {
-    color: #aaa;
-    float: right;
-    font-size: 28px;
-    font-weight: bold;
-    cursor: pointer;
-}
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
 
-.close:hover {
-    color: black;
-}
+        .close:hover {
+            color: black;
+        }
 
-.modal-header {
-    padding: 10px 0;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 20px;
-}
+        .modal-header {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            margin-bottom: 20px;
+        }
 
-.modal-body {
-    padding: 10px 0;
-}
+        .modal-body {
+            padding: 10px 0;
+        }
 
-.modal-footer {
-    padding: 10px 0;
-    border-top: 1px solid #eee;
-    margin-top: 20px;
-    text-align: right;
-}
+        .modal-footer {
+            padding: 10px 0;
+            margin-top: 20px;
+            text-align: right;
+        }
 
-.form-group {
-    margin-bottom: 15px;
-}
+        .form-group {
+            margin-bottom: 15px;
+        }
 
-.form-group label {
-    display: block;
-    margin-bottom: 5px;
-    font-weight: 500;
-}
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
 
-.form-group input, .form-group select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-family: 'Fredoka';
-}
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Fredoka';
+        }
 
-.btn {
-    padding: 8px 15px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-family: 'Fredoka';
-    margin-right: 10px;
-}
+        .btn {
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            margin-right: 10px;
+        }
 
-.btn-primary {
-    background-color: #f8b500;
-    color: white;
-}
+        .btn-success {
+            background-color: #F8B500;
+            text-decoration: none;
+            cursor: pointer;
+            color: white;
+        }
 
-.btn-secondary {
-    background-color: #6c757d;
-    color: white;
-}
+        .btn-primary {
+            background-color: #f8b500;
+            color: white;
+        }
 
-.btn-danger {
-    background-color: #dc3545;
-    color: white;
-}
+        .btn-secondary {
+            background-color: #6c757d;
+            color: white;
+            text-decoration: none;
+        }
 
-.btn:hover {
-    opacity: 0.9;
-}
+        .btn-danger {
+            background-color: #dc3545;
+            color: white;
+            text-decoration: none;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+        }
 
         /* Responsive adjustments */
         @media (max-width: 1200px) {
@@ -847,6 +963,11 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
         }
 
         .status-badge.inactive {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.deactivated {
             background-color: #f8d7da;
             color: #721c24;
         }
@@ -979,6 +1100,10 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             color: #dc3545;
         }
 
+        .btn-deactivate {
+            color: #6c757d;
+        }
+
         .btn-view:hover {
             background-color: #17a2b8 !important;
             color: white !important;
@@ -991,6 +1116,11 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
 
         .btn-delete:hover {
             background-color: #dc3545 !important;
+            color: white !important;
+        }
+
+        .btn-deactivate:hover {
+            background-color: #6c757d !important;
             color: white !important;
         }
 
@@ -1111,7 +1241,6 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
 
         .modal-footer {
             padding: 10px 0;
-            border-top: 1px solid #eee;
             margin-top: 20px;
             text-align: right;
         }
@@ -1202,11 +1331,11 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                     <i class="fa-solid fa-graduation-cap"></i>
                     <span>Students</span>
                 </a>
-                <a href="a_Teachers.php" class="active" title="Teachers">
+                <a href="a_Teachers.php" title="Teachers">
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>Teachers</span>
                 </a>
-                <a href="a_Classes.php" title="Classes">
+                <a href="a_Classes.php" class="active" title="Classes">
                     <i class="fa-solid fa-list"></i>
                     <span>Classes</span>
                 </a>
@@ -1217,8 +1346,8 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
         <div class="content">
             <div class="content-header">
                 <div>
-                    <h1>Manage Teachers</h1>
-                    <p>View, edit, and manage teacher accounts</p>
+                    <h1>Manage Classes</h1>
+                    <p>View, edit, and manage all classes</p>
                 </div>
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
@@ -1233,42 +1362,58 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 </div>
             </div>
 
-            <!-- Add New Teacher Button -->
+            <!-- Add New Class -->
             <div style="margin-bottom: 1.5rem;">
-                <button onclick="openAddTeacherModal()" class="add-new-btn"><i class="fa-solid fa-plus"></i> Add New Teacher</button>
+                <button onclick="openAddClassModal()" class="add-new-btn"><i class="fa-solid fa-plus"></i> Add New Class</button>
             </div>
 
-            <div id="addTeacherModal" class="modal" style="display: none;">
+            <!-- Add Class Modal -->
+            <div id="addClassModal" class="modal">
                 <div class="modal-content">
-                    <span class="close" onclick="closeAddTeacherModal()">&times;</span>
+                    <span class="close" onclick="closeAddClassModal()">&times;</span>
                     <div class="modal-header">
-                        <h2>Add New Teacher</h2>
+                        <h2>Add New Class</h2>
                     </div>
                     <div class="modal-body">
-                        <form id="addTeacherForm" method="POST" action="a_Teachers.php">
+                        <form method="POST" action="a_Classes.php">
                             <div class="form-group">
-                                <label for="add_account_number">Account Number</label>
-                                <input type="text" id="add_account_number" name="account_number" placeholder="e.g., T001" required>
+                                <label for="subject_name">Subject Name</label>
+                                <input type="text" id="subject_name" name="subject_name" required>
                             </div>
+                            
                             <div class="form-group">
-                                <label for="add_fname">First Name</label>
-                                <input type="text" id="add_fname" name="fname" required>
+                                <label for="teacher_id">Teacher</label>
+                                <select id="teacher_id" name="teacher_id" required>
+                                    <option value="">Select Teacher</option>
+                                    <?php foreach ($teachers as $teacher): ?>
+                                        <option value="<?php echo htmlspecialchars($teacher['account_number']); ?>">
+                                            <?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname'] . ' (' . $teacher['account_number'] . ')'); ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
                             </div>
+                            
                             <div class="form-group">
-                                <label for="add_lname">Last Name</label>
-                                <input type="text" id="add_lname" name="lname" required>
+                                <label for="grade_level">Grade Level</label>
+                                <select id="grade_level" name="grade_level" required>
+                                    <option value="">Select Grade Level</option>
+                                    <option value="7">Grade 7</option>
+                                    <option value="8">Grade 8</option>
+                                    <option value="9">Grade 9</option>
+                                    <option value="10">Grade 10</option>
+                                    <option value="11">Grade 11</option>
+                                    <option value="12">Grade 12</option>
+                                </select>
                             </div>
+                            
                             <div class="form-group">
-                                <label for="add_password">Password</label>
-                                <input type="password" id="add_password" name="password" required>
+                                <label for="section">Section</label>
+                                <input type="text" id="section" name="section" required>
                             </div>
-                            <div class="form-group">
-                                <label for="add_school_id">School ID (Auto-Generated)</label>
-                                <input type="text" id="add_school_id" name="school_id">
-                            </div>
+                            
                             <div class="modal-footer">
-                                <button type="button" class="btn btn-secondary" onclick="closeAddTeacherModal()">Cancel</button>
-                                <button type="submit" name="add_teacher" class="btn btn-primary">Add Teacher</button>
+                                <button type="button" class="btn btn-secondary" onclick="closeAddClassModal()">Cancel</button>
+                                <button type="submit" name="add_class" class="btn btn-primary">Add Class</button>
                             </div>
                         </form>
                     </div>
@@ -1277,8 +1422,8 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
 
             <!-- Search Container -->
             <div class="search-container">
-                <form method="GET" action="a_Teachers.php" style="display: flex; width: 100%; gap: 10px;">
-                    <input type="text" name="search" placeholder="Search teachers by name, ID, or school ID..." value="<?php echo htmlspecialchars($search); ?>">
+                <form method="GET" action="a_Classes.php" style="display: flex; width: 100%; gap: 10px;">
+                    <input type="text" name="search" placeholder="Search classes by name, subject code, or school ID..." value="<?php echo htmlspecialchars($search); ?>">
                     <button type="submit"><i class="fas fa-search"></i> Search</button>
                     <?php if (!empty($search)): ?>
                         <a href="a_Teachers.php" class="add-new-btn" style="background-color: #dc3545;"><i class="fas fa-times"></i> Clear</a>
@@ -1288,59 +1433,112 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
 
             <!-- View/Edit Modal -->
             <?php if (isset($_GET['view']) || isset($_GET['edit'])): ?>
-                <div class="modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
-                    <div style="background: white; padding: 2rem; border-radius: 10px; width: 80%; max-width: 600px;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h2><?php echo isset($_GET['edit']) ? 'Edit Teacher' : 'Teacher Details'; ?></h2>
-                            <button onclick="window.location.href='a_Teachers.php'" style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">&times;</button>
+                <div class="modal" style="display: block;">
+                    <div class="modal-content">
+                        <span class="close" onclick="window.location.href='a_Classes.php'">&times;</span>
+                        <div class="modal-header">
+                            <h2><?php echo isset($_GET['edit']) ? 'Edit Class' : 'Class Details'; ?></h2>
                         </div>
-                        
-                        <?php if ($teacherToView): ?>
-                            <form method="POST" action="a_Teachers.php">
-                                <input type="hidden" name="account_number" value="<?php echo htmlspecialchars($teacherToView['account_number']); ?>">
-                                
-                                <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                                    <div style="flex: 1;">
-                                        <label style="display: block; margin-bottom: 0.5rem;">First Name</label>
-                                        <input type="text" name="fname" value="<?php echo htmlspecialchars($teacherToView['fname']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;" required>
+                        <div class="modal-body">
+                            <?php if ($classToView): ?>
+                                <form method="POST" action="a_Classes.php">
+                                    <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($classToView['subject_id']); ?>">
+                                    
+                                    <div class="form-group">
+                                        <label for="subject_name">Subject Name</label>
+                                        <input type="text" id="subject_name" name="subject_name" 
+                                            value="<?php echo htmlspecialchars($classToView['subject_name']); ?>" 
+                                            <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> required>
                                     </div>
-                                    <div style="flex: 1;">
-                                        <label style="display: block; margin-bottom: 0.5rem;">Last Name</label>
-                                        <input type="text" name="lname" value="<?php echo htmlspecialchars($teacherToView['lname']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;" required>
+                                    
+                                    <div class="form-group">
+                                        <label for="subject_code">Subject Code</label>
+                                        <input type="text" value="<?php echo htmlspecialchars($classToView['subject_code']); ?>" readonly>
                                     </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="teacher_id">Teacher</label>
+                                        <?php if (isset($_GET['edit'])): ?>
+                                            <select id="teacher_id" name="teacher_id" required>
+                                                <?php 
+                                                $teachersQuery->data_seek(0); // Reset pointer to beginning
+                                                while ($teacher = $teachersQuery->fetch_assoc()): 
+                                                ?>
+                                                    <option value="<?php echo htmlspecialchars($teacher['account_number']); ?>"
+                                                        <?php echo $teacher['account_number'] == $classToView['teacher_id'] ? 'selected' : ''; ?>>
+                                                        <?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname'] . ' (' . $teacher['account_number'] . ')'); ?>
+                                                    </option>
+                                                <?php endwhile; ?>
+                                            </select>
+                                        <?php else: ?>
+                                            <input type="text" value="<?php echo htmlspecialchars($classToView['teacher_fname'] . ' ' . $classToView['teacher_lname'] . ' (' . $classToView['teacher_id'] . ')'); ?>" readonly>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="grade_level">Grade Level</label>
+                                        <?php if (isset($_GET['edit'])): ?>
+                                            <select id="grade_level" name="grade_level" required>
+                                                <option value="7" <?php echo $classToView['grade_level'] == '7' ? 'selected' : ''; ?>>Grade 7</option>
+                                                <option value="8" <?php echo $classToView['grade_level'] == '8' ? 'selected' : ''; ?>>Grade 8</option>
+                                                <option value="9" <?php echo $classToView['grade_level'] == '9' ? 'selected' : ''; ?>>Grade 9</option>
+                                                <option value="10" <?php echo $classToView['grade_level'] == '10' ? 'selected' : ''; ?>>Grade 10</option>
+                                                <option value="11" <?php echo $classToView['grade_level'] == '11' ? 'selected' : ''; ?>>Grade 11</option>
+                                                <option value="12" <?php echo $classToView['grade_level'] == '12' ? 'selected' : ''; ?>>Grade 12</option>
+                                            </select>
+                                        <?php else: ?>
+                                            <input type="text" value="Grade <?php echo htmlspecialchars($classToView['grade_level']); ?>" readonly>
+                                        <?php endif; ?>
+                                    </div>
+                                    
+                                    <div class="form-group">
+                                        <label for="section">Section</label>
+                                        <input type="text" id="section" name="section" 
+                                            value="<?php echo htmlspecialchars($classToView['section']); ?>" 
+                                            <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> required>
+                                    </div>
+                                    
+                                    <div class="modal-footer">
+                                        <?php if (isset($_GET['edit'])): ?>
+                                            <button type="submit" name="update" class="btn btn-primary">Save Changes</button>
+                                        <?php else: ?>
+                                            <?php if ($classToView['status'] == 'Deactivated'): ?>
+                                                <a href="a_Classes.php?activate=<?php echo htmlspecialchars($classToView['subject_id']); ?>" 
+                                                class="btn btn-success" 
+                                                onclick="return confirm('Are you sure you want to activate this class?');">
+                                                <i class="fas fa-check-circle"></i> Activate
+                                                </a>
+                                            <?php else: ?>
+                                                <a href="a_Classes.php?deactivate=<?php echo htmlspecialchars($classToView['subject_id']); ?>" 
+                                                class="btn btn-danger" 
+                                                onclick="return confirm('Are you sure you want to deactivate this class? All enrolled students will be unenrolled.');">
+                                                <i class="fas fa-times-circle"></i> Deactivate
+                                                </a>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        <a href="a_Classes.php" class="btn btn-secondary">Close</a>
+                                    </div>
+                                </form>
+                            <?php else: ?>
+                                <p>Class not found.</p>
+                                <div class="modal-footer">
+                                    <a href="a_Classes.php" class="btn btn-secondary">Close</a>
                                 </div>
-                                
-                                <div style="margin-bottom: 1rem;">
-                                    <label style="display: block; margin-bottom: 0.5rem;">School ID</label>
-                                    <input type="text" name="school_id" value="<?php echo htmlspecialchars($teacherToView['school_id']); ?>" <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 5px;">
-                                </div>
-                                
-                                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
-                                    <?php if (isset($_GET['edit'])): ?>
-                                        <button type="submit" name="update" style="background-color: #f8b500; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">Save Changes</button>
-                                    <?php else: ?>
-                                        <a href="a_Teachers.php?edit=<?php echo htmlspecialchars($teacherToView['account_number']); ?>" style="background-color: #f8b500; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none; text-align: center;">Edit</a>
-                                    <?php endif; ?>
-                                    <a href="a_Teachers.php" style="background-color: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none; text-align: center;">Close</a>
-                                </div>
-                            </form>
-                        <?php else: ?>
-                            <p>Teacher not found.</p>
-                            <a href="a_Teachers.php" style="background-color: #dc3545; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; text-decoration: none; text-align: center; display: inline-block; margin-top: 1rem;">Close</a>
-                        <?php endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
             <?php endif; ?>
 
             <!-- Success/Error Messages -->
             <?php if (isset($success_message)): ?>
-                <div style="background-color: #d4edda; color: #155724; padding: 1rem; margin-bottom: 1rem; border-radius: 5px;">
+                <div class="alert alert-success">
                     <?php echo htmlspecialchars($success_message); ?>
                 </div>
             <?php endif; ?>
             
             <?php if (isset($error_message)): ?>
-                <div style="background-color: #f8d7da; color: #721c24; padding: 1rem; margin-bottom: 1rem; border-radius: 5px;">
+                <div class="alert alert-danger">
                     <?php echo htmlspecialchars($error_message); ?>
                 </div>
             <?php endif; ?>
@@ -1350,65 +1548,75 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                     <thead>
                         <tr>
                             <th>#</th>
+                            <th>Subject</th>
+                            <th>Subject Code</th>
+                            <th>Grade & Section</th>
                             <th>Teacher</th>
-                            <th>Account Number</th>
-                            <th>School ID</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php if ($teachersResult->num_rows > 0): ?>
+                        <?php if ($classesResult->num_rows > 0): ?>
                             <?php 
                             $counter = 1;
-                            while ($teacher = $teachersResult->fetch_assoc()): 
+                            while ($class = $classesResult->fetch_assoc()): 
+                                // Check if class has students enrolled
+                                $enrollmentCheck = $conn->prepare("SELECT COUNT(*) as count FROM subjects WHERE subject_id = ?");
+                                $enrollmentCheck->bind_param("i", $class['subject_id']);
+                                $enrollmentCheck->execute();
+                                $enrollmentResult = $enrollmentCheck->get_result();
+                                $enrollmentCount = $enrollmentResult->fetch_assoc()['count'];
+                                $enrollmentCheck->close();
                             ?>
                                 <tr>
                                     <td data-label="#"><?php echo $counter++; ?></td>
+                                    <td data-label="Subject"><?php echo htmlspecialchars($class['subject_name']); ?></td>
+                                    <td data-label="Subject Code"><?php echo htmlspecialchars($class['subject_code']); ?></td>
+                                    <td data-label="Grade & Section">
+                                        Grade <?php echo htmlspecialchars($class['grade_level']); ?> - <?php echo htmlspecialchars($class['section']); ?>
+                                    </td>
                                     <td data-label="Teacher">
                                         <div class="teacher-name">
-                                            <img src="uploads/<?php echo htmlspecialchars($teacher['profile_pic']); ?>" alt="Profile" class="teacher-avatar" onerror="this.src='uploads/default_profile.png'">
-                                            <div>
-                                                <strong><?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname']); ?></strong>
+                                            <?php echo htmlspecialchars($class['teacher_fname'] . ' ' . $class['teacher_lname']); ?>
+                                            <div class="teacher-email">
+                                                <?php echo htmlspecialchars($class['teacher_account']); ?>
                                             </div>
                                         </div>
                                     </td>
-                                    <td data-label="Account Number"><?php echo htmlspecialchars($teacher['account_number']); ?></td>
-                                    <td data-label="School ID">
-                                        <?php if (!empty($teacher['school_id'])): ?>
-                                            <span class="badge badge-section">
-                                                <?php echo htmlspecialchars($teacher['school_id']); ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge">N/A</span>
-                                        <?php endif; ?>
-                                    </td>
                                     <td data-label="Status">
-                                        <span class="status-badge active">
-                                            Active
+                                        <span class="status-badge <?php 
+                                            switch($class['status']) {
+                                                case 'Active': echo 'active'; break;
+                                                case 'Inactive': echo 'inactive'; break;
+                                                case 'Deactivated': echo 'deactivated'; break;
+                                                default: echo 'active';
+                                            }
+                                        ?>">
+                                            <?php echo htmlspecialchars($class['status']); ?>
                                         </span>
                                     </td>
                                     <td data-label="Actions" class="action-btns">
                                         <div class="action-buttons">
-                                            <a href="a_Teachers.php?view=<?php echo urlencode($teacher['account_number']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
-                                            <a href="a_Teachers.php?edit=<?php echo urlencode($teacher['account_number']); ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
-                                            <a href="a_Teachers.php?delete=<?php echo urlencode($teacher['account_number']); ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this teacher?');"><i class="fas fa-trash-alt"></i></a>
+                                            <a href="a_Classes.php?view=<?php echo urlencode($class['subject_id']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
+                                            <a href="a_Classes.php?edit=<?php echo urlencode($class['subject_id']); ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
+                                            <a href="a_Classes.php?delete=<?php echo urlencode($class['subject_id']); ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this class? All quizzes and student data will be permanently removed.');"><i class="fas fa-trash-alt"></i></a>
                                         </div>
                                     </td>
                                 </tr>
                             <?php endwhile; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="6">
+                                <td colspan="7">
                                     <div class="empty-state">
-                                        <i class="fas fa-chalkboard-teacher"></i>
-                                        <h3>No teachers found</h3>
+                                        <i class="fas fa-chalkboard"></i>
+                                        <h3>No classes found</h3>
                                         <?php if (!empty($search)): ?>
                                             <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
-                                            <a href="a_Teachers.php" class="add-new-btn">View All Teachers</a>
+                                            <a href="a_Classes.php" class="add-new-btn">View All Classes</a>
                                         <?php else: ?>
-                                            <p>No teachers registered yet</p>
-                                            <a href="a_addTeacher.php" class="add-new-btn">Add First Teacher</a>
+                                            <p>No classes created yet</p>
+                                            <button onclick="openAddClassModal()" class="add-new-btn">Add First Class</button>
                                         <?php endif; ?>
                                     </div>
                                 </td>
@@ -1442,39 +1650,27 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             }
         });
 
-        function openAddTeacherModal() {
-            document.getElementById('add_school_id').value = generateSchoolId();
-            document.getElementById('addTeacherModal').style.display = 'block';
+        function openAddClassModal() {
+            document.getElementById('addClassModal').style.display = 'block';
         }
 
-        function closeAddTeacherModal() {
-            document.getElementById('addTeacherModal').style.display = 'none';
-        }
-
-        // Close modal when clicking outside of it
-        window.onclick = function(event) {
-            var modal = document.getElementById('addTeacherModal');
-            if (event.target == modal) {
-                closeAddTeacherModal();
-            }
-            
-            // Keep the existing profile dropdown functionality
-            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
-                var dropdowns = document.getElementsByClassName("dropdown-content");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
-            }
+        function closeAddClassModal() {
+            document.getElementById('addClassModal').style.display = 'none';
         }
 
         function profileDropdown() {
             document.getElementById("dropdown").classList.toggle("show");
         }
 
+        // Close modals and dropdowns when clicking outside
         window.onclick = function(event) {
+            // Close modals
+            var addClassModal = document.getElementById('addClassModal');
+            if (event.target == addClassModal) {
+                closeAddClassModal();
+            }
+            
+            // Close profile dropdown
             if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
@@ -1485,24 +1681,10 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 }
             }
         }
-        function generateSchoolId() {
-            // Generate 2 random uppercase letters
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            let letterPart = '';
-            for (let i = 0; i < 2; i++) {
-                letterPart += letters.charAt(Math.floor(Math.random() * letters.length));
-            }
-            
-            // Generate 2 random digits
-            const digitPart = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-            
-            return letterPart + digitPart;
-        }
     </script>
 </body>
 </html>
 <?php
 $teachersQuery->close();
-$teacherCountQuery->close();
 $conn->close();
 ?>

@@ -63,6 +63,7 @@ if (isset($_POST['add_student'])) {
     $glevel = $_POST['glevel'];
     $strand = $_POST['strand'];
     $section = $_POST['section'];
+    $school_id = $_POST['school_id'];
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash the password
     
     // Check if account number already exists
@@ -75,9 +76,9 @@ if (isset($_POST['add_student'])) {
     if ($check_result->num_rows > 0) {
         $error_message = "Account number already exists!";
     } else {
-        $sql = "INSERT INTO students (account_number, fname, lname, glevel, strand, section, password, profile_pic) VALUES (?, ?, ?, ?, ?, ?, ?, 'default_profile.png')";
+        $sql = "INSERT INTO students (account_number, fname, lname, glevel, strand, section, password, profile_pic, school_id) VALUES (?, ?, ?, ?, ?, ?, ?, 'default_profile.png', ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("sssssss", $account_number, $fname, $lname, $glevel, $strand, $section, $password);
+        $stmt->bind_param("ssssssss", $account_number, $fname, $lname, $glevel, $strand, $section, $password, $school_id);
         
         if ($stmt->execute()) {
             $success_message = "Student added successfully!";
@@ -1329,9 +1330,9 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>Teachers</span>
                 </a>
-                <a href="a_Settings.php" title="Settings">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Settings</span>
+                <a href="a_Classes.php" title="Classes">
+                    <i class="fa-solid fa-list"></i>
+                    <span>Classes</span>
                 </a>
             </div>
         </div>
@@ -1405,6 +1406,11 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                             </div>
                         </div>
                         
+                        <div class="form-group">
+                        <label for="school_id">School ID</label>
+                        <input type="text" id="school_id" name="school_id" placeholder="e.g., IT21">
+                    </div>
+
                         <div class="form-row">
                             <div class="form-group">
                                 <label for="glevel">Grade Level</label>

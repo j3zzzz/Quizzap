@@ -24,7 +24,7 @@ $lname = "Unknown";
 $glevel = "Unknown";
 $strand = "Unknown";
 $section = "Unknown";
-$profile_pic = 'default-profile.jpg';
+$profile_pic = 'default-profile.png';
 
 // Fetch student data
 $sql = "SELECT fname, lname, account_number, glevel, strand, section, profile_pic FROM students WHERE account_number = ?";
@@ -40,7 +40,7 @@ if ($result->num_rows > 0) {
     $glevel = $row['glevel'];
     $strand = $row['strand'];
     $section = $row['section'];
-    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.png';
 }
 
 // Handle form submission
@@ -51,22 +51,50 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_strand = $_POST['strand'];
     $new_section = $_POST['section'];
     
+    // Handle profile picture removal
+    if (isset($_POST['remove_pic']) && $_POST['remove_pic'] === '1') {
+        // Delete old profile picture if it's not the default
+        if ($profile_pic !== 'default-profile.png' && file_exists("uploads/profiles/" . $profile_pic)) {
+            unlink("uploads/profiles/" . $profile_pic);
+        }
+        $profile_pic = 'default-profile.png';
+    }
     // Handle profile picture upload
-    if ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
+    elseif (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
         $target_dir = "uploads/profiles/";
         if (!file_exists($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
         
-        $file_extension = pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION);
-        $new_filename = "student_" . $account_number . "_" . time() . "." . $file_extension;
+        // Validate image
+        $check = getimagesize($_FILES['profile_pic']['tmp_name']);
+        if ($check === false) {
+            die("File is not an image.");
+        }
+        
+        // Check file size (max 2MB)
+        if ($_FILES['profile_pic']['size'] > 2000000) {
+            die("Sorry, your file is too large. Maximum 2MB allowed.");
+        }
+        
+        // Allow certain file formats
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+        $file_extension = strtolower(pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION));
+        if (!in_array($file_extension, $allowed_types)) {
+            die("Sorry, only JPG, JPEG, PNG & GIF files are allowed.");
+        }
+        
+        // Generate unique filename
+        $new_filename = "student_" . $account_number . "_" . uniqid() . "." . $file_extension;
         $target_file = $target_dir . $new_filename;
         
-        $check = getimagesize($_FILES['profile_pic']['tmp_name']);
-        if ($check !== false) {
-            if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $target_file)) {
-                $profile_pic = $new_filename;
+        // Try to upload file
+        if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $target_file)) {
+            // Delete old profile picture if it's not the default
+            if ($profile_pic !== 'default-profile.png' && file_exists($target_dir . $profile_pic)) {
+                unlink($target_dir . $profile_pic);
             }
+            $profile_pic = $new_filename;
         }
     }
     
@@ -99,7 +127,7 @@ $conn->close();
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
+    :root {
             --primary: #f8b500;
             --primary-light: #ffc740;
             --primary-dark: #e0a100;
@@ -245,17 +273,6 @@ $conn->close();
             padding: 0 40px;
             position: relative;
             overflow: hidden;
-        }
-        
-        .profile-header::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 100%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
-            transform: rotate(30deg);
         }
 
         .profile-title {
@@ -407,6 +424,20 @@ $conn->close();
             align-items: center;
             gap: 15px;
             margin-bottom: 30px;
+        }
+
+        .profile-pic-edit .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .profile-pic-edit .btn {
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+
+        .profile-pic-edit .btn i {
+            margin-right: 5px;
         }
         
         .profile-pic-preview {
@@ -579,6 +610,15 @@ $conn->close();
                 padding: 20px;
                 height: auto;
             }
+
+            .profile-pic-edit .btn-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .profile-pic-edit .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
@@ -610,7 +650,7 @@ $conn->close();
                 <!-- Preview Mode -->
                 <div id="previewMode" class="profile-preview">
                     <div class="profile-pic-container">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.onerror=null;this.src='uploads/profiles/default-profile.png'">
                     </div>
                     
                     <div class="profile-info">
@@ -644,12 +684,18 @@ $conn->close();
                 <form id="editMode" method="POST" enctype="multipart/form-data" class="profile-form hidden">
                     <div class="profile-pic-edit">
                         <div class="profile-pic-preview">
-                            <img id="profilePicPreview" src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'">
+                            <img id="profilePicPreview" src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.onerror=null;this.src='uploads/profiles/default-profile.png'">
                         </div>
                         <input type="file" id="profile_pic" name="profile_pic" accept="image/*" style="display: none;">
-                        <button type="button" id="changeProfilePic" class="btn btn-secondary">
-                            <i class="fas fa-camera"></i> Change Photo
-                        </button>
+                        <div class="btn-group">
+                            <button type="button" id="changeProfilePic" class="btn btn-secondary">
+                                <i class="fas fa-camera"></i> Change Photo
+                            </button>
+                            <button type="button" id="removeProfilePic" class="btn btn-secondary" <?php echo ($profile_pic === 'default-profile.png') ? 'disabled' : ''; ?>>
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                        <input type="hidden" id="remove_pic" name="remove_pic" value="0">
                     </div>
                     
                     <div class="form-group">
@@ -711,6 +757,8 @@ $conn->close();
             const changeProfilePic = document.getElementById('changeProfilePic');
             const profilePicInput = document.getElementById('profile_pic');
             const profilePicPreview = document.getElementById('profilePicPreview');
+            const removeProfilePic = document.getElementById('removeProfilePic');
+            const removePicInput = document.getElementById('remove_pic');
             const successMessage = document.getElementById('successMessage');
             
             // Toggle between preview and edit modes
@@ -738,6 +786,8 @@ $conn->close();
             
             profilePicInput.addEventListener('change', function(e) {
                 if (e.target.files && e.target.files[0]) {
+                    removePicInput.value = '0';
+                    removeProfilePic.disabled = false;
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         profilePicPreview.src = event.target.result;
@@ -746,6 +796,17 @@ $conn->close();
                 }
             });
             
+            // Profile picture removal handler
+            removeProfilePic.addEventListener('click', function() {
+                if (confirm('Are you sure you want to remove your profile picture?')) {
+                    profilePicPreview.src = 'uploads/profiles/default-profile.png';
+                    removePicInput.value = '1';
+                    this.disabled = true;
+                    // Clear any selected file
+                    profilePicInput.value = '';
+                }
+            });
+
             // Show success message if form was submitted
             if (successMessage) {
                 setTimeout(() => {

@@ -28,11 +28,12 @@ if ($result->num_rows > 0) {
     $name = $row['fname'];
     $lname = $row['lname'];
     $school_id = $row['school_id'];
-    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.png';
 } else {
     $name = "Unknown";
     $lname = "Unknown";
-    $profile_pic = 'default-profile.jpg';
+    $school_id = "Unknown";
+    $profile_pic = 'default-profile.png';
 }
 
 // Handle form submission
@@ -41,35 +42,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_lname = $_POST['lname'];
     
     // Handle profile picture removal
-    if (isset($_POST['remove_profile_pic'])) {
+    if (isset($_POST['remove_pic']) && $_POST['remove_pic'] === '1') {
         // Delete the old profile picture if it's not the default
-        if ($profile_pic !== 'default-profile.jpg' && file_exists("uploads/profiles/$profile_pic")) {
+        if ($profile_pic !== 'default-profile.png' && file_exists("uploads/profiles/$profile_pic")) {
             unlink("uploads/profiles/$profile_pic");
         }
-        $profile_pic = 'default-profile.jpg';
+        $profile_pic = 'default-profile.png';
     }
     // Handle profile picture upload
-    elseif ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
-        // Delete the old profile picture if it's not the default
-        if ($profile_pic !== 'default-profile.jpg' && file_exists("uploads/profiles/$profile_pic")) {
-            unlink("uploads/profiles/$profile_pic");
-        }
-        
+    elseif (isset($_FILES['profile_pic']) && $_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
         $target_dir = "uploads/profiles/";
         if (!file_exists($target_dir)) {
             mkdir($target_dir, 0777, true);
         }
         
-        $file_extension = pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION);
-        $new_filename = "teacher_" . $account_number . "_" . time() . "." . $file_extension;
+        // Validate image
+        $check = getimagesize($_FILES['profile_pic']['tmp_name']);
+        if ($check === false) {
+            die("File is not an image.");
+        }
+        
+        // Check file size (max 2MB)
+        if ($_FILES['profile_pic']['size'] > 2000000) {
+            die("Sorry, your file is too large. Maximum 2MB allowed.");
+        }
+        
+        // Allow certain file formats
+        $allowed_types = ['jpg', 'jpeg', 'png', 'gif'];
+        $file_extension = strtolower(pathinfo($_FILES['profile_pic']['name'], PATHINFO_EXTENSION));
+        if (!in_array($file_extension, $allowed_types)) {
+            die("Sorry, only JPG, JPEG, PNG & GIF files are allowed.");
+        }
+        
+        // Generate unique filename
+        $new_filename = "teacher_" . $account_number . "_" . uniqid() . "." . $file_extension;
         $target_file = $target_dir . $new_filename;
         
-        // Check if image file is a actual image
-        $check = getimagesize($_FILES['profile_pic']['tmp_name']);
-        if ($check !== false) {
-            if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $target_file)) {
-                $profile_pic = $new_filename;
+        // Try to upload file
+        if (move_uploaded_file($_FILES['profile_pic']['tmp_name'], $target_file)) {
+            // Delete old profile picture if it's not the default
+            if ($profile_pic !== 'default-profile.png' && file_exists($target_dir . $profile_pic)) {
+                unlink($target_dir . $profile_pic);
             }
+            $profile_pic = $new_filename;
         }
     }
     
@@ -97,6 +112,7 @@ $conn->close();
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Teacher Profile | RAWRIT</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #f8b500;
@@ -108,18 +124,23 @@ $conn->close();
             --card-bg: #fff;
             --error: #e74c3c;
             --success: #2ecc71;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
-                * {
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: Fredoka;
+            font-family: 'Fredoka', sans-serif;
         }
 
         body {
             background-color: var(--light-bg);
             color: var(--text);
+            line-height: 1.6;
         }
 
         header {
@@ -128,15 +149,20 @@ $conn->close();
             align-items: center;
             padding: 15px 5%;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
             position: sticky;
             top: 0;
             z-index: 100;
+            transition: var(--transition);
         }
         
         .logo img {
             height: 40px;
             transition: transform 0.3s;
+        }
+
+        .logo img:hover {
+            transform: scale(1.05);
         }
 
         nav {
@@ -151,21 +177,38 @@ $conn->close();
             font-weight: 500;
             position: relative;
             padding: 5px 0;
-            transition: all 0.3s;
+            transition: var(--transition);
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #000;
+            transition: var(--transition);
         }
         
         nav a:hover {
             color: #000;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        nav a:hover::after {
+            width: 100%;
         }
 
         nav a.active {
             color: #000;
             font-weight: 600;
-            border-bottom: 2px solid #000;
+        }
+        
+        nav a.active::after {
+            width: 100%;
         }
 
-        .logout-btn {
+        .logout-btn, .edit-btn {
             background-color: rgba(0, 0, 0, 0.1);
             color: #000;
             border: none;
@@ -173,16 +216,16 @@ $conn->close();
             border-radius: 30px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.3s;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
-        .logout-btn:hover {
+        .logout-btn:hover, .edit-btn:hover {
             background-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
         }
-
         
         main {
             padding: 40px 5%;
@@ -194,55 +237,78 @@ $conn->close();
         
         .profile-container {
             width: 100%;
-            max-width: 600px;
+            max-width: 900px;
             background: var(--card-bg);
             border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            box-shadow: var(--shadow-lg);
             overflow: hidden;
             border: 1px solid rgba(248, 181, 0, 0.2);
+            transition: var(--transition);
+        }
+        
+        .profile-container:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-5px);
         }
 
         .profile-header {
-            height: 100px;
+            height: 120px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 30px;
+            padding: 0 40px;
+            position: relative;
+            overflow: hidden;
         }
 
         .profile-title {
             color: #000;
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 600;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
+            position: relative;
+            z-index: 1;
+        }
+        
+        .profile-subtitle {
+            font-size: 14px;
+            color: rgba(0, 0, 0, 0.7);
+            margin-top: 5px;
+            font-weight: 400;
         }
 
         .profile-content {
-            padding: 30px;
+            padding: 40px;
         }
         
         .profile-preview {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 20px;
+            gap: 25px;
         }
         
         .profile-pic-container {
-            width: 150px;
-            height: 150px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             overflow: hidden;
-            border: 5px solid var(--accent);
+            border: 6px solid var(--accent);
             margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.3);
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .profile-pic-container:hover {
+            transform: scale(1.05);
         }
         
         .profile-pic {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: var(--transition);
         }
         
         .profile-info {
@@ -255,94 +321,161 @@ $conn->close();
             color: var(--primary-dark);
             font-weight: 600;
             margin-bottom: 5px;
+            display: inline-block;
+            padding: 5px 15px;
+            background-color: var(--accent);
+            border-radius: 20px;
         }
         
         .full-name {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 600;
-            margin-bottom: 20px;
+            margin: 15px 0;
+            position: relative;
+            display: inline-block;
+        }
+
+        .student-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            width: 100%;
+            margin-top: 30px;
+        }
+        
+        .detail-group {
+            background-color: var(--accent);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .detail-group:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .detail-label {
+            font-size: 14px;
+            color: var(--primary-dark);
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .detail-value {
+            font-size: 18px;
+            color: var(--text);
+            font-weight: 500;
         }
         
         .profile-form {
             display: grid;
-            gap: 20px;
+            gap: 25px;
         }
         
         .form-group {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
         
         .form-label {
-            font-size: 14px;
+            font-size: 15px;
             color: var(--primary);
             font-weight: 600;
         }
         
         .form-input {
-            padding: 12px 15px;
+            padding: 14px 18px;
             border: 1px solid #ddd;
-            border-radius: 8px;
+            border-radius: 10px;
             font-size: 16px;
-            transition: all 0.3s;
+            transition: var(--transition);
+            background-color: #f9f9f9;
         }
+        
         .form-input:focus {
             border-color: var(--primary);
             outline: none;
             box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.1);
+            background-color: #fff;
         }
 
         .profile-pic-edit {
             display: flex;
             flex-direction: column;
             align-items: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .profile-pic-edit .btn-group {
+            display: flex;
             gap: 10px;
-            margin-bottom: 20px;
+        }
+
+        .profile-pic-edit .btn {
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+
+        .profile-pic-edit .btn i {
+            margin-right: 5px;
         }
         
         .profile-pic-preview {
-            width: 150px;
-            height: 150px;
+            width: 180px;
+            height: 180px;
             border-radius: 50%;
             overflow: hidden;
-            border: 5px solid var(--accent);
+            border: 6px solid var(--accent);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+        
+        .profile-pic-preview:hover {
+            transform: scale(1.05);
         }
         
         .form-actions {
             display: flex;
             justify-content: flex-end;
-            gap: 15px;
-            margin-top: 30px;
+            gap: 20px;
+            margin-top: 40px;
         }
         
         .preview-actions {
             display: flex;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 30px;
         }
         
         .btn {
-            padding: 12px 25px;
-            border-radius: 8px;
+            padding: 14px 30px;
+            border-radius: 10px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
             border: none;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            font-size: 16px;
         }
         
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: #000;
-            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.3);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(248, 181, 0, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(248, 181, 0, 0.4);
             background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
         }
         
@@ -354,30 +487,57 @@ $conn->close();
 
         .btn-secondary:hover {
             background-color: #e1e1e1;
-        }
-                
-        .edit-btn {
-            background-color: rgba(0, 0, 0, 0.1);
-            color: #000;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .edit-btn:hover {
-            background-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-sm);
         }
         
         .hidden {
             display: none;
         }
         
+        /* Success message */
+        .success-message {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            background-color: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .success-message.show {
+            transform: translateX(0);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .profile-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .profile-pic-container {
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        /* Responsive styles */
         @media (max-width: 768px) {
             header {
                 padding: 15px 20px;
@@ -388,50 +548,72 @@ $conn->close();
             }
             
             .profile-content {
-                padding: 20px;
+                padding: 25px;
             }
             
             .profile-header {
-                padding: 0 20px;
+                padding: 0 25px;
+                height: 100px;
+            }
+            
+            .profile-title {
+                font-size: 24px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .full-name {
+                font-size: 24px;
+            }
+            
+            .student-details {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
             }
         }
-
-        /* Add some subtle animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .profile-container {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .remove-photo-btn {
-            background-color: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
         
-        .remove-photo-btn:hover {
-            background-color: #ff5252;
-        }
-        
-        .remove-photo-btn i {
-            font-size: 12px;
+        @media (max-width: 480px) {
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .profile-header {
+                flex-direction: column;
+                justify-content: center;
+                text-align: center;
+                padding: 20px;
+                height: auto;
+            }
+
+            .profile-pic-edit .btn-group {
+                flex-direction: column;
+                width: 100%;
+            }
+
+            .profile-pic-edit .btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 <body>
     <header>                   
-        <div class="logo"> <img src="img/logo4.png" width="110px" height="80px" class="logo-img"></div>
+        <div class="logo">
+            <img src="img/logo4.png" width="110px" height="80px" class="logo-img" alt="RAWRIT Logo">
+        </div>
         <nav>
             <a href="t_Home.php">Home</a>
             <a href="t_Students.php">Students</a>
@@ -447,19 +629,25 @@ $conn->close();
     <main>
         <div class="profile-container">
             <div class="profile-header">
-                <h1 class="profile-title">Personal Information</h1>
+                <div>
+                    <h1 class="profile-title">Teacher Profile</h1>
+                </div>
             </div>
             <div class="profile-content">
                 <!-- Preview Mode -->
                 <div id="previewMode" class="profile-preview">
                     <div class="profile-pic-container">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.onerror=null;this.src='uploads/profiles/default-profile.png'">
                     </div>
                     
                     <div class="profile-info">
-                        <div class="account-number">Account #: <?php echo htmlspecialchars($account_number); ?></div>
-                        <div class="account-number">School ID: <?php echo htmlspecialchars($school_id); ?></div>
-                        <div class="full-name"><?php echo htmlspecialchars($name . ' ' . $lname); ?></div>
+                        <div class="account-number"><?php echo htmlspecialchars($account_number); ?></div>
+                        <h2 class="full-name"><?php echo htmlspecialchars($name . ' ' . $lname); ?></h2>
+
+                        <div class="detail-group">
+                            <div class="detail-label">School ID</div>
+                            <div class="detail-value"><?php echo htmlspecialchars($school_id); ?></div>
+    </div>
                     </div>
                     
                     <div class="preview-actions">
@@ -473,18 +661,20 @@ $conn->close();
                 <form id="editMode" method="POST" enctype="multipart/form-data" class="profile-form hidden">
                     <div class="profile-pic-edit">
                         <div class="profile-pic-preview">
-                            <img id="profilePicPreview" src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'">
+                            <img id="profilePicPreview" src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.onerror=null;this.src='uploads/profiles/default-profile.png'">
                         </div>
                         <input type="file" id="profile_pic" name="profile_pic" accept="image/*" style="display: none;">
-                        <button type="button" id="changeProfilePic" class="btn btn-secondary">
-                            <i class="fas fa-camera"></i> Change Photo
-                        </button>
-                        <?php if ($profile_pic !== 'default-profile.jpg'): ?>
-                        <button type="submit" name="remove_profile_pic" class="remove-photo-btn">
-                            <i class="fas fa-trash-alt"></i> Remove Photo
-                        </button>
-                        <?php endif; ?>
+                        <div class="btn-group">
+                            <button type="button" id="changeProfilePic" class="btn btn-secondary">
+                                <i class="fas fa-camera"></i> Change Photo
+                            </button>
+                            <button type="button" id="removeProfilePic" class="btn btn-secondary" <?php echo ($profile_pic === 'default-profile.png') ? 'disabled' : ''; ?>>
+                                <i class="fas fa-trash"></i> Remove
+                            </button>
+                        </div>
+                        <input type="hidden" id="remove_pic" name="remove_pic" value="0">
                     </div>
+                    
                     <div class="form-group">
                         <label class="form-label">Account Number</label>
                         <input type="text" class="form-input" value="<?php echo htmlspecialchars($account_number); ?>" disabled>
@@ -511,6 +701,13 @@ $conn->close();
                 </form>
             </div>
         </div>
+        
+        <?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+        <div id="successMessage" class="success-message">
+            <i class="fas fa-check-circle"></i>
+            <span>Profile updated successfully!</span>
+        </div>
+        <?php endif; ?>
     </main>
     
     <script>
@@ -522,11 +719,22 @@ $conn->close();
             const changeProfilePic = document.getElementById('changeProfilePic');
             const profilePicInput = document.getElementById('profile_pic');
             const profilePicPreview = document.getElementById('profilePicPreview');
+            const removeProfilePic = document.getElementById('removeProfilePic');
+            const removePicInput = document.getElementById('remove_pic');
+            const successMessage = document.getElementById('successMessage');
             
             // Toggle between preview and edit modes
             function toggleEditMode() {
                 previewMode.classList.toggle('hidden');
                 editMode.classList.toggle('hidden');
+                
+                // Smooth scroll to top when editing
+                if (!editMode.classList.contains('hidden')) {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }
             }
             
             // Event listeners
@@ -540,6 +748,8 @@ $conn->close();
             
             profilePicInput.addEventListener('change', function(e) {
                 if (e.target.files && e.target.files[0]) {
+                    removePicInput.value = '0';
+                    removeProfilePic.disabled = false;
                     const reader = new FileReader();
                     reader.onload = function(event) {
                         profilePicPreview.src = event.target.result;
@@ -548,21 +758,46 @@ $conn->close();
                 }
             });
             
+            // Profile picture removal handler
+            removeProfilePic.addEventListener('click', function() {
+                if (confirm('Are you sure you want to remove your profile picture?')) {
+                    profilePicPreview.src = 'uploads/profiles/default-profile.png';
+                    removePicInput.value = '1';
+                    this.disabled = true;
+                    // Clear any selected file
+                    profilePicInput.value = '';
+                }
+            });
+
+            // Show success message if form was submitted
+            if (successMessage) {
+                setTimeout(() => {
+                    successMessage.classList.add('show');
+                    
+                    // Hide after 5 seconds
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 5000);
+                }, 300);
+            }
+            
             // If form was submitted with errors, show edit mode
             if (window.location.search.includes('error')) {
                 toggleEditMode();
             }
+            
+            // Add hover effect to profile picture in preview mode
+            const profilePicContainer = document.querySelector('.profile-pic-container');
+            if (profilePicContainer) {
+                profilePicContainer.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05) rotate(5deg)';
+                });
+                
+                profilePicContainer.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1) rotate(0)';
+                });
+            }
         });
-
-                    // Update the preview image when changing or removing profile picture
-                    const form = document.getElementById('editMode');
-            form.addEventListener('submit', function() {
-                // This ensures the preview updates after form submission
-                setTimeout(() => {
-                    const previewImg = document.querySelector('#previewMode .profile-pic');
-                    previewImg.src = 'uploads/profiles/' + '<?php echo $profile_pic; ?>?' + new Date().getTime();
-                }, 100);
-            });
     </script>
 </body>
 </html>

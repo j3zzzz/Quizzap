@@ -28,9 +28,9 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.png';
 } else {
-    $profile_pic = 'default-profile.jpg';
+    $profile_pic = 'default-profile.png';
 }
 
 $stmt->close();
@@ -1222,7 +1222,7 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 </div>
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.png'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                         <div id="dropdown" class="dropdown-content">
                             <button onclick="window.location.href='a_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
                             <form action="logout.php" method="POST">

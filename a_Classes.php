@@ -28,9 +28,9 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.png';
 } else {
-    $profile_pic = 'default-profile.jpg';
+    $profile_pic = 'default-profile.png';
 }
 
 $stmt->close();
@@ -66,7 +66,7 @@ if (isset($_POST['add_class'])) {
         $teacher_row = $teacher_result->fetch_assoc();
         $school_id = $teacher_row['school_id'];
         
-        // Check if class already exists for this teacher
+        // Check if class already exists for this teacher (same subject, grade, section)
         $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND section = ? AND teacher_id = ?";
         $check_stmt = $conn->prepare($check_sql);
         $check_stmt->bind_param("ssss", $subject_name, $grade_level, $section, $teacher_account_number);
@@ -74,27 +74,82 @@ if (isset($_POST['add_class'])) {
         $check_result = $check_stmt->get_result();
         
         if ($check_result->num_rows > 0) {
-            $error_message = "Error: A class with the same subject, grade level, and section already exists for this teacher.";
-        } else {
-            $sql = "INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, section, school_id, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $section, $school_id);
+            // Store form data in session
+            $_SESSION['pending_class'] = [
+                'subject_name' => $subject_name,
+                'grade_level' => $grade_level,
+                'section' => $section,
+                'teacher_id' => $teacher_account_number,
+                'subject_code' => $subject_code,
+                'school_id' => $school_id
+            ];
             
-            if ($stmt->execute()) {
-                $success_message = "Class created successfully!";
-                // Redirect to avoid form resubmission
-                header("Location: a_Classes.php");
-                exit();
-            } else {
-                $error_message = "Error adding class: " . $stmt->error;
-            }
-            $stmt->close();
+            $error_message = "Error: This teacher already has an existing class. A teacher can not have duplicate classes.";
+            header("Location: a_Classes.php?duplicate_error=1&message=" . urlencode($error_message));
+            exit();
         }
-        $check_stmt->close();
+        
+        // Check if class exists for any teacher (same grade and section)
+        $check_all_sql = "SELECT * FROM subjects WHERE grade_level = ? AND section = ?";
+        $check_all_stmt = $conn->prepare($check_all_sql);
+        $check_all_stmt->bind_param("ss", $grade_level, $section);
+        $check_all_stmt->execute();
+        $check_all_result = $check_all_stmt->get_result();
+        
+        if ($check_all_result->num_rows > 0) {
+            // Store form data in session
+            $_SESSION['pending_class'] = [
+                'subject_name' => $subject_name,
+                'grade_level' => $grade_level,
+                'section' => $section,
+                'teacher_id' => $teacher_account_number,
+                'subject_code' => $subject_code,
+                'school_id' => $school_id
+            ];
+            
+            $warning_message = "Warning: A class with the same grade level and section already exists for another teacher. Are you sure you want to create another class with the same grade and section?";
+            header("Location: a_Classes.php?duplicate_warning=1&message=" . urlencode($warning_message));
+            exit();
+        }
+        
+        // No duplicate found, proceed with creation
+        $sql = "INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, section, school_id, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')";
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param("ssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $section, $school_id);
+        
+        if ($stmt->execute()) {
+            $success_message = "Class created successfully!";
+            header("Location: a_Classes.php");
+            exit();
+        } else {
+            $error_message = "Error adding class: " . $stmt->error;
+        }
+        $stmt->close();
     } else {
         $error_message = "Error: Selected teacher not found.";
     }
     $teacher_stmt->close();
+}
+
+// Handle duplicate confirmation
+if (isset($_GET['confirm_duplicate']) && $_GET['confirm_duplicate'] == 1 && isset($_SESSION['pending_class'])) {
+    $pending = $_SESSION['pending_class'];
+    
+    $sql = "INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, section, school_id, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("ssssss", $pending['subject_name'], $pending['teacher_id'], $pending['subject_code'], $pending['grade_level'], $pending['section'], $pending['school_id']);
+    
+    if ($stmt->execute()) {
+        $success_message = "Class created successfully!";
+        unset($_SESSION['pending_class']);
+    } else {
+        $error_message = "Error adding class: " . $stmt->error;
+    }
+    $stmt->close();
+    
+    // Redirect to avoid form resubmission
+    header("Location: a_Classes.php");
+    exit();
 }
 
 // Handle Delete Action
@@ -252,7 +307,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="other resources/fontawesome-free-6.5.2-web/css/all.min.css">
-    <title>Manage Teachers</title>
+    <title>Manage Classes</title>
      <style>
         * {
             margin: 0;
@@ -1306,6 +1361,24 @@ while ($row = $teachersQuery->fetch_assoc()) {
             background-color: #f8d7da;
             color: #721c24;
         }
+
+        /* Add to your existing CSS */
+        #duplicateModal .modal-content {
+            max-width: 500px;
+            margin: 10% auto;
+        }
+
+        #duplicateModal .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        #duplicateModal p {
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
     </style>
 </head>
 <body>
@@ -1351,7 +1424,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
                 </div>
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.png'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                         <div id="dropdown" class="dropdown-content">
                             <button onclick="window.location.href='a_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
                             <form action="logout.php" method="POST">
@@ -1647,6 +1720,49 @@ while ($row = $teachersQuery->fetch_assoc()) {
                     content.classList.toggle('expanded');
                     localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
                 });
+            }
+        });
+
+        // Add to your existing JavaScript
+        function showDuplicateModal(message, isError = false) {
+            const modal = document.createElement('div');
+            modal.id = 'duplicateModal';
+            modal.className = 'modal';
+            modal.style.display = 'block';
+            
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <span class="close" onclick="document.getElementById('duplicateModal').remove()">&times;</span>
+                    <div class="modal-header">
+                        <h2>${isError ? 'Error' : 'Warning'}</h2>
+                    </div>
+                    <div class="modal-body">
+                        <p>${message}</p>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn btn-secondary" onclick="document.getElementById('duplicateModal').remove()">OK</button>
+                        ${!isError ? `<a href="a_Classes.php?confirm_duplicate=1" class="btn btn-primary">Continue Anyway</a>` : ''}
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        // Check for duplicate warning/error in URL when page loads
+        window.addEventListener('load', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.has('duplicate_warning')) {
+                const message = decodeURIComponent(urlParams.get('message'));
+                showDuplicateModal(message, false);
+                window.history.replaceState({}, document.title, window.location.pathname);
+            }
+            
+            if (urlParams.has('duplicate_error')) {
+                const message = decodeURIComponent(urlParams.get('message'));
+                showDuplicateModal(message, true);
+                window.history.replaceState({}, document.title, window.location.pathname);
             }
         });
 

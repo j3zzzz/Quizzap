@@ -79,6 +79,7 @@ $conn->close();
             color: #F8B500;
             font-family: Fredoka;
             font-size: 3rem;
+            font-weight: 500;
         }
 
         .right p {

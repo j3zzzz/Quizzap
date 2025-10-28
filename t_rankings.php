@@ -1,4 +1,10 @@
 <?php
+session_start();
+if (strpos($_SESSION['account_number'], 'T') !== 0) {
+    header("Location: login.php");
+    exit();
+}
+
 // Database connection details remain the same
 $servername = "localhost";
 $username = "root";
@@ -9,6 +15,22 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
+}
+
+$loggedInUser = $_SESSION['account_number'];
+
+//query to fetch the teacher's profile pic
+$sql = "SELECT profile_pic FROM teachers WHERE account_number = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $loggedInUser);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+} else {
+    $profile_pic = 'default-profile.jpg';
 }
 
 $subject_id = isset($_GET['subject_id']) ? $_GET['subject_id'] : null;
@@ -558,6 +580,15 @@ function getRankings($conn, $quiz_id) {
         .show {
              display: block;
         }
+
+        .profile {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            border: 2px solid #f8b500;
+        }
     </style>
 </head>
 <body>
@@ -605,16 +636,16 @@ function getRankings($conn, $quiz_id) {
                     <h1>Rankings of all Quizzes in <?php echo $subject_name; ?></h1><br>
                 </div>
                 <div class="actions">
-                    <div class="profile"><img src="img/default.png" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
-
+                    <div class="profile" onclick="profileDropdown()">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                         <div id="dropdown" class="dropdown-content">
                             <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                            <form action="logout.php" method="post">
+                            <form action="logout.php" method="POST">
                                 <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                             </form>
-                        </div> 
-
+                        </div>
                     </div>
+
                 </div>
             </div>
     <center>
@@ -740,12 +771,13 @@ function formatDate(dateString) {
     return date.toLocaleString();
 }
 
-function profileDropdown() { // Dropdown funtion
+function profileDropdown() {
             document.getElementById("dropdown").classList.toggle("show");
-            }
+        }
 
+        // Close the dropdown if clicked outside
         window.onclick = function(event) {
-            if (!event.target.matches('.dropdwn-btn')) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
                     var openDropdown = dropdowns[i];
@@ -755,6 +787,7 @@ function profileDropdown() { // Dropdown funtion
                 }
             }
         }
+
 </script>
 
 </body>

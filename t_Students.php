@@ -32,8 +32,8 @@ if (isset($_GET['download_template']) && $subject_id) {
     $verify_result = $verify_stmt->get_result();
     
     if ($verify_result->num_rows > 0) {
-        // Get subject details (grade level and section)
-        $subject_details_sql = "SELECT grade_level, section FROM subjects WHERE subject_id = ?";
+        // Get subject details (grade level, section, and school_id)
+        $subject_details_sql = "SELECT grade_level, section, school_id FROM subjects WHERE subject_id = ?";
         $subject_details_stmt = $conn->prepare($subject_details_sql);
         $subject_details_stmt->bind_param("i", $subject_id);
         $subject_details_stmt->execute();
@@ -42,32 +42,36 @@ if (isset($_GET['download_template']) && $subject_id) {
         
         $subject_grade_level = $subject_details['grade_level'];
         $subject_section = $subject_details['section'];
+        $subject_school_id = $subject_details['school_id'];
         
-        // Fetch students not enrolled in the selected subject
+        // Fetch students with same school_id, grade level, and section who are not enrolled in this subject
         $csv_query = "SELECT s.account_number, s.fname, s.lname, s.glevel, s.strand, s.section
                     FROM students s
-                    WHERE NOT EXISTS (
+                    WHERE s.school_id = ?
+                    AND s.glevel = ?
+                    AND (s.section = ? OR ? IS NULL)
+                    AND NOT EXISTS (
                         SELECT 1 FROM enrollments e 
-                        JOIN subjects sub ON e.subject_id = sub.subject_id
                         WHERE e.student_id = s.student_id 
-                        AND sub.subject_name = (SELECT subject_name FROM subjects WHERE subject_id = ?)
-                        AND sub.grade_level = (SELECT grade_level FROM subjects WHERE subject_id = ?)
-                        AND sub.section = (SELECT section FROM subjects WHERE subject_id = ?)
-                        AND sub.school_id = (SELECT school_id FROM subjects WHERE subject_id = ?)
+                        AND e.subject_id = ?
                     )
-                    AND s.school_id = (SELECT school_id FROM subjects WHERE subject_id = ?)
-                    AND s.glevel = (SELECT grade_level FROM subjects WHERE subject_id = ?)
-                    AND (s.section = (SELECT section FROM subjects WHERE subject_id = ?) 
-                        OR (SELECT section FROM subjects WHERE subject_id = ?) IS NULL)
                     ORDER BY s.lname, s.fname";
+        
         $csv_stmt = $conn->prepare($csv_query);
-        $csv_stmt->bind_param("iiiiiiii", $subject_id, $subject_id, $subject_id, $subject_id, $subject_id, $subject_id, $subject_id, $subject_id);
+        
+        // Handle NULL section properly
+        if ($subject_section === null) {
+            $csv_stmt->bind_param("iiisi", $subject_school_id, $subject_grade_level, $subject_section, $subject_section, $subject_id);
+        } else {
+            $csv_stmt->bind_param("iissi", $subject_school_id, $subject_grade_level, $subject_section, $subject_section, $subject_id);
+        }
+        
         $csv_stmt->execute();
         $csv_result = $csv_stmt->get_result();
         
         // Set headers for download
         header('Content-Type: text/csv');
-        header('Content-Disposition: attachment; filename="student_enrollment.csv"');
+        header('Content-Disposition: attachment; filename="student_enrollment_template.csv"');
         
         // Open output stream
         $output = fopen('php://output', 'w');
@@ -1562,11 +1566,32 @@ if (isset($_SESSION['enroll_message'])) {
                 <select id="subject-filter" onchange="filterSubject()">
                     <option value="">All Subjects</option>
                     <?php 
-                    $subjects_result->data_seek(0); // Reset pointer to beginning
-                    while ($subject = $subjects_result->fetch_assoc()): ?>
+                    // Reset pointer and fetch all subjects with their details
+                    $subjects_result->data_seek(0);
+                    while ($subject = $subjects_result->fetch_assoc()): 
+                        // Get additional subject details for display
+                        $subject_details_sql = "SELECT grade_level, section FROM subjects WHERE subject_id = ?";
+                        $subject_details_stmt = $conn->prepare($subject_details_sql);
+                        $subject_details_stmt->bind_param("i", $subject['subject_id']);
+                        $subject_details_stmt->execute();
+                        $subject_details = $subject_details_stmt->get_result()->fetch_assoc();
+                        $subject_details_stmt->close();
+                        
+                        $grade_level = $subject_details['grade_level'] ?? '';
+                        $section = $subject_details['section'] ?? '';
+                        
+                        // Format the display text
+                        $display_text = htmlspecialchars($subject['subject_name']);
+                        if (!empty($grade_level)) {
+                            $display_text .= " - Grade " . $grade_level;
+                        }
+                        if (!empty($section)) {
+                            $display_text .= " - " . $section;
+                        }
+                    ?>
                         <option value="<?php echo htmlspecialchars($subject['subject_id']); ?>" 
                             <?php echo ($selected_subject == $subject['subject_id'] ? 'selected' : ''); ?>>
-                            <?php echo htmlspecialchars($subject['subject_name']); ?>
+                            <?php echo $display_text; ?>
                         </option>
                     <?php endwhile; ?>
                 </select>

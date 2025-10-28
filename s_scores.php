@@ -26,9 +26,9 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profilePic = $row['profile_pic'] ?: "uploads/default_profile.png"; // Pang display ng default profile pic pag wala pang profile pic na nakaset
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 } else {
-    $profilePic = "uploads/default_profile.png"; // Default picture path if no custom picture found
+    $profile_pic = 'default-profile.jpg';
 }
 
 // Define the quiz ID
@@ -487,15 +487,14 @@ $conn->close();
                     <h1><?php echo $subject_name; ?></h1><br>
                 </div>
                 <div class="actions">
-                    <div class="profile"><img src="<?php echo $profilePic; ?>" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
-
+                    <div class="profile" onclick="profileDropdown()">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
                         <div id="dropdown" class="dropdown-content">
                             <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                            <form action="logout.php" method="post">
+                            <form action="logout.php" method="POST">
                                 <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
                             </form>
-                        </div> 
-
+                        </div>
                     </div>
                 </div>
             </div>
@@ -553,12 +552,13 @@ $conn->close();
             }
         });
 
-        function profileDropdown() { // Dropdown funtion
-        document.getElementById("dropdown").classList.toggle("show");
+        function profileDropdown() {
+            document.getElementById("dropdown").classList.toggle("show");
         }
 
+        // Close the dropdown if clicked outside
         window.onclick = function(event) {
-            if (!event.target.matches('.dropdwn-btn')) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
                     var openDropdown = dropdowns[i];

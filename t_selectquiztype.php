@@ -143,9 +143,6 @@ $conn->close();
 
     <header>
         <div class="logo"><img src="img/logo1.png" width="200px" height="80px"></div>
-        <div class="actions">
-            <div class="profile"><img src="img/default.png" width="50px" height="50px"></div>
-        </div>
     </header>
 
     <p class="quiz-type">Choose the Type of Quiz.</p>

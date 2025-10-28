@@ -29,9 +29,9 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'uploads/profiles/default-profile.jpg';
 } else {
-    $profile_pic = 'default-profile.jpg';
+    $profile_pic = 'uploads/profiles/default-profile.jpg';
 }
 
 $stmt->close();

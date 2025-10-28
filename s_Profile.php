@@ -221,7 +221,7 @@ $conn->close();
         }
         
         .profile-container {
-            width: 100%;
+            width: 60%;
             max-width: 900px;
             background: var(--card-bg);
             border-radius: 16px;
@@ -237,7 +237,7 @@ $conn->close();
         }
 
         .profile-header {
-            height: 120px;
+            height: 80px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             display: flex;
             justify-content: space-between;
@@ -333,7 +333,7 @@ $conn->close();
 
         .student-details {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
             gap: 20px;
             width: 100%;
             margin-top: 30px;

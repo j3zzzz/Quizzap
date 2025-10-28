@@ -435,7 +435,7 @@ $conn->close();
         .subject-button span {
             font-size: 15px;
             font-family: Fredoka;
-            color: #f8b500;
+            color: #6b685eff;
         }
 
         /* width */
@@ -559,7 +559,7 @@ $conn->close();
             border: 2px solid #F8B500;
             font-family: Fredoka;
             font-weight: 500;
-            font-size: 18px;
+            font-size: 15px;
             box-shadow: 0 6px 0 0 #BC8900;
             cursor: pointer;
         }
@@ -577,7 +577,7 @@ $conn->close();
 
         .add-sub {
             float: right;
-            margin-right: 200px;
+            margin-left: -80px;
             margin-top: 65px;
         }
 
@@ -1259,7 +1259,7 @@ $conn->close();
                 
             </div>
             
-            <div style="margin-top: 1px; background-color:#f8b50052; padding: 10px; border-radius: 8px; width: 60%;">
+            <div style="margin-top: 1px; background-color:#f8b50052; padding: 15px; border-radius: 8px; width: 100%;">
             <div style="display: flex; align-items: center; gap: 4px;"><strong>School ID: </strong><p><?php echo htmlspecialchars($school_id); ?></p></div><br>
                 <div><p style="font-size: small; font-style: italic;"><i class="fas fa-lightbulb" style="color: #f8b500; background-color: white; padding: 10px; border-radius: 50%;"></i> School ID is used to distinguish between different teachers and prevents mismatching of students. Please provide this school id to your students upon registration.</p></div>
             </div>

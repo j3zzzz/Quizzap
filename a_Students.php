@@ -837,27 +837,38 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             }
         }  
 
+        /* Updated table styles */
         .data-table {
             width: 100%;
             border-collapse: collapse;
+            border-spacing: 0;
             margin-top: 1rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             font-size: 0.9rem;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
-        .data-table th, .data-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
+        .data-table thead {
+            background-color: #f8b500;
         }
 
         .data-table th {
-            background-color: #f8b500;
+            padding: 12px 0.75rem;
+            text-align: left;
             color: white;
             font-weight: bold;
             position: sticky;
             top: 0;
+            border: none !important;
+            margin: 0;
+        }
+
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
         }
 
         .data-table tr:nth-child(even) {
@@ -930,19 +941,47 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             color: #721c24;
         }
 
-        .badge-g11 {
+        .badge-g11, .badge-11 {
             background-color: #e2e3e5;
             color: #383d41;
         }
 
-        .badge-g12 {
+        .badge-g12, .badge-12 {
             background-color: #d1ecf1;
             color: #0c5460;
         }
 
+        .badge-7, .badge-8, .badge-9, .badge-10 {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .badge-section {
+            background-color: #e2d4f0;
+            color: #4a2d7a;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .status-badge.active {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-badge.inactive {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
         .search-container {
             display: flex;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
             gap: 10px;
         }
 
@@ -1015,13 +1054,6 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             background-color: #f5f5f5;
         }
 
-        .table-responsive {
-            overflow-x: auto;
-            margin-bottom: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
-        }
-
         .empty-state {
             text-align: center;
             padding: 2rem;
@@ -1035,76 +1067,54 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
         }
 
         .student-name {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
-.student-name div {
-    display: flex;
-    flex-direction: column;
-}
+        .student-name div {
+            display: flex;
+            flex-direction: column;
+        }
 
-.badge-section {
-    background-color: #e2d4f0;
-    color: #4a2d7a;
-}
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+        }
 
-.status-badge {
-    padding: 4px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-}
+        .btn-view {
+            color: #17a2b8;
+        }
 
-.status-badge.active {
-    background-color: #d4edda;
-    color: #155724;
-}
+        .btn-edit {
+            color: #ffc107;
+        }
 
-.status-badge.inactive {
-    background-color: #f8d7da;
-    color: #721c24;
-}
+        .btn-delete {
+            color: #dc3545;
+        }
 
-.action-buttons {
-    display: flex;
-    gap: 8px;
-}
+        .btn-view:hover {
+            background-color: #17a2b8 !important;
+            color: white !important;
+        }
 
-.btn-view {
-    color: #17a2b8;
-}
+        .btn-edit:hover {
+            background-color: #ffc107 !important;
+            color: white !important;
+        }
 
-.btn-edit {
-    color: #ffc107;
-}
+        .btn-delete:hover {
+            background-color: #dc3545 !important;
+            color: white !important;
+        }
 
-.btn-delete {
-    color: #dc3545;
-}
+        /* Make table rows more compact */
+        .data-table td {
+            padding: 0.5rem 0.75rem !important;
+        }
 
-.btn-view:hover {
-    background-color: #17a2b8 !important;
-    color: white !important;
-}
-
-.btn-edit:hover {
-    background-color: #ffc107 !important;
-    color: white !important;
-}
-
-.btn-delete:hover {
-    background-color: #dc3545 !important;
-    color: white !important;
-}
-
-/* Make table rows more compact */
-.data-table td {
-    padding: 0.5rem 0.75rem !important;
-}
-
- .modal-overlay {
+        .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -1344,17 +1354,6 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                     <h1>Manage Students</h1>
                     <p>View, edit, and manage student accounts</p>
                 </div>
-                <div class="actions">
-                    <div class="profile" onclick="profileDropdown()">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                        <div id="dropdown" class="dropdown-content">
-                            <button onclick="window.location.href='a_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                            <form action="logout.php" method="POST">
-                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Add New Student Button -->
@@ -1535,94 +1534,96 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 </div>
             <?php endif; ?>
 
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Student</th>
-                            <th>Account Number</th>
-                            <th>Grade Level</th>
-                            <th>Strand</th>
-                            <th>Section</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($studentsResult->num_rows > 0): ?>
-                            <?php 
-                            $counter = 1;
-                            while ($student = $studentsResult->fetch_assoc()): 
-                            ?>
-                                <tr>
-                                    <td data-label="#"><?php echo $counter++; ?></td>
-                                    <td data-label="Student">
-                                        <div class="student-name">
-                                            <img src="uploads/<?php echo htmlspecialchars($student['profile_pic']); ?>" alt="Profile" class="student-avatar" onerror="this.src='uploads/default_profile.png'">
-                                            <div>
-                                                <strong><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></strong>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td data-label="Account Number"><?php echo htmlspecialchars($student['account_number']); ?></td>
-                                    <td data-label="Grade Level">
-                                        <span class="badge badge-<?php echo strtolower($student['glevel']); ?>">
-                                            <?php echo htmlspecialchars($student['glevel']); ?>
-                                        </span>
-                                    </td>
-                                    <td data-label="Strand">
-                                        <?php if (!empty($student['strand'])): ?>
-                                            <span class="badge badge-<?php echo strtolower($student['strand']); ?>">
-                                                <?php echo htmlspecialchars($student['strand']); ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge">N/A</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td data-label="Section">
-                                        <?php if (!empty($student['section'])): ?>
-                                            <span class="badge badge-section">
-                                                <?php echo htmlspecialchars($student['section']); ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge">N/A</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td data-label="Status">
-                                        <span class="status-badge <?php echo ($student['status'] ?? 'active') === 'active' ? 'active' : 'inactive'; ?>">
-                                            <?php echo ucfirst($student['status'] ?? 'active'); ?>
-                                        </span>
-                                    </td>
-                                    <td data-label="Actions" class="action-btns">
-                                        <div class="action-buttons">
-                                            <a href="a_Students.php?view=<?php echo urlencode($student['account_number']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
-                                            <a href="a_Students.php?edit=<?php echo urlencode($student['account_number']); ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
-                                            <a href="a_Students.php?delete=<?php echo urlencode($student['account_number']); ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this student?');"><i class="fas fa-trash-alt"></i></a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
+            <!-- Updated table without table-responsive wrapper -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Student</th>
+                        <th>Account Number</th>
+                        <th>Grade Level</th>
+                        <th>Strand</th>
+                        <th>Section</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($studentsResult->num_rows > 0): ?>
+                        <?php 
+                        $counter = 1;
+                        while ($student = $studentsResult->fetch_assoc()): 
+                        ?>
                             <tr>
-                                <td colspan="8">
-                                    <div class="empty-state">
-                                        <i class="fas fa-user-graduate"></i>
-                                        <h3>No students found</h3>
-                                        <?php if (!empty($search)): ?>
-                                            <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
-                                            <a href="a_Students.php" class="add-new-btn">View All Students</a>
-                                        <?php else: ?>
-                                            <p>No students registered yet</p>
-                                            <button id="addFirstStudentBtn" class="add-new-btn">Add First Student</button>
-                                        <?php endif; ?>
+                                <td data-label="#"><?php echo $counter++; ?></td>
+                                <td data-label="Student">
+                                    <div class="student-name">
+                                        <img src="uploads/profiles/<?php echo htmlspecialchars($student['profile_pic']); ?>" 
+                                            alt="Profile" 
+                                            class="student-avatar" 
+                                            onerror="this.src='uploads/profiles/default_profile.png'">
+                                        <div>
+                                            <strong><?php echo htmlspecialchars($student['fname'] . ' ' . $student['lname']); ?></strong>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="Account Number"><?php echo htmlspecialchars($student['account_number']); ?></td>
+                                <td data-label="Grade Level">
+                                    <span class="badge badge-<?php echo strtolower($student['glevel']); ?>">
+                                        <?php echo htmlspecialchars($student['glevel']); ?>
+                                    </span>
+                                </td>
+                                <td data-label="Strand">
+                                    <?php if (!empty($student['strand'])): ?>
+                                        <span class="badge badge-<?php echo strtolower($student['strand']); ?>">
+                                            <?php echo htmlspecialchars($student['strand']); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge">N/A</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td data-label="Section">
+                                    <?php if (!empty($student['section'])): ?>
+                                        <span class="badge badge-section">
+                                            <?php echo htmlspecialchars($student['section']); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge">N/A</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td data-label="Status">
+                                    <span class="status-badge <?php echo ($student['status'] ?? 'active') === 'active' ? 'active' : 'inactive'; ?>">
+                                        <?php echo ucfirst($student['status'] ?? 'active'); ?>
+                                    </span>
+                                </td>
+                                <td data-label="Actions" class="action-btns">
+                                    <div class="action-buttons">
+                                        <a href="a_Students.php?view=<?php echo urlencode($student['account_number']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
+                                        <a href="a_Students.php?edit=<?php echo urlencode($student['account_number']); ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
+                                        <a href="a_Students.php?delete=<?php echo urlencode($student['account_number']); ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this student?');"><i class="fas fa-trash-alt"></i></a>
                                     </div>
                                 </td>
                             </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="8">
+                                <div class="empty-state">
+                                    <i class="fas fa-user-graduate"></i>
+                                    <h3>No students found</h3>
+                                    <?php if (!empty($search)): ?>
+                                        <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
+                                        <a href="a_Students.php" class="add-new-btn">View All Students</a>
+                                    <?php else: ?>
+                                        <p>No students registered yet</p>
+                                        <button id="addFirstStudentBtn" class="add-new-btn">Add First Student</button>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 

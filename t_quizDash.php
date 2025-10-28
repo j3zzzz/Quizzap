@@ -16,19 +16,21 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+$loggedInUser = $_SESSION['account_number'];
+
 //query to fetch the teacher's profile pic
 $sql = "SELECT profile_pic FROM teachers WHERE account_number = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $teacher_id);
+$stmt->bind_param("s", $loggedInUser);
 $stmt->execute();
 $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profilePic = $row['profile_pic'] ?: "uploads/default_profile.png"; // Pang display ng default profile pic pag wala pang profile pic na nakaset
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 } else {
-    $profilePic = "uploads/default_profile.png"; // Default picture path if no custom picture found
-}
+    $profile_pic = 'default-profile.jpg';
+}   
 
 $stmt->close();
 
@@ -739,6 +741,15 @@ $conn->close();
                 grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             }
         }
+
+        .profile {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            border: 2px solid #f8b500;
+        }
     </style>
 </head>
 <body>
@@ -783,17 +794,18 @@ $conn->close();
         <!-- Content Area -->
         <div class="content" id="content">
             <div class="content-header">
-                <h1><?php echo htmlspecialchars($subject['subject_name']); ?></h1><br>
+                <h1><?php echo htmlspecialchars($subject['subject_name']); ?> - Grade <?php echo htmlspecialchars($subject['grade_level']); ?> - <?php echo htmlspecialchars($subject['section']); ?></h1><br>
                 <div class="actions">
-                    <div class="profile">
-                        <img src="<?php echo $profilePic; ?>" style="cursor: pointer;" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
-                            <div id="dropdown" class="dropdown-content">
-                                 <button onclick="window.location.href='t_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                                <form action="logout.php" method="POST">
-                                    <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                                </form>
-                            </div>
+                    <div class="profile" onclick="profileDropdown()">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <div id="dropdown" class="dropdown-content">
+                            <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                            <form action="logout.php" method="POST">
+                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                            </form>
+                        </div>
                     </div>
+
                 </div>
             </div>
 
@@ -941,8 +953,9 @@ $conn->close();
             document.getElementById("dropdown").classList.toggle("show");
         }
 
+        // Close the dropdown if clicked outside
         window.onclick = function(event) {
-            if (!event.target.matches('.dropdwn-btn')) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
                     var openDropdown = dropdowns[i];

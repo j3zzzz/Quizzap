@@ -29,9 +29,9 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.png';
 } else {
-    $profile_pic = 'default-profile.jpg';
+    $profile_pic = 'default-profile.png';
 }
 
 $stmt->close();
@@ -545,65 +545,74 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
         }
 
         .dropdown-content {
-            width: 300px;
-            right: -1%;
-            display: none;
-            position: absolute;
-            background-color: #F8B500;
-            border-radius: 15px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            padding: 10px 0;
-            top: 135%;
-        }
+    width: 300px;
+    right: 1%; /* Changed from -1% */
+    display: none;
+    position: absolute;
+    background-color: #F8B500;
+    border-radius: 15px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    padding: 10px 0;
+    top: 15%; /* Changed from 135% */
+}
 
-        .dropdown-content:before {
-            content: " " ;
-            position: absolute;
-            background: #F8B500;
-            width: 30px;
-            height: 30px;
-            top: 1px;
-            right: 23px;
-            transform: rotate(135deg);
-            z-index: -1 !important;
-        }
+.dropdown-content:before {
+    content: " ";
+    position: absolute;
+    background: #F8B500;
+    width: 30px;
+    height: 30px;
+    top: 1px;
+    right: 23px;
+    transform: rotate(135deg);
+    z-index: -1 !important;
+}
 
-        .dropdown-content button {
-            background-color: white;     
-            justify-content: center;
-            align-items: center;
-            align-self: center;
-            font-family: 'Fredoka';
-            color: white;
-            font-size: 18px;
-            font-weight: lighter;
-            border: 2px solid white !important;
-            width: 86% !important;
-            padding: 13px 20px !important;
-            margin: 8px 20px !important;
-            text-decoration: none;
-            display: block;
-            float: none;
-            text-align: center;
-            background-color: transparent;
-            transition: background-color 0.3s, color 0.3s;
-            border-radius: 10px;
-            cursor: pointer;
-            letter-spacing: 1px;
-            box-sizing: border-box;
-            z-index: 1 !important;  
-            cursor: pointer;
-        }
+.dropdown-content button {
+    background-color: white;     
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+    font-family: 'Fredoka';
+    color: white;
+    font-size: 18px;
+    font-weight: lighter;
+    border: 2px solid white !important;
+    width: 86% !important;
+    padding: 13px 20px !important;
+    margin: 8px 20px !important;
+    text-decoration: none;
+    display: block;
+    float: none;
+    text-align: center;
+    background-color: transparent;
+    transition: background-color 0.3s, color 0.3s;
+    border-radius: 10px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-sizing: border-box;
+    z-index: 1 !important;  
+    cursor: pointer;
+}
 
-        .dropdown-content a:hover, .dropdown-content button:hover{
-            background-color: white !important;
-            color: #F8B500;
-        }
+.dropdown-content a:hover, .dropdown-content button:hover {
+    background-color: white !important;
+    color: #F8B500;
+}
 
-        .show {
-            display: block;
-        }
+.show {
+    display: block;
+}
+
+.profile {
+    position: relative;
+    cursor: pointer;
+}
+
+.profile-pic {
+    border: 2px solid #f8b500;
+}
 
         /* Mobile menu toggle */
         .menu-toggle {
@@ -791,21 +800,10 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
         <!-- Content Area -->
         <div class="content">
             <div class="content-header">
-                <div>
-                    <h1>Welcome, <?php echo htmlspecialchars($_SESSION['fname']); ?>!</h1>
-                    <p>Manage student and teacher accounts with ease.</p>
-                </div>
-                <div class="actions">
-                    <div class="profile" onclick="profileDropdown()">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                        <div id="dropdown" class="dropdown-content">
-                            <button onclick="window.location.href='a_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                            <form action="logout.php" method="POST">
-                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+    <div>
+        <h1>Welcome, <?php echo htmlspecialchars($_SESSION['fname']); ?>!</h1>
+        <p>Manage student and teacher accounts with ease.</p>
+    </div>
             </div>
             <br>        
             <div class="cards">
@@ -926,7 +924,7 @@ function profileDropdown() {
 
 // Close the dropdown if clicked outside
 window.onclick = function(event) {
-    if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+    if (!event.target.matches('.profile') && !event.target.matches('.profile-pic') && !event.target.matches('.dropdwn-btn')) {
         var dropdowns = document.getElementsByClassName("dropdown-content");
         for (var i = 0; i < dropdowns.length; i++) {
             var openDropdown = dropdowns[i];
@@ -936,6 +934,7 @@ window.onclick = function(event) {
         }
     }
 }
+
 </script>
 </body>
 </html>

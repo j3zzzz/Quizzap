@@ -372,7 +372,7 @@ $conn->close();
             font-size: 15px;
             font-family: Fredoka;
             font-weight: 500;
-            color: #f8b500;
+            color: #676255ff;
         }
 
         /* width */

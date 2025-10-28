@@ -768,28 +768,38 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             }
         }   
 
-        /* New improved table styles */
+        /* Updated table styles */
         .data-table {
             width: 100%;
             border-collapse: collapse;
+            border-spacing: 0;
             margin-top: 1rem;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
             font-size: 0.9rem;
+            border-radius: 10px;
+            overflow: hidden;
         }
 
-        .data-table th, .data-table td {
-            padding: 0.75rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            vertical-align: middle;
+        .data-table thead {
+            background-color: #f8b500;
         }
 
         .data-table th {
-            background-color: #f8b500;
+            padding: 12px 0.75rem;
+            text-align: left;
             color: white;
             font-weight: bold;
             position: sticky;
             top: 0;
+            border: none !important;
+            margin: 0;
+        }
+
+        .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
         }
 
         .data-table tr:nth-child(even) {
@@ -924,13 +934,6 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
 
         .pagination a:hover:not(.active) {
             background-color: #f5f5f5;
-        }
-
-        .table-responsive {
-            overflow-x: auto;
-            margin-bottom: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
         }
 
         .empty-state {
@@ -1220,17 +1223,6 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                     <h1>Manage Teachers</h1>
                     <p>View, edit, and manage teacher accounts</p>
                 </div>
-                <div class="actions">
-                    <div class="profile" onclick="profileDropdown()">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                        <div id="dropdown" class="dropdown-content">
-                            <button onclick="window.location.href='a_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                            <form action="logout.php" method="POST">
-                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Add New Teacher Button -->
@@ -1345,78 +1337,80 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 </div>
             <?php endif; ?>
 
-            <div class="table-responsive">
-                <table class="data-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Teacher</th>
-                            <th>Account Number</th>
-                            <th>School ID</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($teachersResult->num_rows > 0): ?>
-                            <?php 
-                            $counter = 1;
-                            while ($teacher = $teachersResult->fetch_assoc()): 
-                            ?>
-                                <tr>
-                                    <td data-label="#"><?php echo $counter++; ?></td>
-                                    <td data-label="Teacher">
-                                        <div class="teacher-name">
-                                            <img src="uploads/<?php echo htmlspecialchars($teacher['profile_pic']); ?>" alt="Profile" class="teacher-avatar" onerror="this.src='uploads/default_profile.png'">
-                                            <div>
-                                                <strong><?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname']); ?></strong>
-                                            </div>
-                                        </div>
-                                    </td>
-                                    <td data-label="Account Number"><?php echo htmlspecialchars($teacher['account_number']); ?></td>
-                                    <td data-label="School ID">
-                                        <?php if (!empty($teacher['school_id'])): ?>
-                                            <span class="badge badge-section">
-                                                <?php echo htmlspecialchars($teacher['school_id']); ?>
-                                            </span>
-                                        <?php else: ?>
-                                            <span class="badge">N/A</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td data-label="Status">
-                                        <span class="status-badge active">
-                                            Active
-                                        </span>
-                                    </td>
-                                    <td data-label="Actions" class="action-btns">
-                                        <div class="action-buttons">
-                                            <a href="a_Teachers.php?view=<?php echo urlencode($teacher['account_number']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
-                                            <a href="a_Teachers.php?edit=<?php echo urlencode($teacher['account_number']); ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
-                                            <a href="a_Teachers.php?delete=<?php echo urlencode($teacher['account_number']); ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this teacher?');"><i class="fas fa-trash-alt"></i></a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
+            <!-- Updated table without table-responsive wrapper -->
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Teacher</th>
+                        <th>Account Number</th>
+                        <th>School ID</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($teachersResult->num_rows > 0): ?>
+                        <?php 
+                        $counter = 1;
+                        while ($teacher = $teachersResult->fetch_assoc()): 
+                        ?>
                             <tr>
-                                <td colspan="6">
-                                    <div class="empty-state">
-                                        <i class="fas fa-chalkboard-teacher"></i>
-                                        <h3>No teachers found</h3>
-                                        <?php if (!empty($search)): ?>
-                                            <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
-                                            <a href="a_Teachers.php" class="add-new-btn">View All Teachers</a>
-                                        <?php else: ?>
-                                            <p>No teachers registered yet</p>
-                                            <a href="a_addTeacher.php" class="add-new-btn">Add First Teacher</a>
-                                        <?php endif; ?>
+                                <td data-label="#"><?php echo $counter++; ?></td>
+                                <td data-label="Teacher">
+                                    <div class="teacher-name">
+                                        <img src="uploads/profiles/<?php echo htmlspecialchars($teacher['profile_pic']); ?>" 
+                                            alt="Profile" 
+                                            class="teacher-avatar" 
+                                            onerror="this.src='uploads/profiles/default_profile.png'">
+                                        <div>
+                                            <strong><?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname']); ?></strong>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td data-label="Account Number"><?php echo htmlspecialchars($teacher['account_number']); ?></td>
+                                <td data-label="School ID">
+                                    <?php if (!empty($teacher['school_id'])): ?>
+                                        <span class="badge badge-section">
+                                            <?php echo htmlspecialchars($teacher['school_id']); ?>
+                                        </span>
+                                    <?php else: ?>
+                                        <span class="badge">N/A</span>
+                                    <?php endif; ?>
+                                </td>
+                                <td data-label="Status">
+                                    <span class="status-badge active">
+                                        Active
+                                    </span>
+                                </td>
+                                <td data-label="Actions" class="action-btns">
+                                    <div class="action-buttons">
+                                        <a href="a_Teachers.php?view=<?php echo urlencode($teacher['account_number']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
+                                        <a href="a_Teachers.php?edit=<?php echo urlencode($teacher['account_number']); ?>" title="Edit" class="btn-edit"><i class="fas fa-edit"></i></a>
+                                        <a href="a_Teachers.php?delete=<?php echo urlencode($teacher['account_number']); ?>" title="Delete" class="btn-delete" onclick="return confirm('Are you sure you want to delete this teacher?');"><i class="fas fa-trash-alt"></i></a>
                                     </div>
                                 </td>
                             </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                        <?php endwhile; ?>
+                    <?php else: ?>
+                        <tr>
+                            <td colspan="6">
+                                <div class="empty-state">
+                                    <i class="fas fa-chalkboard-teacher"></i>
+                                    <h3>No teachers found</h3>
+                                    <?php if (!empty($search)): ?>
+                                        <p>No results for "<?php echo htmlspecialchars($search); ?>"</p>
+                                        <a href="a_Teachers.php" class="add-new-btn">View All Teachers</a>
+                                    <?php else: ?>
+                                        <p>No teachers registered yet</p>
+                                        <a href="a_addTeacher.php" class="add-new-btn">Add First Teacher</a>
+                                    <?php endif; ?>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
     </div>
 

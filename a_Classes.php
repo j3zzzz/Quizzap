@@ -1349,17 +1349,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
                     <h1>Manage Classes</h1>
                     <p>View, edit, and manage all classes</p>
                 </div>
-                <div class="actions">
-                    <div class="profile" onclick="profileDropdown()">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                        <div id="dropdown" class="dropdown-content">
-                            <button onclick="window.location.href='a_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                            <form action="logout.php" method="POST">
-                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
             </div>
 
             <!-- Add New Class -->

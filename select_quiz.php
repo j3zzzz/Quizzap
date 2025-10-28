@@ -29,9 +29,9 @@ $result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $row = $result->fetch_assoc();
-    $profilePic = $row['profile_pic'] ?: "uploads/default_profile.png"; // Pang display ng default profile pic pag wala pang profile pic na nakaset
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
 } else {
-    $profilePic = "uploads/default_profile.png"; // Default picture path if no custom picture found
+    $profile_pic = 'default-profile.jpg';
 }
 
 // Get the subject_id from the URL
@@ -355,6 +355,10 @@ $conn->close();
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
+        }
+
+        .profile-pic {
+            border: 2px solid #f8b500;
         }
 
         .subject-button {
@@ -797,6 +801,7 @@ $conn->close();
         #quiz-details .availability-span {
             line-height: 1.3;
             margin-top: -5%;
+            width: 290px;
         }
 
         .dropdown-content {
@@ -903,14 +908,14 @@ $conn->close();
                     <h1><?php echo htmlspecialchars($subject_name); ?></h1><br>
                 </div>
                 <div class="actions">
-                    <div class="profile"><img src="<?php echo $profilePic; ?>" onclick="profileDropdown()" width="50px" height="50px" class="dropdwn-btn">
-                        
-                            <div id="dropdown" class="dropdown-content">
-                                 <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                                <form action="logout.php" method="post">
-                                    <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                                </form>
-                            </div>
+                    <div class="profile" onclick="profileDropdown()">
+                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                        <div id="dropdown" class="dropdown-content">
+                            <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                            <form action="logout.php" method="POST">
+                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -976,12 +981,13 @@ $conn->close();
             }
         });
 
-        function profileDropdown() { // Dropdown funtion
+        function profileDropdown() {
             document.getElementById("dropdown").classList.toggle("show");
         }
 
+        // Close the dropdown if clicked outside
         window.onclick = function(event) {
-            if (!event.target.matches('.dropdwn-btn')) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
                     var openDropdown = dropdowns[i];
@@ -991,6 +997,7 @@ $conn->close();
                 }
             }
         }
+
         
         document.addEventListener("DOMContentLoaded", function() {
             // Get the modal and elements inside it

@@ -82,6 +82,12 @@ $conn->close();
 
         body, html {
             height: 100%;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -102,6 +108,10 @@ $conn->close();
             justify-content: flex-start;
             transition: all 0.3s ease;
             z-index: 999;
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
         }
 
         .sidebar.collapsed {
@@ -199,6 +209,12 @@ $conn->close();
             color: #f8b500;
         }
 
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
+            background-color: #444;
+            color: #f8b500;
+        }
+
         .sidebar .menu a i {
             margin-right: 0.5rem;
             min-width: 20px;
@@ -267,7 +283,12 @@ $conn->close();
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .content.expanded {
@@ -295,12 +316,20 @@ $conn->close();
             border-bottom: 1.5px solid #F8B500;
         }
 
+        body.dark-mode .content-header h1 {
+            color: #e0e0e0;
+        }
+
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
             font-family: Fredoka;
             font-weight: 500;
+        }
+
+        body.dark-mode .content-header p {
+            color: #b0b0b0;
         }
 
         .content-header .actions {
@@ -336,6 +365,10 @@ $conn->close();
             font-size: 1.5rem;
         }
 
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
+        }
+
         .subject-button {
             color: black;
             font-family: Fredoka;
@@ -355,10 +388,19 @@ $conn->close();
             margin-right: 1%;
             transition: transform .2s;
             box-shadow: 0 6px 0 0 #BC8900;
-            
+        }
+
+        body.dark-mode .subject-button {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
         }
 
         .subject-button:hover {
+            background-color: #F8B500;
+            color: white;
+        }
+
+        body.dark-mode .subject-button:hover {
             background-color: #F8B500;
             color: white;
         }
@@ -372,7 +414,11 @@ $conn->close();
             font-size: 15px;
             font-family: Fredoka;
             font-weight: 500;
-            color: #676255ff;
+            color: #f8b500;
+        }
+
+        body.dark-mode .subject-button span {
+            color: #f8b500;
         }
 
         /* width */
@@ -558,6 +604,15 @@ $conn->close();
             // Save state to localStorage
             localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         });
+    }
+
+    // Dark Mode Functionality - Auto apply based on localStorage
+    // Check for saved dark mode preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+    // Apply dark mode on page load if enabled
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
     }
 });
 

@@ -154,6 +154,12 @@ $conn->close();
         body, html {
             font-family: 'Fredoka';
             height: 100%;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -176,6 +182,10 @@ $conn->close();
             justify-content: flex-start;
             transition: all 0.3s ease;
             z-index: 999;
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
         }
 
         .sidebar.collapsed {
@@ -273,6 +283,12 @@ $conn->close();
             color: #f8b500;
         }
 
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
+            background-color: #444;
+            color: #f8b500;
+        }
+
         .sidebar .menu a i {
             margin-right: 0.5rem;
             min-width: 20px;
@@ -341,7 +357,12 @@ $conn->close();
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .content.expanded {
@@ -363,6 +384,10 @@ $conn->close();
             margin-bottom: 0.5rem;
         }
 
+        body.dark-mode .content-header h1 {
+            color: #e0e0e0;
+        }
+
         .content-header p {
             color: #999;
             font-size: 1rem;
@@ -370,6 +395,10 @@ $conn->close();
             font-family: 'Fredoka';
             font-weight: 500;
             width: 100%;
+        }
+
+        body.dark-mode .content-header p {
+            color: #b0b0b0;
         }
 
         .content-header .actions {
@@ -408,6 +437,10 @@ $conn->close();
             cursor: pointer;
         }
 
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
+        }
+
         .cards {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -422,13 +455,23 @@ $conn->close();
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             height: 30rem;
             z-index: 4 !important;
+            transition: background-color 0.3s;
+        }
+
+        body.dark-mode .quizzes-card {
+            background-color: #2d2d2d;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
         .quizzes-card #quizzes-card-header {
             position: absolute;
             background-color: white;
             width: 20%;
-        } 
+        }
+
+        body.dark-mode .quizzes-card #quizzes-card-header {
+            background-color: #2d2d2d;
+        }
 
         #quizzes-cont {
             padding: 1rem;
@@ -448,10 +491,18 @@ $conn->close();
             font-family: 'Fredoka';
         }
 
+        body.dark-mode .quizzes-card h3 {
+            color: #e0e0e0;
+        }
+
         .quizzes-card h5 {
             font-family: Fredoka;
             color: #999;
             font-weight: lighter;
+        }
+
+        body.dark-mode .quizzes-card h5 {
+            color: #b0b0b0;
         }
 
         #quizzes-cont a {
@@ -472,6 +523,11 @@ $conn->close();
             color: #F8B500;  
         }
 
+        body.dark-mode #quizzes-cont a:hover {
+            background-color: #2d2d2d;
+            color: #F8B500;  
+        }
+
         .quizzes-card h4 {
             color: #6666;
             display: flex;
@@ -479,6 +535,10 @@ $conn->close();
             justify-self: center;
             font-weight: lighter;
             margin-top: 30%;
+        }
+
+        body.dark-mode .quizzes-card h4 {
+            color: #b0b0b0;
         }
 
         /* Tooltip ng Quiz na di pa nate-take */
@@ -533,6 +593,12 @@ $conn->close();
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
             height: 260px;
             width: 100%;
+            transition: background-color 0.3s;
+        }
+
+        body.dark-mode .high-score-card {
+            background-color: #2d2d2d;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
         .high-score-header {
@@ -540,6 +606,10 @@ $conn->close();
             background-color: white;
             width: 20%;
             display: flex;
+        }
+
+        body.dark-mode .high-score-header {
+            background-color: #2d2d2d;
         }
 
         .high-score-card .star {
@@ -556,6 +626,10 @@ $conn->close();
             justify-content: center;
         }
 
+        body.dark-mode .high-score-card h3 {
+            color: #e0e0e0;
+        }
+
         .high-score-card h4 {
             color: #6666;
             display: flex;
@@ -563,6 +637,10 @@ $conn->close();
             justify-self: center;
             font-weight: lighter;
             margin-top: 12%;
+        }
+
+        body.dark-mode .high-score-card h4 {
+            color: #b0b0b0;
         }
 
         #high-score-quiz h4 {
@@ -577,6 +655,10 @@ $conn->close();
             justify-content: center;
             color: #333333;
             font-size: 15px;
+        }
+
+        body.dark-mode .quiz-title {
+            color: #e0e0e0;
         }
 
         .score {
@@ -605,6 +687,12 @@ $conn->close();
             padding: 1.5rem;
             border-radius: 10px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            transition: background-color 0.3s;
+        }
+
+        body.dark-mode .difficult-question-card {
+            background-color: #2d2d2d;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
         .difficult-question-header {
@@ -614,10 +702,18 @@ $conn->close();
             display: flex;
         }
 
+        body.dark-mode .difficult-question-header {
+            background-color: #2d2d2d;
+        }
+
         .difficult-question-card h3 {
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+
+        body.dark-mode .difficult-question-card h3 {
+            color: #e0e0e0;
         }
 
         .question {
@@ -641,6 +737,11 @@ $conn->close();
 
         td {
            text-align: center; 
+           color: #333;
+        }
+
+        body.dark-mode td {
+            color: #e0e0e0;
         }
 
         th {
@@ -652,6 +753,14 @@ $conn->close();
 
         tr:nth-child(even) {
             background-color: #f2f2f2;
+        }
+
+        body.dark-mode tr:nth-child(even) {
+            background-color: #3a3a3a;
+        }
+
+        body.dark-mode tr:nth-child(odd) {
+            background-color: #2d2d2d;
         }
 
         table thead th:first-child {
@@ -778,11 +887,20 @@ $conn->close();
             z-index: 4;
         }
 
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         #ready {
             font-size: 18px;
             color: black;
             font-family: Fredoka;
             text-align: left;
+        }
+
+        body.dark-mode #ready {
+            color: #e0e0e0;
         }   
 
         .modal-content button {
@@ -852,6 +970,10 @@ $conn->close();
           transition: 1.0s;
         }
 
+        body.dark-mode .close {
+            color: #e0e0e0;
+        }
+
         .close:hover,
         .close:focus {
           color: #ed5e00;
@@ -880,6 +1002,10 @@ $conn->close();
             text-align: left;
         }
 
+        body.dark-mode #quiz-details h2 {
+            color: #e0e0e0;
+        }
+
         #quiz-details span {
             font-family: Fredoka;
             float: right;
@@ -891,6 +1017,10 @@ $conn->close();
             text-align: center;
         }
 
+        body.dark-mode #quiz-details span {
+            color: #e0e0e0;
+        }
+
         .profile-pic {
             border: 2px solid #f8b500;
         }
@@ -900,10 +1030,43 @@ $conn->close();
             margin-top: -5%;
         }
 
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: background-color 0.3s;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
+        }
 
     </style>
 </head>
 <body>
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <div class="container">
             <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
@@ -1023,190 +1186,127 @@ $conn->close();
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php while ($difficult_question = $difficult_questions_result->fetch_assoc()): ?>
+                                    <?php while ($row = $difficult_questions_result->fetch_assoc()) { ?>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($difficult_question['subject_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($difficult_question['quiz_title']); ?></td>
-                                            <td><?php echo htmlspecialchars($difficult_question['question_text']); ?></td>
-                                            <td><?php echo htmlspecialchars($difficult_question['total_attempts']); ?></td>
-                                            <td><?php echo htmlspecialchars($difficult_question['lowest_score']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['subject_name']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['quiz_title']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['question_text']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['total_attempts']); ?></td>
+                                            <td><?php echo htmlspecialchars($row['lowest_score']); ?></td>
                                         </tr>
-                                    <?php endwhile; ?>    
+                                    <?php } ?>
                                 </tbody>
-                            </table>    
-                            <?php 
-                        } else { ?>
-                            <div style="color: #9999 !important; text-align: center;">No Difficult Question Found.</div>
-                        <?php } ?>     
+                            </table>
+                        <?php } else { ?>
+                            <h4>No difficult questions found.</h4>
+                        <?php } ?>
                     </div>
-                </div>    
+                </div>
             </div>
         </div>
     </div>
 
-    <div id="quiz-info-modal" class="modal">
-        
+    <!-- Modal for Quiz Details -->
+    <div id="myModal" class="modal">
         <div class="modal-content">
-            
-            <!-- Modal content -->    
             <span class="close">&times;</span>
-            <h2 id="ready">Are you Ready to Ace this Quiz?</h2>
-            <hr style="height: 4px; background-color: #CCCCCC; border-radius: 5px; border: none;"><br>
-            
-            <div class="modal-body">    
-                <div id="quiz-details"></div>
-            </div> 
-            <center>   
-                <button id="start-quiz-button">QuizZap!</button>
-            </center>            
+            <div class="modal-dialog">
+                <img src="img/quiz.png" alt="Quiz Image">
+            </div>
+            <div class="modal-body">
+                <div id="quiz-details">
+                    <!-- Quiz details will be displayed here -->
+                </div>
+            </div>
         </div>
-    </div>    
+    </div>
 
-<script type="text/javascript">
-    document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.querySelector('.sidebar');
-    const content = document.querySelector('.content');
-    const toggleBtn = document.getElementById('toggleSidebar');
+    <script>
+        // Sidebar toggle functionality
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.querySelector('.content');
 
-    // Check if sidebar state is saved in localStorage
-    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    
-    // Set initial state based on localStorage
-    if (isSidebarCollapsed) {
-        sidebar.classList.add('collapsed');
-        content.classList.add('expanded');
-    }
-
-    // Toggle sidebar when button is clicked
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
+        toggleSidebar.addEventListener('click', () => {
             sidebar.classList.toggle('collapsed');
             content.classList.toggle('expanded');
-            
-            // Save state to localStorage
-            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         });
-    }
-});
 
-function profileDropdown() { // Dropdown funtion
-document.getElementById("dropdown").classList.toggle("show");
-}
-
-window.onclick = function(event) {
-    if (!event.target.matches('.dropdwn-btn')) {
-        var dropdowns = document.getElementsByClassName("dropdown-content");
-        for (var i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
-            if (openDropdown.classList.contains('show')) {
-                openDropdown.classList.remove('show');
-            }
+        // Profile dropdown functionality
+        function profileDropdown() {
+            document.getElementById("dropdown").classList.toggle("show");
         }
-    }
-}
 
-    document.addEventListener("DOMContentLoaded", function() {
-    // Get the modal and elements inside it
-    var modal = document.getElementById("quiz-info-modal");
-    var closeModal = document.getElementsByClassName("close")[0];
-    var quizDetails = document.getElementById("quiz-details");
-    var startQuizButton = document.getElementById("start-quiz-button");
-
-    // Add this function in the script section of select_quiz.php
-    function formatDateRange(startDate, endDate) {
-        if (!startDate || !endDate) {
-            return "Always available";
-        }
-        
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        
-        const options = { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        };
-        
-        return `${start.toLocaleDateString('en-US', options)} to ${end.toLocaleDateString('en-US', options)}`;
-    }
-    
-    // Add event listener to all quiz links
-    document.querySelectorAll(".quiz-link").forEach(function(link) {
-        link.addEventListener("click", function() {
-            var quizId = this.getAttribute("data-quiz-id");
-            // Fetch quiz details (replace with actual PHP script to fetch quiz data)
-            fetch(`s_quiz_details.php?quiz_id=${quizId}`)
-                .then(response => response.json())
-                .then(data => {
-                    // Populate the modal with quiz details
-                    quizDetails.innerHTML = `
-                        <h1>${data.title}</h1>
-                        <h2>Number of Questions: </h2> <span> ${data.num_of_questions} </span> 
-                        <h2>Quiz Type: </h2> <span> ${data.quiz_type} </span> 
-                        <h2>Time Limit: </h2> <span> ${data.timer} minute/s</span> 
-                        <h2>Availability: </h2> <span class="availability-span"> ${formatDateRange(data.start_date, data.end_date)} </span>
-
-                    `;
-                    
-                    // Update the start quiz button link with conditional routing
-                    startQuizButton.onclick = function() {
-                        // Conditional routing based on quiz type
-                        if (data.quiz_type === "All Zapped") {
-                            window.location.href = `allZapped_quiz.php?quiz_id=${quizId}`;
-                        } else if (["Multiple Choice", "True or False", "Fill in the Blanks", "Enumeration", "Identification", "Drag and Drop", "Matching Type"].includes(data.quiz_type)) {
-                            window.location.href = `s_quiz.php?quiz_id=${quizId}`;
-                        } else {
-                            // Fallback for any unexpected quiz types
-                            window.location.href = `s_quiz.php?quiz_id=${quizId}`;
-                        }
-                    };
-                    
-                    // Show the modal
-                    modal.style.display = "block";
-                })
-                .catch(error => {
-                    console.error("Error fetching quiz details:", error);
-                });
-        });
-    });
-    
-    // Close the modal when the close button is clicked
-    closeModal.onclick = function() {
-        modal.style.display = "none";
-    };
-    
-    // Close the modal when the user clicks outside of it
-    window.onclick = function(event) {
-        if (event.target == modal) {
-            modal.style.display = "none";
-        }
-    };
-});
-
-function profileDropdown() { // Dropdown funtion
-    document.getElementById("dropdown").classList.toggle("show");
-    }
-
-    window.onclick = function(event) {
-        if (!event.target.matches('.dropdwn-btn')) {
-            var dropdowns = document.getElementsByClassName("dropdown-content");
-            for (var i = 0; i < dropdowns.length; i++) {
-                var openDropdown = dropdowns[i];
-                if (openDropdown.classList.contains('show')) {
-                    openDropdown.classList.remove('show');
+        // Close the dropdown if clicked outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
                 }
             }
         }
-    }
-</script>
 
+        // Quiz modal functionality
+        const modal = document.getElementById("myModal");
+        const closeModal = document.querySelector(".close");
+        const quizLinks = document.querySelectorAll(".quiz-link");
+
+        quizLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                const quizId = this.getAttribute('data-quiz-id');
+                fetchQuizDetails(quizId);
+            });
+        });
+
+        closeModal.addEventListener('click', function() {
+            modal.style.display = "none";
+        });
+
+        window.addEventListener('click', function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        });
+
+        function fetchQuizDetails(quizId) {
+            fetch('fetch_quiz_details.php?quiz_id=' + quizId)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('quiz-details').innerHTML = data;
+                    modal.style.display = "block";
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        // Dark Mode Toggle Functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Apply dark mode if previously enabled
+        if (isDarkMode) {
+            body.classList.add('dark-mode');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            // Update button icon and save preference
+            if (body.classList.contains('dark-mode')) {
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('darkMode', 'false');
+            }
+        });
+    </script>
 </body>
 </html>
-
-<?php 
-$stud_id_sql->close();
-$not_taken_sql->close();
-$latest_high_score_sql->close();
-?>

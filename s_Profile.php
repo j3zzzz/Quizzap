@@ -47,9 +47,7 @@ if ($result->num_rows > 0) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_fname = $_POST['fname'];
     $new_lname = $_POST['lname'];
-    $new_glevel = $_POST['glevel'];
-    $new_strand = $_POST['strand'];
-    $new_section = $_POST['section'];
+    // Note: glevel, strand, and section are no longer editable, so we don't update them
     
     // Handle profile picture upload
     if ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
@@ -70,19 +68,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Update database
-    $update_sql = "UPDATE students SET fname = ?, lname = ?, glevel = ?, strand = ?, section = ?, profile_pic = ? WHERE account_number = ?";
+    // Update database - only update editable fields
+    $update_sql = "UPDATE students SET fname = ?, lname = ?, profile_pic = ? WHERE account_number = ?";
     $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("sssssss", $new_fname, $new_lname, $new_glevel, $new_strand, $new_section, $profile_pic, $account_number);
+    $update_stmt->bind_param("ssss", $new_fname, $new_lname, $profile_pic, $account_number);
     $update_stmt->execute();
     
     // Update session variables
     $_SESSION['fname'] = $new_fname;
     $name = $new_fname;
     $lname = $new_lname;
-    $glevel = $new_glevel;
-    $strand = $new_strand;
-    $section = $new_section;
     
     $update_stmt->close();
 }
@@ -126,6 +121,101 @@ $conn->close();
             background-color: var(--light-bg);
             color: var(--text);
             line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode header {
+            background: linear-gradient(135deg, #333 0%, #444 100%);
+        }
+
+        body.dark-mode .profile-container {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .form-input {
+            background-color: #333;
+            color: #e0e0e0;
+            border-color: #444;
+        }
+
+        body.dark-mode .form-input:focus {
+            border-color: var(--primary);
+            background-color: #3a3a3a;
+        }
+
+        body.dark-mode .form-input:disabled {
+            background-color: #444;
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .btn-secondary {
+            background-color: #444;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        body.dark-mode .btn-secondary:hover {
+            background-color: #555;
+        }
+
+        body.dark-mode .detail-group {
+            background-color: #333;
+        }
+
+        body.dark-mode .detail-value {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode nav a {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        body.dark-mode nav a:hover,
+        body.dark-mode nav a.active {
+            color: #fff;
+        }
+
+        body.dark-mode nav a::after {
+            background-color: #fff;
+        }
+
+        body.dark-mode .logout-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        body.dark-mode .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px grey; 
+          border-radius: 10px;
+        }
+         
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+          background: #CF5300; 
+          border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+          background: #A34404; 
         }
 
         header {
@@ -400,6 +490,12 @@ $conn->close();
             box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.1);
             background-color: #fff;
         }
+        
+        .form-input:disabled {
+            background-color: #e9ecef;
+            opacity: 1;
+            cursor: not-allowed;
+        }
 
         .profile-pic-edit {
             display: flex;
@@ -669,17 +765,17 @@ $conn->close();
                     
                     <div class="form-group">
                         <label for="glevel" class="form-label">Grade Level</label>
-                        <input type="text" id="glevel" name="glevel" class="form-input" value="<?php echo htmlspecialchars($glevel); ?>" required>
+                        <input type="text" id="glevel" name="glevel" class="form-input" value="<?php echo htmlspecialchars($glevel); ?>" disabled>
                     </div>
                     
                     <div class="form-group">
                         <label for="strand" class="form-label">Strand</label>
-                        <input type="text" id="strand" name="strand" class="form-input" value="<?php echo htmlspecialchars($strand); ?>" required>
+                        <input type="text" id="strand" name="strand" class="form-input" value="<?php echo htmlspecialchars($strand); ?>" disabled>
                     </div>
 
                     <div class="form-group">
                         <label for="section" class="form-label">Section</label>
-                        <input type="text" id="section" name="section" class="form-input" value="<?php echo htmlspecialchars($section); ?>" required>
+                        <input type="text" id="section" name="section" class="form-input" value="<?php echo htmlspecialchars($section); ?>" disabled>
                     </div>
                     
                     <div class="form-actions">
@@ -712,6 +808,15 @@ $conn->close();
             const profilePicInput = document.getElementById('profile_pic');
             const profilePicPreview = document.getElementById('profilePicPreview');
             const successMessage = document.getElementById('successMessage');
+            
+            // Dark Mode Functionality - Auto apply based on localStorage
+            // Check for saved dark mode preference
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+            // Apply dark mode on page load if enabled
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
             
             // Toggle between preview and edit modes
             function toggleEditMode() {

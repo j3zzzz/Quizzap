@@ -124,6 +124,12 @@ $conn->close();
         body, html {
             height: 100%;
             overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -147,6 +153,11 @@ $conn->close();
             z-index: 999;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
             transform: translateX(0);
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
+            color: #f8b500;
         }
 
         .sidebar.collapsed {
@@ -183,6 +194,10 @@ $conn->close();
             padding: 5px;
             border-radius: 4px;
             transition: background 0.2s;
+        }
+
+        body.dark-mode .toggle-btn {
+            color: #f8b500;
         }
 
         .toggle-btn:hover {
@@ -230,6 +245,10 @@ $conn->close();
             width: 100%;
         }
 
+        body.dark-mode .sidebar .menu a {
+            color: #f8b500;
+        }
+
         .sidebar.collapsed .menu a {
             justify-content: center;
             padding: 1rem 0;
@@ -254,6 +273,12 @@ $conn->close();
 
         .sidebar .menu a:hover,
         .sidebar .menu a.active {
+            background-color: #f8b500;
+            color: white;
+        }
+
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
             background-color: #f8b500;
             color: white;
         }
@@ -288,7 +313,12 @@ $conn->close();
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .content.expanded {
@@ -308,12 +338,16 @@ $conn->close();
         }
 
         .content-header h1 {
-            width: 100%;
+            width: 830%;
             font-size: 2rem;
             color: #333333;
             font-family: Fredoka;
             padding: 10px;
             border-bottom: 1.5px solid #F8B500;
+        }
+
+        body.dark-mode .content-header h1 {
+            color: #e0e0e0;
         }
 
         .content-header p {
@@ -322,6 +356,10 @@ $conn->close();
             margin-top: 0.5rem;
             font-family: Fredoka;
             font-weight: 500;
+        }
+
+        body.dark-mode .content-header p {
+            color: #b0b0b0;
         }
 
         .content-header .actions {
@@ -357,6 +395,10 @@ $conn->close();
             font-size: 1.5rem;
         }
 
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
+        }
+
         .profile-pic {
             border: 2px solid #f8b500;
         }
@@ -382,6 +424,11 @@ $conn->close();
             
         }
 
+        body.dark-mode .subject-button {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .subject-button a:hover{
             background-color: #F8B500;
             color: white;
@@ -392,6 +439,11 @@ $conn->close();
         }
 
         .subject-button:hover {
+            background-color: #F8B500;
+            color: white;
+        }
+
+        body.dark-mode .subject-button:hover {
             background-color: #F8B500;
             color: white;
         }
@@ -408,6 +460,10 @@ $conn->close();
         .subject-button span {
             font-size: 15px;
             font-family: Fredoka;
+            color: #f8b500;
+        }
+
+        body.dark-mode .subject-button span {
             color: #f8b500;
         }
 
@@ -495,6 +551,11 @@ $conn->close();
             box-shadow: 2px 4px 2px 0 rgba(0, 0, 0, 0.2);
         }
 
+        body.dark-mode .quiz {
+            background-color: #2d2d2d;
+            border-color: #444;
+        }
+
         .quiz-btn {
             background-color: white;
             align-items: center;
@@ -519,10 +580,20 @@ $conn->close();
             cursor: pointer;
         }
 
+        body.dark-mode .quiz-btn {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .quiz-btn.taken {
             background-color: #e0e0e0;
             border-color: #999999;
             box-shadow: 0 4px 0 0 #666666;
+        }
+
+        body.dark-mode .quiz-btn.taken {
+            background-color: #444;
+            border-color: #666;
         }
 
         .quiz-btn:hover {
@@ -555,6 +626,12 @@ $conn->close();
             transition: opacity 0.7s;
         }
 
+        body.dark-mode .quiz-btn .tooltiptext {
+            background-color: #333;
+            color: #e0e0e0;
+            border-color: #f8b500;
+        }
+
         .quiz-btn .tooltiptext::after {
             content: "";
             position: absolute;
@@ -584,7 +661,6 @@ $conn->close();
             margin-top: 3px;
             padding: 3px 0;
         }
-
 
         .img-no-quiz {
             width: 130px;
@@ -682,6 +758,11 @@ $conn->close();
             z-index: 4;
         }
 
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         #ready {
             font-size: 18px;
             font-weight: 500;
@@ -691,6 +772,10 @@ $conn->close();
             padding:10px;
             border-bottom: 1.5px solid #f8b500;
         }   
+
+        body.dark-mode #ready {
+            color: #e0e0e0;
+        }
 
         .modal-content button {
             font-family: Fredoka;
@@ -758,6 +843,10 @@ $conn->close();
           font-size: 28px;
           font-weight: bold;
           transition: 1.0s;
+        }
+
+        body.dark-mode .close {
+            color: #e0e0e0;
         }
 
         .close:hover,
@@ -979,6 +1068,15 @@ $conn->close();
                     localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
                 });
             }
+
+            // Dark Mode Functionality - Auto apply based on localStorage
+            // Check for saved dark mode preference
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+            // Apply dark mode on page load if enabled
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
         });
 
         function profileDropdown() {
@@ -1069,15 +1167,38 @@ $conn->close();
             // Close the modal when the close button is clicked
             closeModal.onclick = function() {
                 modal.style.display = "none";
-            };
+            }
             
-            // Close the modal when the user clicks outside of it
+            // Close the modal when clicking outside of it
             window.onclick = function(event) {
                 if (event.target == modal) {
                     modal.style.display = "none";
                 }
-            };
+            }
         });
-</script>
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('mobile-hidden');
+        }
+
+        // Close mobile sidebar when clicking outside
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const mobileToggle = document.querySelector('.mobile-toggle');
+            
+            if (!sidebar.contains(event.target) && !mobileToggle.contains(event.target) && window.innerWidth <= 768) {
+                sidebar.classList.add('mobile-hidden');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('mobile-hidden');
+            }
+        });
+    </script>
 </body>
 </html>

@@ -76,22 +76,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $subject_name = $_POST['subject_name'] ?? null;
     $grade_level = $_POST['grade_level'] ?? null;
     $section = $_POST['section'] ?? null;
+    $strand = $_POST['strand'] ?? null; // New strand field
     $teacher_account_number = $_SESSION['account_number'];
     $school_id = $row['school_id'];
     $subject_code = generateUniqueSubjectCode($conn);
 
+    // For grades 11-12, include strand in the section display
+    if ($grade_level == '11' || $grade_level == '12') {
+        $section_display = $section . ($strand ? ' - ' . $strand : '');
+    } else {
+        $section_display = $section;
+    }
+
     // Check if the same class already exists for this teacher
     $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND section = ? AND teacher_id = ?";
     $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("ssss", $subject_name, $grade_level, $section, $teacher_account_number);
+    $check_stmt->bind_param("ssss", $subject_name, $grade_level, $section_display, $teacher_account_number);
     $check_stmt->execute();
     $check_result = $check_stmt->get_result();
     
     if ($check_result->num_rows > 0) {
         echo "<script>alert('A class with the same subject, grade level, and section already exists.');</script>";
     } else {
-        $stmt = $conn->prepare("INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, section, school_id) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("ssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $section, $school_id);
+        $stmt = $conn->prepare("INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, section, school_id, strand) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("sssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $section_display, $school_id, $strand);
         
         if ($stmt->execute()) {
             ?>
@@ -418,15 +426,6 @@ $conn->close();
             color: white;
         }
 
-        /*.subject-button span:hover{
-            color: white;
-        }
-
-        .subject-button:hover {
-            background-color: #F8B500;
-            color: white;
-        } */
-
         .subject-button:active {
             background-color: #F8B500;
             box-shadow: 3px 4px 0 0 rgba(0, 0, 0, 0.3);
@@ -487,7 +486,7 @@ $conn->close();
             display: flex;
             align-items: center;
             margin-bottom: 10px;
-            gap: 10px; /* This controls the space between checkbox and subject button */
+            gap: 10px;
         }
 
         .subject-checkbox {
@@ -583,18 +582,18 @@ $conn->close();
 
         /* The Modal (background) */
         .modal {
-          display: none; /* Hidden by default */
-          position: fixed; /* Stay in place */
-          z-index: 100; /* Sit on top */
-          padding-top: 100px; /* Location of the box */
+          display: none;
+          position: fixed;
+          z-index: 100;
+          padding-top: 100px;
           left: 0;
           top: 0;
-          width: 100%; /* Full width */
-          height: 100%; /* Full height */
+          width: 100%;
+          height: 100%;
           overflow-x: hidden;
           overflow-y: scroll;
-          background-color: rgb(0,0,0); /* Fallback color */
-          background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+          background-color: rgb(0,0,0);
+          background-color: rgba(0,0,0,0.4);
         }
 
         /* Modal Content */
@@ -657,6 +656,7 @@ $conn->close();
             font-family: 'Fredoka';
             font-size: 16px;
             font-weight: 500;
+            text-align: left;
         }
         
         .form-group input {
@@ -708,7 +708,7 @@ $conn->close();
             font-size: 18px;
         }
 
-        #grade_level {
+        #grade_level_icon {
             top: 20px;
         }
 
@@ -760,6 +760,15 @@ $conn->close();
         .submit-btn:active {
             transform: translateY(1px);
             box-shadow: 0 3px 0 0 #d89e00;
+        }
+
+        /* Strand field styling */
+        .strand-field {
+            display: none;
+        }
+
+        .strand-field.show {
+            display: block;
         }
         
         /* Responsive adjustments */
@@ -816,7 +825,6 @@ $conn->close();
             cursor: pointer;
             box-shadow: 0 6px 0 0 #BC8900;
         }
-
 
         /* The Close Button */
         .close {
@@ -908,7 +916,6 @@ $conn->close();
             background-color: white !important;
             color: #F8B500;
         }
-
 
         .show {
             display: block;
@@ -1311,7 +1318,7 @@ $conn->close();
                         <span class="close">&times;</span>
                     </div>
                     <div class="modal-body">
-                        <form method="post" action="">
+                        <form method="post" action="" id="subjectForm">
                             <div class="form-group">
                                 <label for="subject_name">Subject Name</label>
                                 <input type="text" name="subject_name" placeholder="e.g. Mathematics, Science" required>
@@ -1321,7 +1328,7 @@ $conn->close();
                             <div class="form-group">
                                 <label for="grade_level">Grade Level</label>
                                 <div class="select-wrapper">
-                                    <select name="grade_level" required>
+                                    <select name="grade_level" id="grade_level_select" required onchange="toggleStrandField()">
                                         <option value="" disabled selected>Select grade level</option>
                                         <option value="7">Grade 7</option>
                                         <option value="8">Grade 8</option>
@@ -1330,7 +1337,21 @@ $conn->close();
                                         <option value="11">Grade 11</option>
                                         <option value="12">Grade 12</option>
                                     </select>
-                                    <i class="fas fa-chevron-down icon" id="grade_level"></i>
+                                    <i class="fas fa-chevron-down icon" id="grade_level_icon"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group strand-field" id="strand_field">
+                                <label for="strand">Strand</label>
+                                <div class="select-wrapper">
+                                    <select name="strand" id="strand_select">
+                                        <option value="" selected>Select strand (Optional)</option>
+                                        <option value="TVL">TVL (Technical-Vocational-Livelihood)</option>
+                                        <option value="ABM">ABM (Accountancy, Business and Management)</option>
+                                        <option value="STEM">STEM (Science, Technology, Engineering and Mathematics)</option>
+                                        <option value="HUMSS">HUMSS (Humanities and Social Sciences)</option>
+                                    </select>
+                                    <i class="fas fa-chevron-down icon" id="grade_level_icon"></i>
                                 </div>
                             </div>
                             
@@ -1394,6 +1415,20 @@ $conn->close();
         document.getElementById("dropdown").classList.toggle("show");
     }
 
+    // Function to toggle strand field visibility
+    function toggleStrandField() {
+        const gradeLevel = document.getElementById('grade_level_select').value;
+        const strandField = document.getElementById('strand_field');
+        
+        if (gradeLevel === '11' || gradeLevel === '12') {
+            strandField.classList.add('show');
+        } else {
+            strandField.classList.remove('show');
+            // Clear strand selection when hidden
+            document.getElementById('strand_select').value = '';
+        }
+    }
+
     // Close the dropdown if clicked outside
     window.onclick = function(event) {
         if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
@@ -1424,6 +1459,9 @@ $conn->close();
     // When the user clicks on <span> (x), close the modal
     span.onclick = function() {
       modal.style.display = "none";
+      // Reset form when modal is closed
+      document.getElementById('subjectForm').reset();
+      document.getElementById('strand_field').classList.remove('show');
     }
 
     // When the user clicks anywhere outside of the modal, close it
@@ -1431,10 +1469,13 @@ $conn->close();
         if (event.target == document.getElementById("myModal")) {
             document.getElementById("myModal").style.display = "none";
             document.querySelector(".modal-content").classList.remove("modal-open");
+            // Reset form when modal is closed
+            document.getElementById('subjectForm').reset();
+            document.getElementById('strand_field').classList.remove('show');
         }
     }
 
-    sdocument.querySelectorAll('select').forEach(select => {
+    document.querySelectorAll('select').forEach(select => {
         select.addEventListener('focus', function() {
             this.nextElementSibling.style.transform = 'rotate(180deg)';
         });

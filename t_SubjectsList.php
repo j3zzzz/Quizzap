@@ -76,22 +76,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $subject_name = $_POST['subject_name'] ?? null;
     $grade_level = $_POST['grade_level'] ?? null;
     $section = $_POST['section'] ?? null;
-    $strand = $_POST['strand'] ?? null; // New strand field
+    $strand = $_POST['strand'] ?? null;
     $teacher_account_number = $_SESSION['account_number'];
     $school_id = $row['school_id'];
     $subject_code = generateUniqueSubjectCode($conn);
-
-    // For grades 11-12, include strand in the section display
-    if ($grade_level == '11' || $grade_level == '12') {
-        $section_display = $section . ($strand ? ' - ' . $strand : '');
-    } else {
-        $section_display = $section;
-    }
+    $section_display = $section;
 
     // Check if the same class already exists for this teacher
-    $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND section = ? AND teacher_id = ?";
+    $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND strand = ? AND section = ? AND teacher_id = ?";
     $check_stmt = $conn->prepare($check_sql);
-    $check_stmt->bind_param("ssss", $subject_name, $grade_level, $section_display, $teacher_account_number);
+    $check_stmt->bind_param("sssss", $subject_name, $grade_level, $strand, $section_display, $teacher_account_number);
     $check_stmt->execute();
     $check_result = $check_stmt->get_result();
     
@@ -434,7 +428,7 @@ $conn->close();
         .subject-button span {
             font-size: 15px;
             font-family: Fredoka;
-            color: #6b685eff;
+            color: #000000ff;
         }
 
         /* width */
@@ -525,7 +519,135 @@ $conn->close();
             color: #555;
         }
 
-        .btn{
+        /* Disabled subject button */
+        .subject-button-disabled {
+            color: #999;
+            font-family: Fredoka;
+            font-size: 24px;
+            font-weight: 600;
+            background-color: #f5f5f5;
+            display: inline-block;
+            border-radius: 6px;
+            border: 2px solid #ddd;
+            text-decoration: none;
+            text-align: left;
+            padding: 12px 30px;
+            width: 100%;
+            margin-top: 2%;
+            margin-bottom: 2%;
+            margin-right: 1%;
+            cursor: not-allowed;
+            opacity: 0.6;
+            position: relative;
+            box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .subject-button-disabled:hover {
+            background-color: #f5f5f5;
+            color: #999;
+            transform: none;
+        }
+
+        /* Deactivated badge inside the button */
+        .deactivated-badge {
+            display: inline-block;
+            margin-top: 8px;
+            padding: 4px 12px;
+            background-color: #dc3545;
+            color: white;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .deactivated-badge i {
+            margin-right: 5px;
+        }
+
+        /* Tooltip styling */
+        .subject-button-disabled[data-tooltip] {
+            position: relative;
+        }
+
+        .subject-button-disabled[data-tooltip]::before {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 110%;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 400;
+            white-space: normal;
+            width: 280px;
+            text-align: center;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            line-height: 1.4;
+        }
+
+        .subject-button-disabled[data-tooltip]::after {
+            content: "";
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 8px solid transparent;
+            border-top-color: #333;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+            z-index: 1000;
+        }
+
+        .subject-button-disabled[data-tooltip]:hover::before,
+        .subject-button-disabled[data-tooltip]:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Prevent selection of deactivated subjects */
+        .subject-item:has(.subject-button-disabled) .subject-checkbox {
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        /* Mobile responsive tooltip */
+        @media (max-width: 768px) {
+            .subject-button-disabled[data-tooltip]::before {
+                width: 220px;
+                font-size: 12px;
+                padding: 10px 12px;
+            }
+            
+            .deactivated-badge {
+                font-size: 12px;
+                padding: 3px 10px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .subject-button-disabled[data-tooltip]::before {
+                width: 180px;
+                font-size: 11px;
+                padding: 8px 10px;
+                left: 10px;
+                right: 10px;
+                transform: none;
+            }
+            
+            .subject-button-disabled[data-tooltip]::after {
+                left: 20%;
+            }
+        }
+
+        .btn {
             float: left;
             margin-top: 2%;
             margin-left: 7%;
@@ -1290,23 +1412,46 @@ $conn->close();
             </div>
             
             <center>
-            <div class="subjects-container">
-                <?php
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        echo '<div class="subject-item">';
-                        echo '<input type="checkbox" name="selected_subjects[]" value="' . $row['subject_id'] . '" class="subject-checkbox">';
-                        echo "<a class='subject-button' href='t_quizDash.php?subject_id=" . $row['subject_id'] . "'>" . $row['subject_name'] . "<br><span>". $row['subject_code'] . " (Grade " . $row['grade_level'] . " - " . $row['section'] . ")</span></a>";
-                        echo '</div>';
+                <div class="subjects-container">
+                    <?php
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            // Build the display text for grade, section, and strand
+                            $display_section = "Grade " . $row['grade_level'] . " - " . $row['section'];
+                            
+                            // Add strand if it exists (for Grade 11-12)
+                            if (!empty($row['strand'])) {
+                                $display_section .= " - " . $row['strand'];
+                            }
+
+                            // Check if subject is deactivated
+                            $isDeactivated = (isset($row['status']) && $row['status'] === 'Deactivated');
+                            
+                            echo '<div class="subject-item">';
+                            echo '<input type="checkbox" name="selected_subjects[]" value="' . $row['subject_id'] . '" class="subject-checkbox">';
+
+                            if ($isDeactivated) {
+                                // Deactivated subject - disabled and with tooltip
+                                echo "<div class='subject-button subject-button-disabled' data-tooltip='This class is deactivated. Please contact your administrator to request reactivation.'>" 
+                                    . htmlspecialchars($row['subject_name']) 
+                                    . "<br><span>" . htmlspecialchars($row['subject_code']) . " (" . htmlspecialchars($display_section) . ")</span>"
+                                    . "<br><span class='deactivated-badge'><i class='fas fa-ban'></i> Deactivated</span></div>";
+                            } else {
+                                // Active subject - clickable
+                                echo "<a class='subject-button' href='t_quizDash.php?subject_id=" . $row['subject_id'] . "'>" 
+                                    . htmlspecialchars($row['subject_name']) 
+                                    . "<br><span>" . htmlspecialchars($row['subject_code']) . " (" . htmlspecialchars($display_section) . ")</span></a>";
+                            }   
+                                echo '</div>';
+                        }
+                    } else {
+                        echo "<div class='no-quiz-con'>";
+                        echo "<p style='font-family: Fredoka; font-size: 22px; margin-top: 10%; color: #999;'>No subjects created yet.</p>";
+                        echo "</div>";
                     }
-                } else {
-                    echo "<div class='no-quiz-con'>";
-                    echo "<p style='font-family: Fredoka; font-size: 22px; margin-top: 10%; color: #999;'>No subjects created yet.</p>";
-                    echo "</div>";
-                }
-                ?>
-                </form>
-            </div>
+                    ?>
+                    </form>
+                </div>
 
             </center>
 
@@ -1400,15 +1545,31 @@ $conn->close();
             });
         }
 
+        // Update select all checkbox to skip deactivated subjects
         const selectAllCheckbox = document.getElementById('select-all');
         if (selectAllCheckbox) {
             selectAllCheckbox.addEventListener('change', function() {
-                const checkboxes = document.querySelectorAll('.subject-checkbox');
+                const checkboxes = document.querySelectorAll('.subject-checkbox:not([disabled])');
                 checkboxes.forEach(checkbox => {
-                    checkbox.checked = selectAllCheckbox.checked;
+                    // Only select non-deactivated subjects
+                    const subjectItem = checkbox.closest('.subject-item');
+                    const isDeactivated = subjectItem.querySelector('.subject-button-disabled');
+                    if (!isDeactivated) {
+                        checkbox.checked = selectAllCheckbox.checked;
+                    }
                 });
             });
         }
+
+        // Prevent clicks on deactivated subject buttons
+        const deactivatedButtons = document.querySelectorAll('.subject-button-disabled');
+        deactivatedButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            });
+        });
     });
 
     function profileDropdown() {

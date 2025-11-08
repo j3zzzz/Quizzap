@@ -35,14 +35,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $correct = isset($_POST['correct']) ? $_POST['correct'] : [];
         $correct_answer = $_POST['correct_answer'] ?? [];
         $blanks_answers = isset($_POST['blanks_answers']) ? $_POST['blanks_answers'] : [];
+        $instructions = $_POST['instructions'] ?? [];
+        $start_date = isset($_POST['start_date']) && !empty($_POST['start_date']) ? $_POST['start_date'] : null;
+        $end_date = $_POST['end_date'];
 
         if (empty($quiz_type)) {
             throw new Exception("Quiz type is empty or not passed.");
         }
 
         // Insert the quiz into the 'quizzes' table
-        $stmt = $conn->prepare("INSERT INTO quizzes (subject_id, title, timer, quiz_type) VALUES (?, ?, ?, ?)");
-        $stmt->bind_param("isis", $subject_id, $quiz_title, $timer, $quiz_type);
+        $stmt = $conn->prepare("INSERT INTO quizzes (subject_id, title, timer, quiz_type, start_date, end_date) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->bind_param("isisss", $subject_id, $quiz_title, $timer, $quiz_type, $start_date, $end_date);
 
         if (!$stmt->execute()) {
             throw new Exception("Error creating quiz: " . $stmt->error);
@@ -57,10 +60,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 throw new Exception("Question text cannot be empty for question " . ($index + 1));
             }
 
+            $instruction = isset($_POST['instructions'][$index]) ? trim($_POST['instructions'][$index]) : null;
+
             // Insert question with question_type
-            $stmt = $conn->prepare("INSERT INTO questions (quiz_id, question_text, question_type) VALUES (?, ?, ?)");
+            $stmt = $conn->prepare("INSERT INTO questions (quiz_id, question_text, question_type, instructions) VALUES (?, ?, ?, ?)");
             $question_type = $quiz_type; // Assuming quiz_type matches question_type
-            $stmt->bind_param("iss", $quiz_id, $question, $question_type);
+            $stmt->bind_param("isss", $quiz_id, $question, $question_type, $instruction);
 
             if (!$stmt->execute()) {
                 throw new Exception("Error creating question: " . $stmt->error);

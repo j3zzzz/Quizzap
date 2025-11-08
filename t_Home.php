@@ -196,6 +196,12 @@ if ($difficultQuizQuery === false) {
         body, html {
             font-family: 'Fredoka';
             height: 100%;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -218,6 +224,10 @@ if ($difficultQuizQuery === false) {
             justify-content: flex-start;
             transition: all 0.3s ease;
             z-index: 999;
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
         }
 
         .sidebar.collapsed {
@@ -315,6 +325,12 @@ if ($difficultQuizQuery === false) {
             color: #f8b500;
         }
 
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
+            background-color: #444;
+            color: #f8b500;
+        }
+
         .sidebar .menu a i {
             margin-right: 0.5rem;
             min-width: 20px;
@@ -383,7 +399,12 @@ if ($difficultQuizQuery === false) {
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .content.expanded {
@@ -405,6 +426,10 @@ if ($difficultQuizQuery === false) {
             margin-bottom: 0.5rem;
         }
 
+        body.dark-mode .content-header h1 {
+            color: #e0e0e0;
+        }
+
         .content-header p {
             color: #999;
             font-size: 1rem;
@@ -412,6 +437,10 @@ if ($difficultQuizQuery === false) {
             font-family: 'Fredoka';
             font-weight: 500;
             width: 100%;
+        }
+
+        body.dark-mode .content-header p {
+            color: #b0b0b0;
         }
 
         .content-header .actions {
@@ -450,6 +479,10 @@ if ($difficultQuizQuery === false) {
             cursor: pointer;
         }
 
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
+        }
+
         .cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -469,6 +502,12 @@ if ($difficultQuizQuery === false) {
             min-height: 200px;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.3s;
+        }
+
+        body.dark-mode .enroll-card {
+            background-color: #2d2d2d;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .header{
@@ -483,6 +522,10 @@ if ($difficultQuizQuery === false) {
             text-align: center;
             margin: auto;
             color: #4d4d4d;
+        }
+
+        body.dark-mode .enroll-card p {
+            color: #e0e0e0;
         }
 
         .enroll-card a {
@@ -501,6 +544,10 @@ if ($difficultQuizQuery === false) {
             margin: auto;
         }
 
+        body.dark-mode h3 {
+            color: #e0e0e0;
+        }
+
         .success-quiz-card {
             font-family: 'Fredoka';
             background-color: #ffffff;
@@ -510,6 +557,12 @@ if ($difficultQuizQuery === false) {
             min-height: 200px;
             display: flex;
             flex-direction: column;
+            transition: background-color 0.3s;
+        }
+
+        body.dark-mode .success-quiz-card {
+            background-color: #2d2d2d;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .icon {
@@ -535,6 +588,10 @@ if ($difficultQuizQuery === false) {
             font-family: 'Fredoka';
             font-size: 1.5rem;
             color: #4d4d4d;
+        }
+
+        body.dark-mode .quiz-details h4 {
+            color: #e0e0e0;
         }
 
         .success-quiz-card p {
@@ -566,6 +623,10 @@ if ($difficultQuizQuery === false) {
             font-weight: bold;
         }
 
+        body.dark-mode #sub-link p {
+            color: #e0e0e0;
+        }
+
         #sub-link a {
             font-family: 'Fredoka';
             font-weight: 500;
@@ -581,6 +642,12 @@ if ($difficultQuizQuery === false) {
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
             min-height: 250px;
+            transition: background-color 0.3s;
+        }
+
+        body.dark-mode .diff-quiz-card {
+            background-color: #2d2d2d;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .ranking-card {
@@ -589,6 +656,12 @@ if ($difficultQuizQuery === false) {
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
             min-height: 300px;
+            transition: background-color 0.3s;
+        }
+
+        body.dark-mode .ranking-card {
+            background-color: #2d2d2d;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .ranking-card p {
@@ -653,6 +726,10 @@ if ($difficultQuizQuery === false) {
             padding: 1rem;
         }
 
+        body.dark-mode .ranking-row-noquiz {
+            color: #b0b0b0;
+        }
+
         /* Different background colors for each position */
         .ranking-row:nth-child(1) {
             background: #ffc62c;
@@ -712,6 +789,10 @@ if ($difficultQuizQuery === false) {
             font-size: 0.9rem;
             text-align: center;
             color: #444;
+        }
+
+        body.dark-mode .subject {
+            color: #e0e0e0;
         }
 
         /* Score styles */
@@ -816,6 +897,10 @@ if ($difficultQuizQuery === false) {
             color: #333;
         }
 
+        body.dark-mode .difficulty-header h3 {
+            color: #e0e0e0;
+        }
+
         .difficulty-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -829,6 +914,11 @@ if ($difficultQuizQuery === false) {
             box-shadow: 0 4px 12px rgba(0,0,0,0.08);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
             border-left: 4px solid #e74c3c;
+        }
+
+        body.dark-mode .difficulty-item {
+            background: #2d2d2d;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
 
         .difficulty-item:hover {
@@ -846,6 +936,10 @@ if ($difficultQuizQuery === false) {
             margin-bottom: 0.5rem;
         }
 
+        body.dark-mode .difficulty-title h4 {
+            color: #e0e0e0;
+        }
+
         .difficulty-percentage {
             display: inline-block;
             background: #ffebee;
@@ -856,11 +950,19 @@ if ($difficultQuizQuery === false) {
             font-weight: 600;
         }
 
+        body.dark-mode .difficulty-percentage {
+            background: #3a1a1a;
+        }
+
         .difficulty-subject {
             display: flex;
             align-items: center;
             margin-bottom: 1.5rem;
             color: #666;
+        }
+
+        body.dark-mode .difficulty-subject {
+            color: #b0b0b0;
         }
 
         .difficulty-subject i {
@@ -922,9 +1024,17 @@ if ($difficultQuizQuery === false) {
             color: #333;
         }
 
+        body.dark-mode .stat-value {
+            color: #e0e0e0;
+        }
+
         .stat-label {
             font-size: 0.8rem;
             color: #777;
+        }
+
+        body.dark-mode .stat-label {
+            color: #b0b0b0;
         }
 
         .analyze-btn {
@@ -950,6 +1060,10 @@ if ($difficultQuizQuery === false) {
             color: #666;
         }
 
+        body.dark-mode .no-difficulty {
+            color: #b0b0b0;
+        }
+
         .no-difficulty i {
             font-size: 3rem;
             color: #f8b500;
@@ -958,6 +1072,35 @@ if ($difficultQuizQuery === false) {
 
         .no-difficulty p {
             font-size: 1.1rem;
+        }
+
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: background-color 0.3s;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
         }
 
         /* Responsive adjustments */
@@ -1138,6 +1281,11 @@ if ($difficultQuizQuery === false) {
     </style>
 </head>
 <body>
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
@@ -1357,6 +1505,32 @@ document.addEventListener('DOMContentLoaded', function() {
             localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         });
     }
+
+    // Dark Mode Toggle Functionality
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
+
+    // Check for saved dark mode preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    
+    // Apply dark mode if previously enabled
+    if (isDarkMode) {
+        body.classList.add('dark-mode');
+        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
+
+    darkModeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        
+        // Update button icon and save preference
+        if (body.classList.contains('dark-mode')) {
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('darkMode', 'false');
+        }
+    });
 });
 
 function profileDropdown() {

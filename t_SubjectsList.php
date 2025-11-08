@@ -133,6 +133,12 @@ $conn->close();
 
         body, html {
             height: 100%;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -153,6 +159,10 @@ $conn->close();
             justify-content: flex-start;
             transition: all 0.3s ease;
             z-index: 999;
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
         }
 
         .sidebar.collapsed {
@@ -250,6 +260,12 @@ $conn->close();
             color: #f8b500;
         }
 
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
+            background-color: #444;
+            color: #f8b500;
+        }
+
         .sidebar .menu a i {
             margin-right: 0.5rem;
             min-width: 20px;
@@ -318,7 +334,12 @@ $conn->close();
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .content.expanded {
@@ -346,12 +367,20 @@ $conn->close();
             border-bottom: 1.5px solid #F8B500;
         }
 
+        body.dark-mode .content-header h1 {
+            color: #e0e0e0;
+        }
+
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
             font-family: Fredoka;
             font-weight: 500;
+        }
+
+        body.dark-mode .content-header p {
+            color: #b0b0b0;
         }
 
         .content-header .actions {
@@ -387,6 +416,10 @@ $conn->close();
             font-size: 1.5rem;
         }
 
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
+        }
+
         .subjects-container {
             padding: auto;
             display: grid;
@@ -415,7 +448,17 @@ $conn->close();
             
         }
 
+        body.dark-mode .subject-button {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .subject-button:hover{
+            background-color: #F8B500;
+            color: white;
+        }
+
+        body.dark-mode .subject-button:hover {
             background-color: #F8B500;
             color: white;
         }
@@ -429,6 +472,10 @@ $conn->close();
             font-size: 15px;
             font-family: Fredoka;
             color: #000000ff;
+        }
+
+        body.dark-mode .subject-button span {
+            color: #f8b500;
         }
 
         /* width */
@@ -473,7 +520,7 @@ $conn->close();
 
         .delete-btn:active {
             transform: translateY(1px);
-            box-shadow: 0 2px 0 0 #cc0000;
+            box-shadow: 0 3px 0 0 #cc0000;
         }
 
         .subject-item {
@@ -519,6 +566,10 @@ $conn->close();
             color: #555;
         }
 
+        body.dark-mode .select-all-label {
+            color: #b0b0b0;
+        }
+
         /* Disabled subject button */
         .subject-button-disabled {
             color: #999;
@@ -542,10 +593,21 @@ $conn->close();
             box-shadow: 0 4px 0 0 rgba(0, 0, 0, 0.1);
         }
 
+        body.dark-mode .subject-button-disabled {
+            background-color: #3d3d3d;
+            color: #999;
+            border: 2px solid #555;
+        }
+
         .subject-button-disabled:hover {
             background-color: #f5f5f5;
             color: #999;
             transform: none;
+        }
+
+        body.dark-mode .subject-button-disabled:hover {
+            background-color: #3d3d3d;
+            color: #999;
         }
 
         /* Deactivated badge inside the button */
@@ -734,6 +796,11 @@ $conn->close();
           animation-duration: 0.6s;
         }
 
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         @-webkit-keyframes zoom {
           from {-webkit-transform:scale(0)} 
           to {-webkit-transform:scale(1)}
@@ -758,6 +825,13 @@ $conn->close();
             padding: 20px 30px;
         }
 
+        body.dark-mode .modal-body,
+        body.dark-mode .modal-dialog,
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .modal-content{
             padding: 30px;
         }
@@ -780,6 +854,10 @@ $conn->close();
             font-weight: 500;
             text-align: left;
         }
+
+        body.dark-mode .form-group label {
+            color: #b0b0b0;
+        }
         
         .form-group input {
             width: 100%;
@@ -791,12 +869,22 @@ $conn->close();
             transition: all 0.3s;
             background-color: #f9f9f9;
         }
+
+        body.dark-mode .form-group input {
+            background-color: #3d3d3d;
+            border-color: #555;
+            color: #e0e0e0;
+        }
         
         .form-group input:focus {
             border-color: #f8b500;
             background-color: #fff;
             box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.2);
             outline: none;
+        }
+
+        body.dark-mode .form-group input:focus {
+            background-color: #4d4d4d;
         }
 
         .select-wrapper {
@@ -814,12 +902,22 @@ $conn->close();
             background-color: #f9f9f9;
             cursor: pointer;
         }
+
+        body.dark-mode .select-wrapper select {
+            background-color: #3d3d3d;
+            border-color: #555;
+            color: #e0e0e0;
+        }
         
         .select-wrapper select:focus {
             border-color: #f8b500;
             background-color: #fff;
             box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.2);
             outline: none;
+        }
+
+        body.dark-mode .select-wrapper select:focus {
+            background-color: #4d4d4d;
         }
         
         .icon {
@@ -930,6 +1028,10 @@ $conn->close();
             font-weight: 500;
             font-size: 15px;
             color: black;
+        }
+
+        body.dark-mode label[for="class_name"] {
+            color: #e0e0e0;
         }
 
         .addBtn{
@@ -1338,6 +1440,23 @@ $conn->close();
             border: 2px solid #f8b500;
         }
 
+        /* Dark mode toggle button */
+        .dark-mode-toggle {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            margin-right: 1rem;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background 0.2s;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
     </style>
 </head>
 <body>
@@ -1524,6 +1643,7 @@ $conn->close();
         const sidebar = document.querySelector('.sidebar');
         const content = document.querySelector('.content');
         const toggleBtn = document.getElementById('toggleSidebar');
+        const darkModeToggle = document.getElementById('darkModeToggle');
 
         // Check if sidebar state is saved in localStorage
         const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -1542,6 +1662,32 @@ $conn->close();
                 
                 // Save state to localStorage
                 localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+            });
+        }
+
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
+
+        // Toggle dark mode when button is clicked
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                
+                // Update button icon
+                if (document.body.classList.contains('dark-mode')) {
+                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                    localStorage.setItem('darkMode', 'true');
+                } else {
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    localStorage.setItem('darkMode', 'false');
+                }
             });
         }
 

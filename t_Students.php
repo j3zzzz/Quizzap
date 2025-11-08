@@ -495,6 +495,12 @@ if (isset($_SESSION['enroll_message'])) {
 
         body, html {
             height: 100%;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -515,6 +521,10 @@ if (isset($_SESSION['enroll_message'])) {
             justify-content: flex-start;
             transition: all 0.3s ease;
             z-index: 999;
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
         }
 
         .sidebar.collapsed {
@@ -612,6 +622,12 @@ if (isset($_SESSION['enroll_message'])) {
             color: #f8b500;
         }
 
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
+            background-color: #444;
+            color: #f8b500;
+        }
+
         .sidebar .menu a i {
             margin-right: 0.5rem;
             min-width: 20px;
@@ -680,7 +696,12 @@ if (isset($_SESSION['enroll_message'])) {
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .content.expanded {
@@ -708,12 +729,20 @@ if (isset($_SESSION['enroll_message'])) {
             border-bottom: 1.5px solid #F8B500;
         }
 
+        body.dark-mode .content-header h1 {
+            color: #e0e0e0;
+        }
+
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
             font-family: Fredoka;
             font-weight: 500;
+        }
+
+        body.dark-mode .content-header p {
+            color: #b0b0b0;
         }
 
         .content-header .actions {
@@ -749,6 +778,10 @@ if (isset($_SESSION['enroll_message'])) {
             font-size: 1.5rem;
         }
 
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
+        }
+
         .enrollment-container {
             display: flex;
             gap: 20px;
@@ -766,12 +799,22 @@ if (isset($_SESSION['enroll_message'])) {
             margin-bottom: 20px;
             overflow-x: auto;
         }
+
+        body.dark-mode .student-table-container {
+            background-color: #2d2d2d;
+            border-color: #444;
+        }
         
         .student-table-container h3 {
             margin-top: 0;
             color: #333;
             border-bottom: 1px solid #ddd;
             padding-bottom: 10px;
+        }
+
+        body.dark-mode .student-table-container h3 {
+            color: #e0e0e0;
+            border-bottom-color: #444;
         }
         
         .student-table {
@@ -792,13 +835,25 @@ if (isset($_SESSION['enroll_message'])) {
             padding: 10px;
             border-bottom: 1px solid #ddd;
         }
+
+        body.dark-mode .student-table td {
+            border-bottom-color: #444;
+        }
         
         .student-table tr:nth-child(even) {
             background-color: #f2f2f2;
         }
+
+        body.dark-mode .student-table tr:nth-child(even) {
+            background-color: #333;
+        }
         
         .student-table tr:hover {
             background-color: #e9e9e9;
+        }
+
+        body.dark-mode .student-table tr:hover {
+            background-color: #3a3a3a;
         }
         
         .enroll-actions {
@@ -1046,13 +1101,25 @@ if (isset($_SESSION['enroll_message'])) {
         border-bottom: 1px solid #e0e0e0;
     }
 
+    body.dark-mode td {
+        border-bottom-color: #444;
+    }
+
     tr:nth-child(even) {
         background-color: #f9f9f9;
+    }
+
+    body.dark-mode tr:nth-child(even) {
+        background-color: #333;
     }
 
     tr:hover {
         background-color: #f1f1f1;
         transition: background-color 0.2s ease;
+    }
+
+    body.dark-mode tr:hover {
+        background-color: #3a3a3a;
     }
 
     tr:last-child td {
@@ -1105,6 +1172,10 @@ if (isset($_SESSION['enroll_message'])) {
         font-family: 'Fredoka';
     }
 
+    body.dark-mode .empty-message {
+        color: #b0b0b0;
+    }
+
     @media (max-width: 576px) {
         #csv-cont {
             flex-direction: column;
@@ -1152,6 +1223,11 @@ if (isset($_SESSION['enroll_message'])) {
         font-weight: 500;
     }
 
+    body.dark-mode .message {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+    }
+
     /* File container responsive */
     .file-container {
         display: flex;
@@ -1175,6 +1251,13 @@ if (isset($_SESSION['enroll_message'])) {
         font-size: 14px;
         width: 250px;
         margin-bottom: 10px;
+    }
+
+    body.dark-mode #available-search, 
+    body.dark-mode #enrolled-search {
+        background-color: #2d2d2d;
+        border-color: #444;
+        color: #e0e0e0;
     }
 
     #available-search:focus, #enrolled-search:focus{
@@ -1202,10 +1285,19 @@ if (isset($_SESSION['enroll_message'])) {
         border: 1px solid #eee;
     }
 
+    body.dark-mode .csv-upload-section {
+        background-color: #2d2d2d;
+        border-color: #444;
+    }
+
     .upload-header {
         margin-bottom: 25px;
         padding-bottom: 15px;
         border-bottom: 1px solid #f0f0f0;
+    }
+
+    body.dark-mode .upload-header {
+        border-bottom-color: #444;
     }
 
     .upload-header h2 {
@@ -1217,9 +1309,17 @@ if (isset($_SESSION['enroll_message'])) {
         gap: 10px;
     }
 
+    body.dark-mode .upload-header h2 {
+        color: #e0e0e0;
+    }
+
     .upload-header p {
         color: #666;
         font-size: 0.95rem;
+    }
+
+    body.dark-mode .upload-header p {
+        color: #b0b0b0;
     }
 
     .upload-steps {
@@ -1259,10 +1359,18 @@ if (isset($_SESSION['enroll_message'])) {
         margin-bottom: 8px;
     }
 
+    body.dark-mode .step-content h3 {
+        color: #e0e0e0;
+    }
+
     .step-content p {
         color: #555;
         font-size: 0.95rem;
         margin-bottom: 10px;
+    }
+
+    body.dark-mode .step-content p {
+        color: #b0b0b0;
     }
 
     .step-button {
@@ -1296,6 +1404,12 @@ if (isset($_SESSION['enroll_message'])) {
         gap: 10px;
     }
 
+    body.dark-mode .hint-box {
+        background-color: #3a3a2a;
+        border-left-color: #ffc107;
+        color: #e0e0e0;
+    }
+
     .upload-form {
         display: flex;
         gap: 15px;
@@ -1321,9 +1435,18 @@ if (isset($_SESSION['enroll_message'])) {
         min-width: 250px;
     }
 
+    body.dark-mode .file-upload-label {
+        background-color: #2d2d2d;
+        color: #e0e0e0;
+    }
+
     .file-upload-label:hover {
         background-color: #fffdf6;
         border-color: #e5941f;
+    }
+
+    body.dark-mode .file-upload-label:hover {
+        background-color: #3a3a3a;
     }
 
     #csv-upload {
@@ -1372,6 +1495,11 @@ if (isset($_SESSION['enroll_message'])) {
         background-color: #f5f5f5;
         padding: 10px 15px;
         border-radius: 5px;
+    }
+
+    body.dark-mode .note {
+        background-color: #3a3a3a;
+        color: #b0b0b0;
     }
 
     .note i {
@@ -1434,9 +1562,33 @@ if (isset($_SESSION['enroll_message'])) {
             justify-content: center;
         }
     }
+
+    /* width */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+      box-shadow: inset 0 0 5px grey; 
+      border-radius: 10px;
+    }
+     
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+      background: #CF5300; 
+      border-radius: 10px;
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+      background: #A34404; 
+    }
     </style>
 </head>
 <body>
+
     <div class="container">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
@@ -1746,6 +1898,15 @@ if (isset($_SESSION['enroll_message'])) {
                 // Save state to localStorage
                 localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
             });
+        }
+
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
         }
 
         // Bulk Enrollment Toggle Functionality

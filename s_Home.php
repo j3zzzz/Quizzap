@@ -865,7 +865,7 @@ $conn->close();
 
         .modal-body {
             overflow: auto;
-            height: 70%;
+            height: 100%;
             width: 100%;
         } 
 
@@ -875,7 +875,7 @@ $conn->close();
             border-radius: 20px;
             padding: 30px 40px;
             width: 50%;
-            height: 80%;
+            height: 70%;
             margin: auto;
             top: 5%;
             left: 30%;
@@ -981,11 +981,7 @@ $conn->close();
           cursor: pointer;
         }
 
-        #quiz-details {
-            overflow: auto;
-        }
-
-        #quiz-details h1 {
+        .modal-body h1 {
             font-family: Fredoka;
             font-size: xx-large ;
             text-align: center;
@@ -993,7 +989,7 @@ $conn->close();
             color: #f8b500;
         }
 
-        #quiz-details h2 {
+        .modal-body h2 {
             font-family: Fredoka;
             margin-top: 4%;
             padding-bottom: 5px;
@@ -1002,11 +998,11 @@ $conn->close();
             text-align: left;
         }
 
-        body.dark-mode #quiz-details h2 {
+        body.dark-mode .modal-body h2 {
             color: #e0e0e0;
         }
 
-        #quiz-details span {
+        .modal-body span {
             font-family: Fredoka;
             float: right;
             right: 5%;
@@ -1017,7 +1013,7 @@ $conn->close();
             text-align: center;
         }
 
-        body.dark-mode #quiz-details span {
+        body.dark-mode .modal-body span {
             color: #e0e0e0;
         }
 
@@ -1025,7 +1021,7 @@ $conn->close();
             border: 2px solid #f8b500;
         }
 
-        #quiz-details .availability-span {
+        .modal-body .availability-span {
             line-height: 1.3;
             margin-top: -5%;
         }
@@ -1210,13 +1206,8 @@ $conn->close();
     <div id="myModal" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
-            <div class="modal-dialog">
-                <img src="img/quiz.png" alt="Quiz Image">
-            </div>
-            <div class="modal-body">
-                <div id="quiz-details">
+            <div class="modal-body" id="modal-body">
                     <!-- Quiz details will be displayed here -->
-                </div>
             </div>
         </div>
     </div>
@@ -1273,13 +1264,105 @@ $conn->close();
         });
 
         function fetchQuizDetails(quizId) {
-            fetch('fetch_quiz_details.php?quiz_id=' + quizId)
-                .then(response => response.text())
+            fetch('s_quiz_details.php?quiz_id=' + quizId)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    console.log('Response headers:', response.headers);
+                    
+                    // First, get the response as text to see what we're actually getting
+                    return response.text().then(text => {
+                        console.log('Raw response:', text);
+                        
+                        // Try to parse as JSON
+                        try {
+                            const jsonData = JSON.parse(text);
+                            return jsonData;
+                        } catch (e) {
+                            console.error('JSON parse error:', e);
+                            throw new Error('Not valid JSON: ' + text.substring(0, 100));
+                        }
+                    });
+                })
                 .then(data => {
-                    document.getElementById('quiz-details').innerHTML = data;
+                    if (data.error) {
+                        document.getElementById('modal-body').innerHTML = '<p>Error: ' + data.error + '</p>';
+                    } else {
+                        // Format the JSON data as HTML
+                        const quiz = data;
+                        
+                        // Format dates for display
+                        function formatDateForDisplay(date) {
+                            if (!date || date === 'null') return 'Always available';
+                            try {
+                                return new Date(date).toLocaleString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                });
+                            } catch (e) {
+                                return 'Invalid date';
+                            }
+                        }
+                        
+                        let availability = "Always available";
+                        if (quiz.start_date && quiz.end_date && quiz.start_date !== 'null' && quiz.end_date !== 'null') {
+                            availability = formatDateForDisplay(quiz.start_date) + " to " + formatDateForDisplay(quiz.end_date);
+                        }
+                        
+                        const htmlContent = `
+                            <h1>${quiz.title || 'No Title'}</h1>
+                            <div class="detail-row">
+                                <h2>Number of Questions: </h2> <span>${quiz.num_of_questions || 0}</span> 
+                                <h2>Quiz Type: </h2> <span>${quiz.quiz_type || 'Not specified'}</span> 
+                                <h2>Time Limit: </h2> <span>${quiz.timer || 0} minute/s</span> 
+                                <h2>Availability: </h2> <span class="availability-span">${availability}</span>
+                            </div>
+                            <button class="start-quiz-btn" data-quiz-id="${quizId}" data-quiz-type="${quiz.quiz_type || ''}" style="
+                                font-family: Fredoka;
+                                color: white;
+                                font-size: 18px;
+                                width: 40%;
+                                background-color: #F8B500;
+                                padding: 10px 15px;
+                                border: none;
+                                border-radius: 10px;
+                                margin-top: 3%;
+                                margin-left: 2%;
+                                cursor: pointer;
+                                box-shadow: 0 6px 0 0 #BC8900;
+                            ">Start Quiz</button>
+                        `;
+                        
+                        document.getElementById('modal-body').innerHTML = htmlContent;
+                        
+                        // Add event listener to the new button
+                        const startQuizBtn = document.querySelector('.start-quiz-btn');
+                        if (startQuizBtn) {
+                            startQuizBtn.addEventListener('click', function() {
+                                const quizId = this.getAttribute('data-quiz-id');
+                                const quizType = this.getAttribute('data-quiz-type');
+                                startQuiz(quizId, quizType);
+                            });
+                        }
+                    }
                     modal.style.display = "block";
                 })
-                .catch(error => console.error('Error:', error));
+                .catch(error => {
+                    console.error('Fetch error:', error);
+                    document.getElementById('modal-body').innerHTML = '<p>Error loading quiz details: ' + error.message + '</p>';
+                    modal.style.display = "block";
+                });
+        }
+
+        // Add this function to handle quiz start
+        function startQuiz(quizId, quizType) {
+            if (quizType === "All Zapped") {
+                window.location.href = "allZapped_quiz.php?quiz_id=" + quizId;
+            } else {
+                window.location.href = "s_quiz.php?quiz_id=" + quizId;
+            }
         }
 
         // Dark Mode Toggle Functionality

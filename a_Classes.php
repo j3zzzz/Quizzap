@@ -52,6 +52,7 @@ if (isset($_POST['add_class'])) {
     $subject_name = $_POST['subject_name'];
     $grade_level = $_POST['grade_level'];
     $section = $_POST['section'];
+    $strand = isset($_POST['strand']) ? $_POST['strand'] : ''; 
     $teacher_account_number = $_POST['teacher_id'];
     $subject_code = generateUniqueSubjectCode($conn);
     
@@ -67,18 +68,31 @@ if (isset($_POST['add_class'])) {
         $school_id = $teacher_row['school_id'];
         
         // Check if class already exists for this teacher
-        $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND section = ? AND teacher_id = ?";
-        $check_stmt = $conn->prepare($check_sql);
-        $check_stmt->bind_param("ssss", $subject_name, $grade_level, $section, $teacher_account_number);
+        // Different check based on grade level
+        if ($grade_level == '11' || $grade_level == '12') {
+            // For Grade 11 & 12, include strand in duplicate check
+            $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND section = ? AND strand = ? AND teacher_id = ?";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("sssss", $subject_name, $grade_level, $section, $strand, $teacher_account_number);
+        } else {
+            // For Grade 7-10, exclude strand from duplicate check
+            $check_sql = "SELECT * FROM subjects WHERE subject_name = ? AND grade_level = ? AND section = ? AND teacher_id = ?";
+            $check_stmt = $conn->prepare($check_sql);
+            $check_stmt->bind_param("ssss", $subject_name, $grade_level, $section, $teacher_account_number);
+        }
+        
         $check_stmt->execute();
         $check_result = $check_stmt->get_result();
         
         if ($check_result->num_rows > 0) {
-            $error_message = "Error: A class with the same subject, grade level, and section already exists for this teacher.";
+            // DUPLICATE FOUND - Set flag and error message
+            $error_message = "Error: A class with the same subject, grade level, section" . (($grade_level == '11' || $grade_level == '12') ? ", and strand" : "") . " already exists for this teacher.";
+            $show_duplicate_modal = true;
         } else {
-            $sql = "INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, section, school_id, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')";
+            // NO DUPLICATE - Proceed with insertion
+            $sql = "INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, strand, section, school_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("ssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $section, $school_id);
+            $stmt->bind_param("sssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $strand, $section, $school_id);
             
             if ($stmt->execute()) {
                 $success_message = "Class created successfully!";
@@ -175,12 +189,13 @@ if (isset($_POST['update'])) {
     $subject_id = $_POST['subject_id'];
     $subject_name = $_POST['subject_name'];
     $grade_level = $_POST['grade_level'];
+    $strand = $_POST['strand'];
     $section = $_POST['section'];
     $teacher_account_number = $_POST['teacher_id'];
     
-    $sql = "UPDATE subjects SET subject_name=?, grade_level=?, section=?, teacher_id=? WHERE subject_id=?";
+    $sql = "UPDATE subjects SET subject_name=?, grade_level=?, strand=?, section=?, teacher_id=? WHERE subject_id=?";
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssi", $subject_name, $grade_level, $section, $teacher_account_number, $subject_id);
+    $stmt->bind_param("sssssi", $subject_name, $grade_level, $strand, $section, $teacher_account_number, $subject_id);
     
     if ($stmt->execute()) {
         $success_message = "Class updated successfully!";
@@ -252,7 +267,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="other resources/fontawesome-free-6.5.2-web/css/all.min.css">
-    <title>Manage Teachers</title>
+    <title>Manage Classes</title>
      <style>
         * {
             margin: 0;
@@ -684,7 +699,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
 
         .modal-content {
             background-color: #fefefe;
-            margin: 10% auto;
+            margin: 5% auto;
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
@@ -962,11 +977,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
             color: #155724;
         }
 
-        .status-badge.inactive {
-            background-color: #fff3cd;
-            color: #856404;
-        }
-
         .status-badge.deactivated {
             background-color: #f8d7da;
             color: #721c24;
@@ -1208,7 +1218,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
 
         .modal-content {
             background-color: #fefefe;
-            margin: 10% auto;
+            margin: 5% auto;
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
@@ -1243,6 +1253,12 @@ while ($row = $teachersQuery->fetch_assoc()) {
             padding: 10px 0;
             margin-top: 20px;
             text-align: right;
+        }
+
+        .modal-footer > div {
+            display: flex;
+            gap: 10px;
+            align-items: center;
         }
 
         .form-group {
@@ -1383,8 +1399,8 @@ while ($row = $teachersQuery->fetch_assoc()) {
                             </div>
                             
                             <div class="form-group">
-                                <label for="grade_level">Grade Level</label>
-                                <select id="grade_level" name="grade_level" required>
+                                <label for="add_grade_level">Grade Level</label>
+                                <select id="add_grade_level" name="grade_level" required onchange="toggleAddStrandField()">
                                     <option value="">Select Grade Level</option>
                                     <option value="7">Grade 7</option>
                                     <option value="8">Grade 8</option>
@@ -1393,6 +1409,11 @@ while ($row = $teachersQuery->fetch_assoc()) {
                                     <option value="11">Grade 11</option>
                                     <option value="12">Grade 12</option>
                                 </select>
+                            </div>
+
+                            <div class="form-group" id="addStrandField" style="display: none;">
+                                <label for="add_strand">Strand</label>
+                                <input type="text" id="add_strand" name="strand" placeholder="e.g., STEM, HUMSS, ABM, TVL">
                             </div>
                             
                             <div class="form-group">
@@ -1465,9 +1486,9 @@ while ($row = $teachersQuery->fetch_assoc()) {
                                     </div>
                                     
                                     <div class="form-group">
-                                        <label for="grade_level">Grade Level</label>
+                                        <label for="edit_grade_level">Grade Level</label>
                                         <?php if (isset($_GET['edit'])): ?>
-                                            <select id="grade_level" name="grade_level" required>
+                                            <select id="edit_grade_level" name="grade_level" required onchange="toggleEditStrandField()">
                                                 <option value="7" <?php echo $classToView['grade_level'] == '7' ? 'selected' : ''; ?>>Grade 7</option>
                                                 <option value="8" <?php echo $classToView['grade_level'] == '8' ? 'selected' : ''; ?>>Grade 8</option>
                                                 <option value="9" <?php echo $classToView['grade_level'] == '9' ? 'selected' : ''; ?>>Grade 9</option>
@@ -1479,6 +1500,21 @@ while ($row = $teachersQuery->fetch_assoc()) {
                                             <input type="text" value="Grade <?php echo htmlspecialchars($classToView['grade_level']); ?>" readonly>
                                         <?php endif; ?>
                                     </div>
+
+                                    <?php 
+                                    $showStrand = ($classToView['grade_level'] == '11' || $classToView['grade_level'] == '12');
+                                    ?>
+                                    <div class="form-group" id="editStrandField" style="display: <?php echo $showStrand ? 'block' : 'none'; ?>;">
+                                        <label for="edit_strand">Strand</label>
+                                        <?php if (isset($_GET['edit'])): ?>
+                                            <input type="text" id="edit_strand" name="strand" 
+                                                value="<?php echo htmlspecialchars($classToView['strand'] ?? ''); ?>" 
+                                                placeholder="e.g., STEM, HUMSS, ABM, TVL">
+                                        <?php else: ?>
+                                            <input type="text" value="<?php echo htmlspecialchars($classToView['strand'] ?? 'N/A'); ?>" readonly>
+                                        <?php endif; ?>
+                                    </div>
+
                                     
                                     <div class="form-group">
                                         <label for="section">Section</label>
@@ -1487,25 +1523,30 @@ while ($row = $teachersQuery->fetch_assoc()) {
                                             <?php echo !isset($_GET['edit']) ? 'readonly' : ''; ?> required>
                                     </div>
                                     
-                                    <div class="modal-footer">
-                                        <?php if (isset($_GET['edit'])): ?>
-                                            <button type="submit" name="update" class="btn btn-primary">Save Changes</button>
-                                        <?php else: ?>
-                                            <?php if ($classToView['status'] == 'Deactivated'): ?>
-                                                <a href="a_Classes.php?activate=<?php echo htmlspecialchars($classToView['subject_id']); ?>" 
-                                                class="btn btn-success" 
-                                                onclick="return confirm('Are you sure you want to activate this class?');">
-                                                <i class="fas fa-check-circle"></i> Activate
-                                                </a>
-                                            <?php else: ?>
-                                                <a href="a_Classes.php?deactivate=<?php echo htmlspecialchars($classToView['subject_id']); ?>" 
-                                                class="btn btn-danger" 
-                                                onclick="return confirm('Are you sure you want to deactivate this class? All enrolled students will be unenrolled.');">
-                                                <i class="fas fa-times-circle"></i> Deactivate
-                                                </a>
+                                    <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div>
+                                            <?php if (isset($_GET['edit']) && $classToView['status'] != 'Deactivated'): ?>
+                                                <button type="button" class="btn btn-danger" 
+                                                    onclick="openDeactivateModal(<?php echo htmlspecialchars($classToView['subject_id']); ?>)">
+                                                    <i class="fas fa-times-circle"></i> Deactivate
+                                                </button>
                                             <?php endif; ?>
-                                        <?php endif; ?>
-                                        <a href="a_Classes.php" class="btn btn-secondary">Close</a>
+                                        </div>
+                                        <div>
+                                            <?php if (isset($_GET['edit'])): ?>
+                                                <a href="a_Classes.php" class="btn btn-secondary">Cancel</a>
+                                                <button type="submit" name="update" class="btn btn-primary">Save Changes</button>
+                                            <?php else: ?>
+                                                <?php if ($classToView['status'] == 'Deactivated'): ?>
+                                                    <a href="a_Classes.php?activate=<?php echo htmlspecialchars($classToView['subject_id']); ?>" 
+                                                    class="btn btn-success" 
+                                                    onclick="return confirm('Are you sure you want to activate this class?');">
+                                                    <i class="fas fa-check-circle"></i> Activate
+                                                    </a>
+                                                <?php endif; ?>
+                                                <a href="a_Classes.php" class="btn btn-secondary">Close</a>
+                                            <?php endif; ?>
+                                        </div>
                                     </div>
                                 </form>
                             <?php else: ?>
@@ -1526,7 +1567,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
                 </div>
             <?php endif; ?>
             
-            <?php if (isset($error_message)): ?>
+            <?php if (isset($error_message) && strpos($error_message, 'already exists') === false): ?>
                 <div class="alert alert-danger">
                     <?php echo htmlspecialchars($error_message); ?>
                 </div>
@@ -1540,6 +1581,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
                             <th>Subject</th>
                             <th>Subject Code</th>
                             <th>Grade & Section</th>
+                            <th>Strand</th>
                             <th>Teacher</th>
                             <th>Status</th>
                             <th>Actions</th>
@@ -1551,7 +1593,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
                             $counter = 1;
                             while ($class = $classesResult->fetch_assoc()): 
                                 // Check if class has students enrolled
-                                $enrollmentCheck = $conn->prepare("SELECT COUNT(*) as count FROM subjects WHERE subject_id = ?");
+                                $enrollmentCheck = $conn->prepare("SELECT COUNT(*) as count FROM enrollments WHERE subject_id = ?");
                                 $enrollmentCheck->bind_param("i", $class['subject_id']);
                                 $enrollmentCheck->execute();
                                 $enrollmentResult = $enrollmentCheck->get_result();
@@ -1565,6 +1607,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
                                     <td data-label="Grade & Section">
                                         Grade <?php echo htmlspecialchars($class['grade_level']); ?> - <?php echo htmlspecialchars($class['section']); ?>
                                     </td>
+                                    <td data-label="Strand"><?php echo htmlspecialchars($class['strand']); ?></td>
                                     <td data-label="Teacher">
                                         <div class="teacher-name">
                                             <?php echo htmlspecialchars($class['teacher_fname'] . ' ' . $class['teacher_lname']); ?>
@@ -1575,9 +1618,9 @@ while ($row = $teachersQuery->fetch_assoc()) {
                                     </td>
                                     <td data-label="Status">
                                         <span class="status-badge <?php 
-                                            switch($class['status']) {
+                                            $status = $class['status'] ?? 'Active'; 
+                                            switch($status) {
                                                 case 'Active': echo 'active'; break;
-                                                case 'Inactive': echo 'inactive'; break;
                                                 case 'Deactivated': echo 'deactivated'; break;
                                                 default: echo 'active';
                                             }
@@ -1596,7 +1639,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
                             <?php endwhile; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="empty-state">
                                         <i class="fas fa-chalkboard"></i>
                                         <h3>No classes found</h3>
@@ -1613,6 +1656,79 @@ while ($row = $teachersQuery->fetch_assoc()) {
                         <?php endif; ?>
                     </tbody>
                 </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deactivate Confirmation Modal -->
+    <div id="deactivateModal" class="modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeDeactivateModal()">&times;</span>
+            <div class="modal-header">
+                <h2 style="color: #dc3545;">⚠️ Warning: Deactivate Class</h2>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; font-size: 1.1rem;">
+                    <strong>Are you sure you want to deactivate this class?</strong>
+                </p>
+                <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
+                    <p style="margin: 0; color: #856404; font-weight: 500;">
+                        <i class="fas fa-exclamation-triangle"></i> This action will:
+                    </p>
+                    <ul style="margin: 10px 0 0 20px; color: #856404;">
+                        <li>Remove ALL students from this class</li>
+                        <li>Delete ALL enrollment records permanently</li>
+                        <li>Set the class status to "Deactivated"</li>
+                    </ul>
+                </div>
+                <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; border-left: 4px solid #dc3545;">
+                    <p style="margin: 0; color: #721c24; font-weight: 600;">
+                        <i class="fas fa-times-circle"></i> This action cannot be undone!
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" onclick="closeDeactivateModal()">Cancel</button>
+                <a href="#" id="confirmDeactivateBtn" class="btn btn-danger">
+                    <i class="fas fa-times-circle"></i> Yes, Deactivate Class
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Duplicate Class Warning Modal -->
+    <div id="duplicateModal" class="modal" style="display: <?php echo isset($show_duplicate_modal) && $show_duplicate_modal ? 'block' : 'none'; ?>;">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="close" onclick="closeDuplicateModal()">&times;</span>
+            <div class="modal-header">
+                <h2 style="color: #dc3545;">⚠️ Duplicate Class Detected</h2>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 15px; font-size: 1.1rem;">
+                    <strong>This class already exists!</strong>
+                </p>
+                <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
+                    <p style="margin: 0; color: #856404; font-weight: 500;">
+                        <i class="fas fa-exclamation-triangle"></i> A class with the same details already exists:
+                    </p>
+                    <ul style="margin: 10px 0 0 20px; color: #856404;">
+                        <li>Same subject name</li>
+                        <li>Same teacher</li>
+                        <li>Same grade level</li>
+                        <li>Same section</li>
+                        <li>Same strand (if applicable)</li>
+                    </ul>
+                </div>
+                <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; border-left: 4px solid #dc3545;">
+                    <p style="margin: 0; color: #721c24; font-weight: 600;">
+                        <i class="fas fa-times-circle"></i> Please modify the class details to create a unique class.
+                    </p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" onclick="closeDuplicateModal()">
+                    <i class="fas fa-check"></i> Understood
+                </button>
             </div>
         </div>
     </div>
@@ -1645,18 +1761,80 @@ while ($row = $teachersQuery->fetch_assoc()) {
 
         function closeAddClassModal() {
             document.getElementById('addClassModal').style.display = 'none';
+            // Reset form and hide strand field
+            document.getElementById('addStrandField').style.display = 'none';
+            document.getElementById('add_strand').value = '';
+            document.getElementById('add_grade_level').value = '';
         }
 
         function profileDropdown() {
             document.getElementById("dropdown").classList.toggle("show");
         }
 
+        // Toggle strand field for ADD modal
+        function toggleAddStrandField() {
+            var gradeLevel = document.getElementById('add_grade_level').value;
+            var strandField = document.getElementById('addStrandField');
+            
+            if (gradeLevel == '11' || gradeLevel == '12') {
+                strandField.style.display = 'block';
+            } else {
+                strandField.style.display = 'none';
+                // Clear strand value when hidden
+                document.getElementById('add_strand').value = '';
+            }
+        }
+
+        // Toggle strand field for EDIT modal
+        function toggleEditStrandField() {
+            var gradeLevel = document.getElementById('edit_grade_level').value;
+            var strandField = document.getElementById('editStrandField');
+            
+            if (gradeLevel == '11' || gradeLevel == '12') {
+                strandField.style.display = 'block';
+            } else {
+                strandField.style.display = 'none';
+                // Clear strand value when hidden
+                var strandInput = document.getElementById('edit_strand');
+                if (strandInput) {
+                    strandInput.value = '';
+                }
+            }
+        }
+
+        // Deactivate modal functions
+        function openDeactivateModal(subjectId) {
+            document.getElementById('deactivateModal').style.display = 'block';
+            document.getElementById('confirmDeactivateBtn').href = 'a_Classes.php?deactivate=' + subjectId;
+        }
+
+        function closeDeactivateModal() {
+            document.getElementById('deactivateModal').style.display = 'none';
+        }
+
+        //Duplicate modal functions
+        function closeDuplicateModal() {
+            document.getElementById('duplicateModal').style.display = 'none';
+        }
+
         // Close modals and dropdowns when clicking outside
         window.onclick = function(event) {
-            // Close modals
+            // Close add class modal
             var addClassModal = document.getElementById('addClassModal');
             if (event.target == addClassModal) {
                 closeAddClassModal();
+            }
+
+            // Close deactivate modal
+            var deactivateModal = document.getElementById('deactivateModal');
+            if (event.target == deactivateModal) {
+                closeDeactivateModal();
+            }
+
+            // Close duplicate modal
+            var duplicateModal = document.getElementById('duplicateModal');
+            if (event.target == duplicateModal) {
+                closeDuplicateModal();
             }
             
             // Close profile dropdown

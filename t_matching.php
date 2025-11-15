@@ -5,6 +5,10 @@ if (strpos($_SESSION['account_number'], 'T') !== 0) {
     exit();
 }
 
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -15,7 +19,23 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
- 
+
+$loggedInUser = $_SESSION['account_number'];
+
+//query to fetch the teacher's profile pic
+$sql = "SELECT profile_pic FROM teachers WHERE account_number = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $loggedInUser);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+} else {
+    $profile_pic = 'default-profile.jpg';
+}
+
 $subject_id = $_GET['subject_id'];
 ?>
 
@@ -36,6 +56,12 @@ $subject_id = $_GET['subject_id'];
         body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         header {
@@ -44,6 +70,10 @@ $subject_id = $_GET['subject_id'];
             align-items: center;
             padding: 20px;
             background-color: white;
+        }
+
+        body.dark-mode header {
+            background-color: #2d2d2d;
         }
 
         header .logo {
@@ -73,11 +103,20 @@ $subject_id = $_GET['subject_id'];
             box-shadow: 5px 6px 0 0 #BC8900;
         }
 
+        body.dark-mode .create-q-cont {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         label{
             color: black;
             font-family: Fredoka;
             font-size: 20px;
             font-weight: 500;
+        }
+
+        body.dark-mode label {
+            color: #e0e0e0;
         }
 
         label[for=timer]{
@@ -104,6 +143,14 @@ $subject_id = $_GET['subject_id'];
             margin-top: 1%;
             font-family: Fredoka;
             font-size: 17px;
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode input[type=text] {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
         }
 
         input[type=number]{
@@ -113,6 +160,14 @@ $subject_id = $_GET['subject_id'];
             border: 3px solid #B9B6B6;
             margin-right: 2%;
             font-family: Fredoka;
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode input[type=number] {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
         }
 
         .answer_input {
@@ -128,11 +183,19 @@ $subject_id = $_GET['subject_id'];
             border: 2px solid #f8b500;
         }
 
+        body.dark-mode .question-container {
+            background-color: #3d3d3d;
+        }
+
         .quiz-form {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        body.dark-mode .quiz-form {
+            background-color: #2d2d2d;
         }
         
         .form-group {
@@ -191,6 +254,12 @@ $subject_id = $_GET['subject_id'];
             font-weight: 500;
         }
 
+        body.dark-mode .btn-back {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
         .actions {
             display: flex;
             gap: 10px;
@@ -232,6 +301,11 @@ $subject_id = $_GET['subject_id'];
             margin-top: 10px;
         }
 
+        body.dark-mode .add-pair {
+            background-color: #3d3d3d;
+            color: #f8b500;
+        }
+
         .add-pair:hover{
             background-color: #f8b500;
             color: white;
@@ -258,6 +332,11 @@ $subject_id = $_GET['subject_id'];
             justify-content: center;
             font-family: Fredoka;
             font-weight: 500;
+        }
+
+        body.dark-mode .add-question-btn {
+            background-color: #3d3d3d;
+            color: #f8b500;
         }
         
         .add-question-btn:hover {
@@ -297,6 +376,17 @@ $subject_id = $_GET['subject_id'];
         .matching-column {
             flex: 1;
         }
+
+        .profile {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            border: 2px solid #f8b500;
+            border-radius: 50%;
+            object-fit: cover;
+        }
     </style>    
 </head>
 <body>
@@ -304,7 +394,9 @@ $subject_id = $_GET['subject_id'];
     <header>
         <div class="logo"><img src="img/logo1.png" width="200px" height="80px"></div>
         <div class="actions">
-            <div class="profile"><img src="img/default.png" width="50px" height="50px"></div>
+            <div class="profile">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px;">
+            </div>
         </div>
     </header>
 
@@ -343,6 +435,15 @@ $subject_id = $_GET['subject_id'];
     </div>
 
     <script>
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+        }
+
         let currentQuestions = 0;
         const maxQuestions = 20;
 

@@ -177,6 +177,17 @@ $conn->close();
           document.getElementById('table-btn').classList.add('active-view');
         }
       }
+
+      // Dark Mode Functionality - Auto apply based on localStorage
+      document.addEventListener('DOMContentLoaded', function() {
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+          document.body.classList.add('dark-mode');
+        }
+      });
     </script>
 
 <style type="text/css">
@@ -188,6 +199,12 @@ $conn->close();
     margin: 0;
     padding: 0;
     background-color: white;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.dark-mode {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
   }
 
   /* Scroll Bar */
@@ -199,6 +216,10 @@ $conn->close();
   ::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 5px;
+  }
+
+  body.dark-mode ::-webkit-scrollbar-track {
+    background: #2d2d2d;
   }
     
   ::-webkit-scrollbar-thumb {
@@ -222,6 +243,13 @@ $conn->close();
     z-index: 100;
     padding: 20px;
     box-sizing: border-box;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.dark-mode .side-nav {
+    background-color: #2d2d2d;
+    border-right: 1px solid #444;
+    color: #e0e0e0;
   }
 
   @media screen and (max-width: 768px) {
@@ -247,6 +275,10 @@ $conn->close();
     color: #333;
   }
 
+  body.dark-mode .side-nav p {
+    color: #e0e0e0;
+  }
+
   #back {
     display: block;
     text-align: center;
@@ -255,6 +287,10 @@ $conn->close();
     cursor: pointer;
     color: #555;
     transition: color 0.3s;
+  }
+
+  body.dark-mode #back {
+    color: #b0b0b0;
   }
 
   #back:hover {
@@ -270,6 +306,10 @@ $conn->close();
     height: 1px;
     background-color: #ddd;
     margin: 20px 0;
+  }
+
+  body.dark-mode #hr2 {
+    background-color: #444;
   }
 
   .quiz-items {
@@ -295,11 +335,21 @@ $conn->close();
     width: 90%;
   }
 
+  body.dark-mode .quiz-btn {
+    background-color: #F8B500;
+    color: #000 !important;
+  }
+
   .quiz-btn:hover {
     background-color: white !important;
     color: #F8B500 !important;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  body.dark-mode .quiz-btn:hover {
+    background-color: #2d2d2d !important;
+    color: #F8B500 !important;
   }
 
   .quiz-btn:active {
@@ -314,10 +364,19 @@ $conn->close();
     border: 2px solid #F8B500;
   }
 
+  body.dark-mode .quiz-btn.selected {
+    background-color: #2d2d2d !important;
+    color: #F8B500 !important;
+  }
+
   .no-quiz-btn {
     text-align: center;
     padding: 20px;
     color: #666;
+  }
+
+  body.dark-mode .no-quiz-btn {
+    color: #b0b0b0;
   }
 
   #main {
@@ -333,12 +392,22 @@ $conn->close();
     position: sticky;
     top: 0;
     z-index: 10;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.dark-mode #title {
+    background: #2d2d2d;
+    color: #e0e0e0;
   }
 
   #item-analysis {
     font-size: 2rem;
     margin: 0 0 10px 0;
     color: #333;
+  }
+
+  body.dark-mode #item-analysis {
+    color: #e0e0e0;
   }
 
   #hr1 {
@@ -354,18 +423,32 @@ $conn->close();
     margin: 10px 0;
   }
 
+  body.dark-mode #quiz-title {
+    color: #b0b0b0;
+  }
+
   #graph-area {
     background-color: white;
     border-radius: 10px;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     margin-top: 20px;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.dark-mode #graph-area {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
   }
 
   .piechart-container {
     margin-bottom: 40px;
     padding: 20px;
     border-bottom: 1px solid #eee;
+  }
+
+  body.dark-mode .piechart-container {
+    border-bottom: 1px solid #444;
   }
 
   .piechart-container:last-child {
@@ -383,6 +466,12 @@ $conn->close();
     margin: 50px auto;
     max-width: 600px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  }
+
+  body.dark-mode .no-data {
+    background-color: #3a2525;
+    border: 1px solid #5c3a3a;
+    color: #ff6b6b;
   }
   
   .details-btn {
@@ -410,6 +499,12 @@ $conn->close();
     border-left: 4px solid #F8B500;
     height: 400px;
     overflow: auto;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.dark-mode .details-container {
+    background-color: #3a3a3a;
+    color: #e0e0e0;
   }
 
   .details-container h4{
@@ -434,6 +529,10 @@ $conn->close();
     border-bottom: 2px solid #F8B500;
     padding-bottom: 5px;
   }
+
+  body.dark-mode .student-group h4 {
+    color: #e0e0e0;
+  }
   
   .student-item {
     background-color: white;
@@ -441,6 +540,12 @@ $conn->close();
     margin-bottom: 8px;
     border-radius: 5px;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.dark-mode .student-item {
+    background-color: #444;
+    color: #e0e0e0;
   }
   
   .student-item.correct {
@@ -460,6 +565,10 @@ $conn->close();
     font-size: 0.9em;
   }
 
+  body.dark-mode .student-id {
+    color: #b0b0b0;
+  }
+
   /* View toggle buttons */
   .view-toggle {
     display: flex;
@@ -476,6 +585,11 @@ $conn->close();
     font-size: 1rem;
     transition: all 0.3s;
   }
+
+  body.dark-mode .view-btn {
+    background-color: #444;
+    color: black;
+  }
   
   .view-btn:first-child {
     border-radius: 5px 0 0 5px;
@@ -487,6 +601,10 @@ $conn->close();
   
   .view-btn:hover {
     background-color: #ddd;
+  }
+
+  body.dark-mode .view-btn:hover {
+    background-color: #555;
   }
   
   .active-view {
@@ -514,6 +632,11 @@ $conn->close();
     text-align: left;
     border-bottom: 1px solid #ddd;
   }
+
+  body.dark-mode .analysis-table th,
+  body.dark-mode .analysis-table td {
+    border-bottom: 1px solid #444;
+  }
   
   .analysis-table th {
     background-color: #F8B500;
@@ -524,9 +647,17 @@ $conn->close();
   .analysis-table tr:nth-child(even) {
     background-color: #f9f9f9;
   }
+
+  body.dark-mode .analysis-table tr:nth-child(even) {
+    background-color: #3a3a3a;
+  }
   
   .analysis-table tr:hover {
     background-color: #f5f5f5;
+  }
+
+  body.dark-mode .analysis-table tr:hover {
+    background-color: #4a4a4a;
   }
   
   .percentage-cell {

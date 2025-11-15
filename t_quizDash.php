@@ -79,6 +79,12 @@ $conn->close();
         body, html {
             height: 100%;
             overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -102,6 +108,11 @@ $conn->close();
             z-index: 999;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
             transform: translateX(0);
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
+            color: #f8b500;
         }
 
         .sidebar.collapsed {
@@ -138,6 +149,10 @@ $conn->close();
             padding: 5px;
             border-radius: 4px;
             transition: background 0.2s;
+        }
+
+        body.dark-mode .toggle-btn {
+            color: #f8b500;
         }
 
         .toggle-btn:hover {
@@ -213,6 +228,12 @@ $conn->close();
             color: white;
         }
 
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
+            background-color: #f8b500;
+            color: white;
+        }
+
         .sidebar .menu a i {
             margin-right: 0.5rem;
             min-width: 20px;
@@ -243,7 +264,12 @@ $conn->close();
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .content.expanded {
@@ -271,12 +297,20 @@ $conn->close();
             border-bottom: 1.5px solid #F8B500;
         }
 
+        body.dark-mode .content-header h1 {
+            color: #e0e0e0;
+        }
+
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
             font-family: Fredoka;
             font-weight: 500;
+        }
+
+        body.dark-mode .content-header p {
+            color: #b0b0b0;
         }
 
         .content-header .actions {
@@ -312,6 +346,10 @@ $conn->close();
             font-size: 1.5rem;
         }
 
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
+        }
+
         .create-q-button {
             display: flex;
             justify-content: flex-end;
@@ -339,6 +377,11 @@ $conn->close();
             color: #f8b500;
         }
 
+        body.dark-mode .create-q-button a:hover {
+            background-color: #2d2d2d;
+            color: #f8b500;
+        }
+
         .create-q-button a:active {
             background-color: #f8b500;
             color: white;
@@ -355,6 +398,11 @@ $conn->close();
             overflow-y: auto;
             box-shadow: 2px 4px 2px 0 rgba(0, 0, 0, 0.2);
             position: relative;
+        }
+
+        body.dark-mode .quiz-container {
+            background-color: #2d2d2d;
+            border-color: #444;
         }
 
         .edit-quiz {
@@ -374,6 +422,12 @@ $conn->close();
             z-index: 10;
         }
 
+        body.dark-mode .edit-quiz {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
         #select {
             font-family: Fredoka;
             color: black;
@@ -382,6 +436,10 @@ $conn->close();
             line-height: 1.5;
             animation-name: checkbox_fade;
             animation-duration: 1s;
+        }
+
+        body.dark-mode #select {
+            color: #e0e0e0;
         }
 
         #selectQuiz {
@@ -455,7 +513,17 @@ $conn->close();
             justify-content: center;
         }
 
+        body.dark-mode .quiz-btn {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .quiz-btn:hover {
+            background-color: #f8b500;
+            color: white;
+        }
+
+        body.dark-mode .quiz-btn:hover {
             background-color: #f8b500;
             color: white;
         }
@@ -493,6 +561,10 @@ $conn->close();
             font-size: 22px;
             line-height: 1.2;
             color: #666;
+        }
+
+        body.dark-mode .no-quiz-btn {
+            color: #b0b0b0;
         }
 
         #status {
@@ -753,218 +825,228 @@ $conn->close();
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Mobile Toggle Button -->
-        <button class="mobile-toggle" onclick="toggleMobileSidebar()">
-            <i class="fas fa-bars"></i>
-        </button>
 
-        <!-- Sidebar -->
-        <div class="sidebar" id="sidebar">
-            <header>
-                <button id="toggleSidebar" class="toggle-btn">
-                    <i class="fas fa-bars"></i>
-                </button>
-                <div class="logo">
-                    <img src="img/logo1.png" width="200px" height="80px" class="logo-img">
-                    <img src="img/logo 2.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
+<div class="container">
+    <!-- Mobile Toggle Button -->
+    <button class="mobile-toggle" onclick="toggleMobileSidebar()">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <header>
+            <button id="toggleSidebar" class="toggle-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+            <div class="logo">
+                <img src="img/logo1.png" width="200px" height="80px" class="logo-img">
+                <img src="img/logo 2.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
+            </div>
+        </header>
+        <hr style="border: 1px solid #f8b500;">
+        <div class="menu">
+            <a href="t_SubjectsList.php" title="Subject List">
+                <i class="fa-solid fa-list"></i>
+                <span>Subjects</span>
+            </a>
+            <a href="t_quizDash.php" class="active" title="Quiz Dash">
+                <i class="fa-regular fa-circle-question"></i>
+                <span>Quizzes</span>
+            </a>
+            <a href="t_rankings.php?subject_id=<?php echo $subject_id; ?>" title="Rankings">
+                <i class="fa-solid fa-ranking-star"></i>
+                <span>Rankings</span>
+            </a>
+            <a href="t_item-analysis.php?subject_id=<?php echo $subject_id; ?>" title="Item Analysis">
+                <i class="fa-solid fa-chart-line"></i>
+                <span>Item Analysis</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Content Area -->
+    <div class="content" id="content">
+        <div class="content-header">
+            <h1><?php echo htmlspecialchars($subject['subject_name']); ?> - Grade <?php echo htmlspecialchars($subject['grade_level']); ?> - <?php echo htmlspecialchars($subject['section']); ?></h1><br>
+            <div class="actions">
+                <div class="profile" onclick="profileDropdown()">
+                    <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                    <div id="dropdown" class="dropdown-content">
+                        <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                        <form action="logout.php" method="POST">
+                            <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                        </form>
+                    </div>
                 </div>
-            </header>
-            <hr style="border: 1px solid #f8b500;">
-            <div class="menu">
-                <a href="t_SubjectsList.php" title="Subject List">
-                    <i class="fa-solid fa-list"></i>
-                    <span>Subjects</span>
-                </a>
-                <a href="t_quizDash.php" class="active" title="Quiz Dash">
-                    <i class="fa-regular fa-circle-question"></i>
-                    <span>Quizzes</span>
-                </a>
-                <a href="t_rankings.php?subject_id=<?php echo $subject_id; ?>" title="Rankings">
-                    <i class="fa-solid fa-ranking-star"></i>
-                    <span>Rankings</span>
-                </a>
-                <a href="t_item-analysis.php?subject_id=<?php echo $subject_id; ?>" title="Item Analysis">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Item Analysis</span>
-                </a>
+
             </div>
         </div>
 
-        <!-- Content Area -->
-        <div class="content" id="content">
-            <div class="content-header">
-                <h1><?php echo htmlspecialchars($subject['subject_name']); ?> - Grade <?php echo htmlspecialchars($subject['grade_level']); ?> - <?php echo htmlspecialchars($subject['section']); ?></h1><br>
-                <div class="actions">
-                    <div class="profile" onclick="profileDropdown()">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                        <div id="dropdown" class="dropdown-content">
-                            <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
-                            <form action="logout.php" method="POST">
-                                <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
-                            </form>
-                        </div>
-                    </div>
+        <div class="create-q-button">
+            <a href="t_selectquiztype.php?subject_id=<?php echo $subject_id; ?>">Create Quiz</a>
+        </div>
 
-                </div>
-            </div>
-
-            <div class="create-q-button">
-                <a href="t_selectquiztype.php?subject_id=<?php echo $subject_id; ?>">Create Quiz</a>
-            </div>
-
-            <?php 
-            if(isset($_SESSION['status'])) {
-                ?>
-                <div id="status">
-                    <button id="close-btn" onclick="document.getElementById('status').style.display = 'none';">&times;</button>
-                    <?php echo $_SESSION['status']; ?>
-                </div>
-                <?php
-                unset($_SESSION['status']);
-            }
+        <?php 
+        if(isset($_SESSION['status'])) {
             ?>
+            <div id="status">
+                <button id="close-btn" onclick="document.getElementById('status').style.display = 'none';">&times;</button>
+                <?php echo $_SESSION['status']; ?>
+            </div>
+            <?php
+            unset($_SESSION['status']);
+        }
+        ?>
 
-            <div class="quiz-container">
-                <form action="delete_quiz.php?subject_id=<?php echo $subject_id; ?>" method="POST">
-                    <div class="edit-quiz">
+        <div class="quiz-container">
+            <form action="delete_quiz.php?subject_id=<?php echo $subject_id; ?>" method="POST">
+                <div class="edit-quiz">
+                    <div>
+                        <p id="select" style="display: none;">Select Quizzes to Delete</p>
                         <div>
-                            <p id="select" style="display: none;">Select Quizzes to Delete</p>
-                            <div>
-                                <button type="button" onclick="quizCheckbox()" id="selectQuiz">
-                                    <i class="fa-regular fa-pen-to-square"></i>
-                                </button>
-                                <button type="submit" name="delete_quiz_btn" id="deleteBtn" 
-                                        onclick="return confirm('Are you sure you want to proceed on deleting the selected item/s?');" 
-                                        style="display: none;">
-                                    <i class="fa-solid fa-trash"></i> Delete
-                                </button>
-                            </div>
+                            <button type="button" onclick="quizCheckbox()" id="selectQuiz">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </button>
+                            <button type="submit" name="delete_quiz_btn" id="deleteBtn" 
+                                    onclick="return confirm('Are you sure you want to proceed on deleting the selected item/s?');" 
+                                    style="display: none;">
+                                <i class="fa-solid fa-trash"></i> Delete
+                            </button>
                         </div>
                     </div>
+                </div>
 
-                    <div class="quiz-grid">
-                        <?php
-                        if ($result->num_rows > 0) {
-                            while ($row = $result->fetch_assoc()) {
-                                echo "<div class='quiz-items'>";
-                                echo "<div class='quiz-btn'>" . htmlspecialchars($row['title']) . "</div>";
-                                echo "<input type='checkbox' name='delete_quiz[]' value='" . $row['quiz_id'] . "' class='quiz-checkbox' style='display: none;'>";
-                                echo "</div>";
-                            }
-                        } else {
-                            echo "<div class='no-quiz-container'>";
-                            echo "<div class='no-quiz-btn'>No quizzes created yet.</div>";
+                <div class="quiz-grid">
+                    <?php
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            echo "<div class='quiz-items'>";
+                            echo "<div class='quiz-btn'>" . htmlspecialchars($row['title']) . "</div>";
+                            echo "<input type='checkbox' name='delete_quiz[]' value='" . $row['quiz_id'] . "' class='quiz-checkbox' style='display: none;'>";
                             echo "</div>";
                         }
-                        ?>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div><br>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.getElementById('sidebar');
-            const content = document.getElementById('content');
-            const toggleBtn = document.getElementById('toggleSidebar');
-
-            function updateLayout() {
-                if (window.innerWidth <= 768) {
-                    // Mobile layout
-                    content.classList.add('mobile-full');
-                    sidebar.classList.remove('collapsed');
-                } else {
-                    // Desktop layout
-                    content.classList.remove('mobile-full');
-                    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                    
-                    if (isSidebarCollapsed) {
-                        sidebar.classList.add('collapsed');
-                        content.classList.add('expanded');
                     } else {
-                        sidebar.classList.remove('collapsed');
-                        content.classList.remove('expanded');
+                        echo "<div class='no-quiz-container'>";
+                        echo "<div class='no-quiz-btn'>No quizzes created yet.</div>";
+                        echo "</div>";
                     }
-                }
-            }
+                    ?>
+                </div>
+            </form>
+        </div>
+    </div>
+</div><br>
 
-            // Initialize layout
-            updateLayout();
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const sidebar = document.getElementById('sidebar');
+        const content = document.getElementById('content');
+        const toggleBtn = document.getElementById('toggleSidebar');
 
-            // Update layout on resize
-            window.addEventListener('resize', updateLayout);
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
 
-            // Desktop sidebar toggle
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function() {
-                    if (window.innerWidth > 768) {
-                        sidebar.classList.toggle('collapsed');
-                        content.classList.toggle('expanded');
-                        localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-                    }
-                });
-            }
-        });
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+        }
 
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
+        function updateLayout() {
             if (window.innerWidth <= 768) {
-                sidebar.classList.toggle('mobile-open');
+                // Mobile layout
+                content.classList.add('mobile-full');
+                sidebar.classList.remove('collapsed');
+            } else {
+                // Desktop layout
+                content.classList.remove('mobile-full');
+                const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+                
+                if (isSidebarCollapsed) {
+                    sidebar.classList.add('collapsed');
+                    content.classList.add('expanded');
+                } else {
+                    sidebar.classList.remove('collapsed');
+                    content.classList.remove('expanded');
+                }
             }
         }
 
-        // Close mobile sidebar when clicking outside
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const mobileToggle = document.querySelector('.mobile-toggle');
-            
-            if (window.innerWidth <= 768) {
-                if (!sidebar.contains(event.target) && !mobileToggle.contains(event.target)) {
-                    sidebar.classList.remove('mobile-open');
-                }
-            }
-        });
+        // Initialize layout
+        updateLayout();
 
-        function quizCheckbox() {
-            var checkboxes = document.querySelectorAll('.quiz-checkbox');
-            var deleteBtn = document.getElementById("deleteBtn");
-            var select = document.getElementById("select");
-            
-            checkboxes.forEach(function(checkbox) {
-                if (checkbox.style.display === "none") {
-                    checkbox.style.display = "block";
-                } else {
-                    checkbox.style.display = "none";
+        // Update layout on resize
+        window.addEventListener('resize', updateLayout);
+
+        // Desktop sidebar toggle
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', function() {
+                if (window.innerWidth > 768) {
+                    sidebar.classList.toggle('collapsed');
+                    content.classList.toggle('expanded');
+                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
                 }
             });
+        }
+    });
 
-            if (deleteBtn.style.display === "none" && select.style.display === "none") {
-                deleteBtn.style.display = "inline-block";
-                select.style.display = "block";
-            } else {
-                deleteBtn.style.display = "none";
-                select.style.display = "none";
+    function toggleMobileSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        if (window.innerWidth <= 768) {
+            sidebar.classList.toggle('mobile-open');
+        }
+    }
+
+    // Close mobile sidebar when clicking outside
+    document.addEventListener('click', function(event) {
+        const sidebar = document.getElementById('sidebar');
+        const mobileToggle = document.querySelector('.mobile-toggle');
+        
+        if (window.innerWidth <= 768) {
+            if (!sidebar.contains(event.target) && !mobileToggle.contains(event.target)) {
+                sidebar.classList.remove('mobile-open');
             }
         }
+    });
 
-        function profileDropdown() {
-            document.getElementById("dropdown").classList.toggle("show");
+    function quizCheckbox() {
+        var checkboxes = document.querySelectorAll('.quiz-checkbox');
+        var deleteBtn = document.getElementById("deleteBtn");
+        var select = document.getElementById("select");
+        
+        checkboxes.forEach(function(checkbox) {
+            if (checkbox.style.display === "none") {
+                checkbox.style.display = "block";
+            } else {
+                checkbox.style.display = "none";
+            }
+        });
+
+        if (deleteBtn.style.display === "none" && select.style.display === "none") {
+            deleteBtn.style.display = "inline-block";
+            select.style.display = "block";
+        } else {
+            deleteBtn.style.display = "none";
+            select.style.display = "none";
         }
+    }
 
-        // Close the dropdown if clicked outside
-        window.onclick = function(event) {
-            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
-                var dropdowns = document.getElementsByClassName("dropdown-content");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
+    function profileDropdown() {
+        document.getElementById("dropdown").classList.toggle("show");
+    }
+
+    // Close the dropdown if clicked outside
+    window.onclick = function(event) {
+        if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+            var dropdowns = document.getElementsByClassName("dropdown-content");
+            for (var i = 0; i < dropdowns.length; i++) {
+                var openDropdown = dropdowns[i];
+                if (openDropdown.classList.contains('show')) {
+                    openDropdown.classList.remove('show');
                 }
             }
         }
-    </script>
+    }
+</script>
 </body>
 </html>

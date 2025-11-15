@@ -6,6 +6,10 @@ if (strpos($_SESSION['account_number'], 'T') !== 0) {
     exit();
 }
 
+// Enable error reporting
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 $servername = "localhost";
 $username = "root";
 $password = "";
@@ -15,6 +19,22 @@ $conn = new mysqli($servername, $username, $password, $dbname);
 
 if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
+}
+
+$loggedInUser = $_SESSION['account_number'];
+
+// Query to fetch the teacher's profile pic
+$sql = "SELECT profile_pic FROM teachers WHERE account_number = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $loggedInUser);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+} else {
+    $profile_pic = 'default-profile.jpg';
 }
 
 if (!isset($_GET['subject_id'])) {
@@ -51,6 +71,12 @@ $conn->close();
         body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         header {
@@ -59,6 +85,10 @@ $conn->close();
             align-items: center;
             padding: 20px;
             background-color: white;
+        }
+
+        body.dark-mode header {
+            background-color: #2d2d2d;
         }
 
         header .logo {
@@ -88,6 +118,11 @@ $conn->close();
             box-shadow: 5px 6px 0 0 #BC8900;
         }
 
+        body.dark-mode .create-q-cont {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .quiz-controls {
             position: sticky;
             top: 0;
@@ -98,10 +133,18 @@ $conn->close();
             z-index: 100;
         }
 
+        body.dark-mode .quiz-controls {
+            background-color: #2d2d2d;
+        }
+
         label {
             color: black;
             font-family: Fredoka;
             font-size: 20px;
+        }
+
+        body.dark-mode label {
+            color: #e0e0e0;
         }
 
         label[for=timer] {
@@ -116,9 +159,8 @@ $conn->close();
         }
 
         label[for=answer]{
-            width: 90% !important;
+            width: 50% !important;
         }
-
 
         #title {
             width: 35%;
@@ -133,6 +175,14 @@ $conn->close();
             margin-top: 1%;
             font-family: Fredoka;
             font-size: 18px;
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode input[type=text] {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
         }
 
         input[type=number] {
@@ -142,12 +192,19 @@ $conn->close();
             border: 3px solid #B9B6B6;
             margin-right: 3%;
             font-family: Fredoka;
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode input[type=number] {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
         }
 
         input[type=radio]{
             width: 5%;
             float: right;
-            margin-right: 2%;
             margin-left: .5%;
         }
 
@@ -159,6 +216,12 @@ $conn->close();
             font-family: Fredoka;
             background-color: #f0f0f0;
             cursor: pointer;
+        }
+
+        body.dark-mode select {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
         }
 
         button {
@@ -198,6 +261,10 @@ $conn->close();
             font-family: Fredoka;
         }
 
+        body.dark-mode .question {
+            background-color: #3d3d3d;
+        }
+
         .question input[type=text] {
             margin-bottom: 10px;
         }
@@ -206,6 +273,10 @@ $conn->close();
             color: #444;
             margin-bottom: 10px;
             font-family: Fredoka;
+        }
+
+        body.dark-mode h4 {
+            color: #e0e0e0;
         }
 
         .question-number {
@@ -483,6 +554,11 @@ $conn->close();
             font-family: Fredoka;
         }
 
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .close-modal {
             cursor: pointer;
             font-weight: bold;
@@ -502,7 +578,11 @@ $conn->close();
             padding: 20px;
             border-left: 4px solid #f8b500;
             width: 100%;
-    }
+        }
+
+        body.dark-mode .setting-group {
+            background: #3d3d3d;
+        }
         
         .setting-header {
             display: flex;
@@ -514,6 +594,10 @@ $conn->close();
             color: #333;
             font-size: 18px;
             margin: 0;
+        }
+
+        body.dark-mode .setting-header h3 {
+            color: #e0e0e0;
         }
         
         .form-group {
@@ -527,6 +611,10 @@ $conn->close();
             color: #555;
             font-size: 14px;
         }
+
+        body.dark-mode .form-group label {
+            color: #e0e0e0;
+        }
         
         .form-input {
             width: 100%;
@@ -535,6 +623,14 @@ $conn->close();
             border-radius: 6px;
             font-size: 14px;
             transition: border 0.3s;
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode .form-input {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
         }
         
         .form-input:focus {
@@ -568,6 +664,10 @@ $conn->close();
             font-style: italic;
             font-family: Fredoka;
         }
+
+        body.dark-mode .hint {
+            color: #b0b0b0;
+        }
         
         .modal-footer {
             width: 100%;
@@ -578,6 +678,11 @@ $conn->close();
             padding-top: 20px;
             border-top: 1px solid #eee;
         }
+
+        body.dark-mode .modal-footer {
+            border-top-color: #555;
+        }
+
         .save-btn {
             background-color: #4CAF50;
             color: white;
@@ -624,13 +729,47 @@ $conn->close();
             background-color: #e6a700;
         }
 
+        /* width */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px grey; 
+          border-radius: 10px;
+        }
+         
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+          background: #f8b500; 
+          border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+          background: #f8b500; 
+        }
+
+        .profile {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            border: 2px solid #f8b500;
+        }
+
     </style>
 </head>
 <body>
     <header>
         <div class="logo"><img src="img/logo1.png" width="200px" height="80px"></div>
         <div class="actions">
-            <div class="profile"><img src="img/default.png" width="50px" height="50px"></div>
+            <div class="profile" onclick="profileDropdown()">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+            </div>
         </div>
     </header>
 
@@ -676,6 +815,15 @@ $conn->close();
     </div>
 
     <script>
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+        }
+
         let questionCounter = 1;
         const answerCounts = { 1: 1 };
 
@@ -728,7 +876,7 @@ $conn->close();
         case "multiple_choice":
             return `
             <h4>Multiple Choice</h4>
-            <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+            <p style="color: #c7c7c7ff; margin-bottom: 10px; font-size: 14px;">
                 <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
                 Enter the question and provide 4 answer options. Select the correct answer by clicking the radio button.
             </p>
@@ -756,7 +904,7 @@ $conn->close();
         case "true_or_false":
             return `
                 <h4>True or False</h4>
-                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                <p style="color: #c7c7c7ff; margin-bottom: 10px; font-size: 14px;">
                     <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
                     Enter a statement that can be answered with either True or False.
                 </p>
@@ -772,7 +920,7 @@ $conn->close();
         case "enumeration":
             return `
                 <h4>Enumeration</h4>
-                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                <p style="color: #c7c7c7ff; margin-bottom: 10px; font-size: 14px;">
                     <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
                     Enter a question that requires listing multiple answers. Separate correct answers with commas.
                 </p>
@@ -785,7 +933,7 @@ $conn->close();
         case "identification":
             return `
                 <h4>Identification</h4>
-                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                <p style="color: #c7c7c7ff; margin-bottom: 10px; font-size: 14px;">
                     <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
                     Enter a question that requires a specific word or phrase as the answer.
                 </p>
@@ -798,7 +946,7 @@ $conn->close();
         case "fill_in_the_blanks":
             return `
                 <h4>Fill in the Blanks</h4>
-                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                <p style="color: #c7c7c7ff; margin-bottom: 10px; font-size: 14px;">
                     <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
                     Enter a sentence with '_____' where the blank should be. Provide the correct word/phrase for the blank.
                 </p>
@@ -811,7 +959,7 @@ $conn->close();
         case "drag_and_drop":
             return `
                 <h4>Drag and Drop</h4>
-                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                <p style="color: #c7c7c7ff; margin-bottom: 10px; font-size: 14px;">
                     <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
                     Enter a question and provide answer choices. Students will drag the correct answer to match the question.
                 </p>
@@ -832,7 +980,7 @@ $conn->close();
         case "matching_type":
             return `
                 <h4>Matching Type</h4>
-                <p style="color: #666; margin-bottom: 10px; font-size: 14px;">
+                <p style="color: #c7c7c7ff; margin-bottom: 10px; font-size: 14px;">
                     <i class="fas fa-info-circle" style="color: #f8b500;"></i> 
                     Enter pairs of items that need to be matched. Students will connect items from the left column to the right column.
                 </p>
@@ -852,7 +1000,7 @@ $conn->close();
                                 <input type="text" name="right_items[${index}][]" required placeholder="Right item">
                             </div>
                             <button type="button" class="remove-pair" onclick="removeMatchingPair(this, ${index})">
-                                Remove
+                                <i class="fas fa-trash"></i>
                             </button>
                         </div>
                     </div>

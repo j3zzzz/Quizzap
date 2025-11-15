@@ -263,6 +263,12 @@ if (!$subject_id) {
         body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         header {
@@ -271,6 +277,10 @@ if (!$subject_id) {
             align-items: center;
             padding: 20px;
             background-color: white;
+        }
+
+        body.dark-mode header {
+            background-color: #2d2d2d;
         }
 
         header .logo {
@@ -315,6 +325,12 @@ if (!$subject_id) {
             margin-top: 5%;
         }
 
+        body.dark-mode .container {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
         h1{
             font-family: Fredoka;
             font-size: 30px;
@@ -326,6 +342,10 @@ if (!$subject_id) {
             font-family: Fredoka;
         }
 
+        body.dark-mode h2 {
+            color: #e0e0e0;
+        }
+
         a{
             float: left;
             margin-top: 3%;
@@ -334,6 +354,10 @@ if (!$subject_id) {
             font-size: 20px;
             font-family: Fredoka;
             color: #605F5F;
+        }
+
+        body.dark-mode a {
+            color: #b0b0b0;
         }
 
         .score{
@@ -358,12 +382,21 @@ if (!$subject_id) {
             font-size: 22px;
         }
 
+        body.dark-mode .qstn {
+            color: #e0e0e0;
+        }
+
         .qstn-con{
             width: 100%;
             border-radius: 15px;
             border: 2px solid #f8b500;
             padding: 30px;
             margin-bottom: 10px;
+        }
+
+        body.dark-mode .qstn-con {
+            border-color: #f8b500;
+            background-color: #333;
         }
 
         .individual-answer {
@@ -395,6 +428,10 @@ if (!$subject_id) {
             border-radius: 5px;
         }
 
+        body.dark-mode .user-answer {
+            background-color: #3a2a2a;
+        }
+
         .individual-answer {
             padding: 5px 10px;
             margin: 3px 0;
@@ -405,6 +442,33 @@ if (!$subject_id) {
             margin-top: 10px;
             font-style: italic;
             color: #666;
+        }
+
+        body.dark-mode .match-stats {
+            color: #999;
+        }
+
+        /* width */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px grey; 
+          border-radius: 10px;
+        }
+         
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+          background: #CF5300; 
+          border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+          background: #A34404; 
         }
     </style>
 </head>
@@ -718,6 +782,19 @@ if (!$subject_id) {
 // Close connection at the very end
 $conn->close();
 ?>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+        }
+    });
+</script>
 
 </body>
 </html>

@@ -116,6 +116,12 @@ function getRankings($conn, $quiz_id) {
         body, html {
             height: 100%;
             overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -139,6 +145,11 @@ function getRankings($conn, $quiz_id) {
             z-index: 999;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
             transform: translateX(0);
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
+            color: #f8b500;
         }
 
         .sidebar.collapsed {
@@ -250,6 +261,12 @@ function getRankings($conn, $quiz_id) {
             color: white;
         }
 
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
+            background-color: #444;
+            color: #f8b500;
+        }
+
         .sidebar .menu a i {
             margin-right: 0.5rem;
             min-width: 20px;
@@ -275,13 +292,17 @@ function getRankings($conn, $quiz_id) {
         }
 
         /* Dashboard content area */
-        /* Dashboard content area */
         .content {
             flex: 1;
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #444;
         }
 
         .content.expanded {
@@ -309,12 +330,20 @@ function getRankings($conn, $quiz_id) {
             border-bottom: 1.5px solid #F8B500;
         }
 
+        body.dark-mode .content-header h1 {
+            color: white;
+        }
+
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
             font-family: Fredoka;
             font-weight: 500;
+        }
+
+        body.dark-mode .content-header p {
+            color: #b0b0b0;
         }
 
         .content-header .actions {
@@ -348,6 +377,10 @@ function getRankings($conn, $quiz_id) {
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
+        }
+
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
         }
 
         /* Container styles */
@@ -468,6 +501,10 @@ function getRankings($conn, $quiz_id) {
             text-align: center;
             color: #444;
         }
+
+        body.dark-mode .time {
+            color: #444;
+        }
         
         .quiz-dropdown {
             width: 85%;
@@ -475,7 +512,10 @@ function getRankings($conn, $quiz_id) {
             background: #fff6df;
             border-radius: 10px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            
+        }
+
+        body.dark-mode .quiz-dropdown {
+            background: #2d2d2d;
         }
 
         .quiz-header {
@@ -519,6 +559,10 @@ function getRankings($conn, $quiz_id) {
             padding: 2rem;
             color: #6666;
             font-style: italic;
+        }
+
+        body.dark-mode .no-rankings {
+            color: #888;
         }
 
         .dropdown-content {
@@ -588,6 +632,29 @@ function getRankings($conn, $quiz_id) {
 
         .profile-pic {
             border: 2px solid #f8b500;
+        }
+
+        /* width */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px grey; 
+          border-radius: 10px;
+        }
+         
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+          background: #CF5300; 
+          border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+          background: #A34404; 
         }
     </style>
 </head>
@@ -703,6 +770,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Save state to localStorage
                 localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
             });
+        }
+
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
         }
     });
 

@@ -23,6 +23,22 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+$loggedInUser = $_SESSION['account_number'];
+
+//query to fetch the teacher's profile pic
+$sql = "SELECT profile_pic FROM teachers WHERE account_number = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $loggedInUser);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows > 0) {
+    $row = $result->fetch_assoc();
+    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.jpg';
+} else {
+    $profile_pic = 'default-profile.jpg';
+}
+
 $response = ["success" => false, "message" => "", "subject_id" => ""];
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -91,6 +107,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         header {
@@ -99,6 +121,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             align-items: center;
             padding: 20px;
             background-color: white;
+        }
+
+        body.dark-mode header {
+            background-color: #2d2d2d;
         }
 
         header .logo {
@@ -128,11 +154,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             box-shadow: 5px 6px 0 0 #BC8900;
         }
 
+        body.dark-mode .create-q-cont {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         label{
             color: black;
             font-family: Fredoka;
             font-size: 20px;
             font-weight: 500;
+        }
+
+        body.dark-mode label {
+            color: #e0e0e0;
         }
 
         label[for=timer]{
@@ -160,6 +195,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             text-transform: capitalize;
             font-family: Fredoka;
             font-size: 17px;
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode input[type=text] {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
         }
 
         input[type=number]{
@@ -169,6 +212,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border: 3px solid #B9B6B6;
             margin-right: 2%;
             font-family: Fredoka;
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode input[type=number] {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
         }
 
         .question {
@@ -182,12 +233,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin-right: 3%;
         }
 
+        body.dark-mode .question {
+            background-color: #3d3d3d;
+        }
+
         .quiz-form {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
+
+        body.dark-mode .quiz-form {
+            background-color: #2d2d2d;
+        }
+
         .form-group {
             margin-bottom: 20px;
         }
@@ -199,6 +259,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-radius: 10px;
             border: 2px solid #f8b500;
         }
+
+        body.dark-mode .question-container {
+            background-color: #3d3d3d;
+        }
+
         .answer-container {
             display: flex;
             gap: 10px;
@@ -232,6 +297,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-family: Fredoka;
             font-weight: 500;
         }
+
+        body.dark-mode .btn-back {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
         .actions {
             display: flex;
             gap: 10px;
@@ -258,10 +330,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-size: 16px;
         }
 
+        body.dark-mode .answer-btn {
+            background-color: #3d3d3d;
+            color: #f8b500;
+        }
+
         .answer-btn:hover {
             background-color: #f8b500;
             color: white;
             cursor: pointer;
+        }
+
+        body.dark-mode .answer-btn:hover {
+            background-color: #f8b500;
+            color: white;
         }
 
         .answer-btn.selected {
@@ -283,6 +365,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-family: Fredoka;
             font-weight: 500;
         }
+
+        body.dark-mode .number-btn {
+            background-color: #3d3d3d;
+            color: #f8b500;
+        }
+
         .number-btn:hover {
             background-color: #f8b500;
             color: white;
@@ -315,6 +403,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             font-family: Fredoka;
             font-weight: 500;
         }
+
+        body.dark-mode .add-question-btn {
+            background-color: #3d3d3d;
+            color: #f8b500;
+        }
         
         .add-question-btn:hover {
             background-color: #f8b500;
@@ -325,6 +418,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .single-question .btn-removeQuestion {
             display: none;
         }
+
+        /* width */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px grey; 
+          border-radius: 10px;
+        }
+         
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+          background: #f8b500; 
+          border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+          background: #f8b500; 
+        }
+
+        .profile {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            border: 2px solid #f8b500;
+        }
     </style>
 </head>
 <body>
@@ -332,7 +457,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <header>
         <div class="logo"><img src="img/logo1.png" width="200px" height="80px"></div>
         <div class="actions">
-            <div class="profile"><img src="img/default.png" width="50px" height="50px"></div>
+            <div class="profile" onclick="profileDropdown()">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+            </div>
         </div>
     </header>
 
@@ -371,6 +498,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     </div>
 
     <script>
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+        }
+
         let currentQuestions = 0;
         const maxQuestions = 20;
 
@@ -461,6 +597,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         function goBack() {
             window.history.back();
+        }
+
+        function profileDropdown() {
+            // Add your profile dropdown functionality here
+            alert('Profile dropdown clicked');
         }
 
         document.addEventListener('DOMContentLoaded', function() {

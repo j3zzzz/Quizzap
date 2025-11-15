@@ -42,11 +42,18 @@ $conn->close();
         margin: 0;
         padding: 0;
         box-sizing: border-box;
+        font-family: 'Fredoka';
     }
     
     body {
         font-family: Arial, Helvetica, sans-serif;
         background-color: #ffffff;
+        transition: background-color 0.3s, color 0.3s;
+    }
+
+    body.dark-mode {
+        background-color: #1a1a1a;
+        color: #e0e0e0;
     }
 
     header {
@@ -55,6 +62,10 @@ $conn->close();
         align-items: center;
         padding: 20px;
         background-color: white;
+    }
+
+    body.dark-mode header {
+        background-color: #1a1a1a;
     }
 
     header .logo {
@@ -73,11 +84,19 @@ $conn->close();
         font-weight: 600;
     }
 
+    body.dark-mode .quiz-type {
+        color: #f8b500;
+    }
+
     hr{
         border: 1px solid #C8C8C8;
         width: 90%;
         margin-left: 4%;
         align-items: center;
+    }
+
+    body.dark-mode hr {
+        border-color: #444;
     }
 
     .quiz-type-buttons {
@@ -114,6 +133,11 @@ $conn->close();
         box-shadow: 0 6px 0 0 #BC8900;
     }
 
+    body.dark-mode .quiz-type-buttons a {
+        background-color: #2d2d2d;
+        color: #f8b500;
+    }
+
     .quiz-type-buttons a:hover {
         background-color: #f8b500;
         color: white;  
@@ -124,6 +148,11 @@ $conn->close();
         box-shadow: 0 4px 0 0 #BC8900;
     }
 
+    body.dark-mode .quiz-type-buttons a:hover {
+        background-color: #f8b500;
+        color: white;
+    }
+
     .quiz-type-buttons a:active {
         background-color: white;
         color: #f8b500;
@@ -131,10 +160,37 @@ $conn->close();
         box-shadow: 0 5px 0 0 #BC8900;
     }
 
+    body.dark-mode .quiz-type-buttons a:active {
+        background-color: #2d2d2d;
+        color: #f8b500;
+    }
+
     #allZapped{
         margin-left: 60%;
     }
 
+    /* width */
+    ::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    /* Track */
+    ::-webkit-scrollbar-track {
+      box-shadow: inset 0 0 5px grey; 
+      border-radius: 10px;
+    }
+     
+    /* Handle */
+    ::-webkit-scrollbar-thumb {
+      background: #f8b500; 
+      border-radius: 10px;
+    }
+
+    /* Handle on hover */
+    ::-webkit-scrollbar-thumb:hover {
+      background: #f8b500; 
+    }
 
 </style>
 </head>
@@ -159,15 +215,20 @@ $conn->close();
     <a href="t_identification.php?subject_id=<?php echo $subject_id; ?>">Identification</a>
     <a href="allZapped.php?subject_id=<?php echo $subject_id; ?>">All Zapped</a>
 
-</div>    
+</div>
 
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Dark Mode Functionality - Auto apply based on localStorage
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
 
+        // Apply dark mode on page load if enabled
+        if (isDarkMode) {
+            document.body.classList.add('dark-mode');
+        }
+    });
+</script>
 
-
-
-
-
-
-
-
-
+</body>
+</html>

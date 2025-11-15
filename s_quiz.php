@@ -182,6 +182,12 @@ $conn->close();
         body {
             font-family: Arial, Helvetica, sans-serif;
             background-color: #ffffff;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         header {
@@ -190,6 +196,10 @@ $conn->close();
             align-items: center;
             padding: 20px;
             background-color: white;
+        }
+
+        body.dark-mode header {
+            background-color: #1a1a1a;
         }
 
         header .logo {
@@ -206,6 +216,9 @@ $conn->close();
             margin-right: 30px;
         }
 
+        body.dark-mode nav p {
+            color: #e0e0e0;
+        }
 
         p{
             font-size: 30px;
@@ -213,11 +226,18 @@ $conn->close();
             color: white;
         }
 
+        body.dark-mode p {
+            color: #e0e0e0;
+        }
 
         h1 {
             font-family: Fredoka;
             width: fit-content;
             letter-spacing: 2px;
+        }
+
+        body.dark-mode h1 {
+            color: #e0e0e0;
         }
 
         .quiz-cont {
@@ -236,6 +256,11 @@ $conn->close();
             box-shadow: 4px 4px 0 0 #BC8900;
         }
 
+        body.dark-mode .quiz-cont {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .question-info {
             display: flex;
             align-items: center;
@@ -245,7 +270,6 @@ $conn->close();
             margin-left: 40px;
         }
 
-
         #question-text {
             font-family: Fredoka;
             letter-spacing: 2px;
@@ -254,10 +278,18 @@ $conn->close();
             color: black;
         }
 
+        body.dark-mode #question-text {
+            color: #e0e0e0;
+        }
+
         #question-number {
             font-family: Fredoka;
             font-size: 28px;
             color: black;
+        }
+
+        body.dark-mode #question-number {
+            color: #e0e0e0;
         }
 
         /* Instructions styling */
@@ -270,6 +302,11 @@ $conn->close();
             background-color: #f8f9fa;
             border-left: 4px solid #f8b500;
             border-radius: 4px;
+        }
+
+        body.dark-mode .instructions {
+            color: #b0b0b0;
+            background-color: #333;
         }
 
         .instructions strong {
@@ -290,6 +327,11 @@ $conn->close();
             vertical-align: middle;
             align-content: center;
             border: 2px solid #f8b500;
+        }
+
+        body.dark-mode .timer {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
         }
 
         #answers {
@@ -318,9 +360,19 @@ $conn->close();
             box-shadow: 0 5px 0 0 #BC8900;
         }
 
+        body.dark-mode .answer-button {
+            background-color: #2d2d2d;
+            color: #f8b500;
+        }
+
         .answer-button:hover {
               background-color: #f8b500;
               color: #ffffff;
+        }
+
+        body.dark-mode .answer-button:hover {
+            background-color: #f8b500;
+            color: white;
         }
 
         .answer-button.selected {
@@ -335,6 +387,12 @@ $conn->close();
             font-family: Fredoka;
             font-size: 18px;
             border: 2px solid #B9B6B6;
+        }
+
+        body.dark-mode .answer-input {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+            border: 2px solid #f8b500;
         }
 
         .fa-circle-arrow-right {
@@ -404,6 +462,11 @@ $conn->close();
             background-color: white;
             color: #f8b500;
         }
+
+        body.dark-mode .question-btn {
+            background-color: #2d2d2d;
+            color: #f8b500;
+        }
           
         .question-btn-container {
             display: flex;
@@ -437,6 +500,10 @@ $conn->close();
             margin-left: 20px;
         }
 
+        body.dark-mode .drop-zone {
+            background-color: #2d2d2d;
+        }
+
         .drop-zone.dragover {
             background-color: rgba(248, 181, 0, 0.1);
             border-style: solid;
@@ -448,10 +515,19 @@ $conn->close();
             color: #000;
         }
 
+        body.dark-mode .drop-zone.dropped {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
         .drop-zone-prompt {
             color: #999;
             font-size: 16px;
             font-family: Fredoka;
+        }
+
+        body.dark-mode .drop-zone-prompt {
+            color: #b0b0b0;
         }
 
         .choices-container {
@@ -466,6 +542,11 @@ $conn->close();
             margin-right: 5%;
         }
 
+        body.dark-mode .choices-container {
+            background-color: #333;
+            border: 1px solid #f8b500;
+        }
+
         .draggable {
             padding: 10px 20px;
             background-color: white;
@@ -476,6 +557,11 @@ $conn->close();
             color: #f8b500;
             transition: all 0.3s ease;
             box-shadow: 0 2px 0 0 #BC8900;
+        }
+
+        body.dark-mode .draggable {
+            background-color: #2d2d2d;
+            color: #f8b500;
         }
 
         .draggable:hover {
@@ -504,6 +590,12 @@ $conn->close();
             font-weight: 500;
         }
 
+        body.dark-mode .left-items, 
+        body.dark-mode .right-items {
+            background-color: #333;
+            color: #e0e0e0;
+        }
+
         .match-item {
             padding: 10px;
             margin: 5px 0;
@@ -512,6 +604,12 @@ $conn->close();
             background-color: #f9f9f9;
             border: 1px solid #ddd;
             color: black;
+        }
+
+        body.dark-mode .match-item {
+            background-color: #2d2d2d;
+            border: 1px solid #f8b500;
+            color: #e0e0e0;
         }
 
         .match-item:hover {
@@ -531,12 +629,22 @@ $conn->close();
             cursor: default;
         }
 
+        body.dark-mode .match-item.matched {
+            background-color: #f8b500;
+            color: white;
+        }
+
         .pairs-display {
             margin-top: 20px;
             padding: 15px;
             background-color: #f9f9f9;
             border-radius: 8px;
             border: 1px solid #ddd;
+        }
+
+        body.dark-mode .pairs-display {
+            background-color: #333;
+            border: 1px solid #f8b500;
         }
 
         .clear-matches-btn {
@@ -600,6 +708,11 @@ $conn->close();
             border: 1px solid #f8b500;
         }
 
+        body.dark-mode .loading-message {
+            background-color: rgba(45, 45, 45, 0.9);
+            color: #e0e0e0;
+        }
+
         .loading-spinner {
             border: 3px solid #f3f3f3;
             border-top: 3px solid #f8b500;
@@ -607,6 +720,11 @@ $conn->close();
             width: 20px;
             height: 20px;
             animation: spin 1s linear infinite;
+        }
+
+        body.dark-mode .loading-spinner {
+            border: 3px solid #333;
+            border-top: 3px solid #f8b500;
         }
 
         .success-message {
@@ -657,6 +775,29 @@ $conn->close();
 
         .auto-save-error .check-icon-path {
             stroke: #dc3545;
+        }
+
+        /* width */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px grey; 
+          border-radius: 10px;
+        }
+         
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+          background: #CF5300; 
+          border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+          background: #A34404; 
         }
     </style>
 
@@ -715,6 +856,15 @@ $conn->close();
 </div>
 
 <script>
+    // Dark Mode Functionality - Auto apply based on localStorage
+    // Check for saved dark mode preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+    // Apply dark mode on page load if enabled
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+    }
+
     let currentQuestion = 0;
 
     const questions = <?php echo json_encode($questions); ?>;
@@ -1838,9 +1988,3 @@ $conn->close();
 
 </body>
 </html>
-<!-- 
-what's wrong pa:
-
-yung timer pag nireload nagiging sobrang laki nung timer
-pero nagdidisplay na sa ui yung nasave na sagot kaso nga lang di na nauulit ulit yung pagsave ng answer
--->

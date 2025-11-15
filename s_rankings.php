@@ -97,6 +97,12 @@ $quiz_sql->close();
         body, html {
             height: 100%;
             overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .container {
@@ -120,6 +126,11 @@ $quiz_sql->close();
             z-index: 999;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
             transform: translateX(0);
+        }
+
+        body.dark-mode .sidebar {
+            background-color: #333;
+            color: #f8b500;
         }
 
         .sidebar.collapsed {
@@ -231,6 +242,12 @@ $quiz_sql->close();
             color: white;
         }
 
+        body.dark-mode .sidebar .menu a:hover,
+        body.dark-mode .sidebar .menu a.active {
+            background-color: #444;
+            color: #f8b500;
+        }
+
         .sidebar .menu a i {
             margin-right: 0.5rem;
             min-width: 20px;
@@ -261,7 +278,12 @@ $quiz_sql->close();
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
-            transition: margin-left 0.3s ease;
+            transition: margin-left 0.3s ease, background-color 0.3s;
+        }
+
+        body.dark-mode .content {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
         }
 
         .content.expanded {
@@ -289,12 +311,20 @@ $quiz_sql->close();
             border-bottom: 1.5px solid #F8B500;
         }
 
+        body.dark-mode .content-header h1 {
+            color: white;
+        }
+
         .content-header p {
             color: #999;
             font-size: 1rem;
             margin-top: 0.5rem;
             font-family: Fredoka;
             font-weight: 500;
+        }
+
+        body.dark-mode .content-header p {
+            color: #444;
         }
 
         .content-header .actions {
@@ -328,6 +358,10 @@ $quiz_sql->close();
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
+        }
+
+        body.dark-mode .content-header .actions .profile {
+            background-color: #333;
         }
 
         /* Container styles */
@@ -409,13 +443,14 @@ $quiz_sql->close();
             font-size: 1.5rem;
             font-weight: bold;
             text-align: center;
-
+            color: #444;
         }
 
         /* Name styles */
         .stud-name {
             font-size: 1.2rem;
             text-align: center;
+            color: #444;
         }
 
         /* Score styles */
@@ -423,12 +458,40 @@ $quiz_sql->close();
             font-size: 1.5rem;
             font-weight: bold;
             text-align: center;
+            color: #444;
         }
 
         .time {
             font-size:  1rem;
             text-align: center;
             color: #444;
+        }
+
+        body.dark-mode .time {
+            color: #444;
+        }
+
+        /* width */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px grey; 
+          border-radius: 10px;
+        }
+         
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+          background: #f8b500; 
+          border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+          background: #f8b500; 
         }
 
     </style>
@@ -529,30 +592,39 @@ $quiz_sql->close();
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const content = document.querySelector('.content');
-            const toggleBtn = document.getElementById('toggleSidebar');
+    const sidebar = document.querySelector('.sidebar');
+    const content = document.querySelector('.content');
+    const toggleBtn = document.getElementById('toggleSidebar');
 
-            // Check if sidebar state is saved in localStorage
-            const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    // Check if sidebar state is saved in localStorage
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    
+    // Set initial state based on localStorage
+    if (isSidebarCollapsed) {
+        sidebar.classList.add('collapsed');
+        content.classList.add('expanded');
+    }
+
+    // Toggle sidebar when button is clicked
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('expanded');
             
-            // Set initial state based on localStorage
-            if (isSidebarCollapsed) {
-                sidebar.classList.add('collapsed');
-                content.classList.add('expanded');
-            }
-
-            // Toggle sidebar when button is clicked
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function() {
-                    sidebar.classList.toggle('collapsed');
-                    content.classList.toggle('expanded');
-                    
-                    // Save state to localStorage
-                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-                });
-            }
+            // Save state to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         });
+    }
+
+    // Dark Mode Functionality - Auto apply based on localStorage
+    // Check for saved dark mode preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+    // Apply dark mode on page load if enabled
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+    }
+});
 </script>
 
 </body>

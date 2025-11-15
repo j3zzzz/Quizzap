@@ -108,9 +108,13 @@ $conn->close();
             --card-bg: #fff;
             --error: #e74c3c;
             --success: #2ecc71;
+            --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+            --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
-                * {
+        * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
@@ -120,6 +124,102 @@ $conn->close();
         body {
             background-color: var(--light-bg);
             color: var(--text);
+            line-height: 1.6;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode header {
+            background: linear-gradient(135deg, #333 0%, #444 100%);
+        }
+
+        body.dark-mode .profile-container {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .form-input {
+            background-color: #333;
+            color: #e0e0e0;
+            border-color: #444;
+        }
+
+        body.dark-mode .form-input:focus {
+            border-color: var(--primary);
+            background-color: #3a3a3a;
+        }
+
+        body.dark-mode .form-input:disabled {
+            background-color: #444;
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .btn-secondary {
+            background-color: #444;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        body.dark-mode .btn-secondary:hover {
+            background-color: #555;
+        }
+
+        body.dark-mode .detail-group {
+            background-color: #333;
+        }
+
+        body.dark-mode .detail-value {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode nav a {
+            color: rgba(255, 255, 255, 0.8);
+        }
+
+        body.dark-mode nav a:hover,
+        body.dark-mode nav a.active {
+            color: #fff;
+        }
+
+        body.dark-mode nav a::after {
+            background-color: #fff;
+        }
+
+        body.dark-mode .logout-btn {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        body.dark-mode .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Scrollbar Styles */
+        ::-webkit-scrollbar {
+          width: 10px;
+          height: 10px;
+        }
+
+        /* Track */
+        ::-webkit-scrollbar-track {
+          box-shadow: inset 0 0 5px grey; 
+          border-radius: 10px;
+        }
+         
+        /* Handle */
+        ::-webkit-scrollbar-thumb {
+          background: #CF5300; 
+          border-radius: 10px;
+        }
+
+        /* Handle on hover */
+        ::-webkit-scrollbar-thumb:hover {
+          background: #A34404; 
         }
 
         header {
@@ -128,15 +228,20 @@ $conn->close();
             align-items: center;
             padding: 15px 5%;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-md);
             position: sticky;
             top: 0;
             z-index: 100;
+            transition: var(--transition);
         }
         
         .logo img {
             height: 40px;
             transition: transform 0.3s;
+        }
+
+        .logo img:hover {
+            transform: scale(1.05);
         }
 
         nav {
@@ -151,21 +256,38 @@ $conn->close();
             font-weight: 500;
             position: relative;
             padding: 5px 0;
-            transition: all 0.3s;
+            transition: var(--transition);
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #000;
+            transition: var(--transition);
         }
         
         nav a:hover {
             color: #000;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+        }
+        
+        nav a:hover::after {
+            width: 100%;
         }
 
         nav a.active {
             color: #000;
             font-weight: 600;
-            border-bottom: 2px solid #000;
+        }
+        
+        nav a.active::after {
+            width: 100%;
         }
 
-        .logout-btn {
+        .logout-btn, .edit-btn {
             background-color: rgba(0, 0, 0, 0.1);
             color: #000;
             border: none;
@@ -173,16 +295,16 @@ $conn->close();
             border-radius: 30px;
             cursor: pointer;
             font-weight: 500;
-            transition: all 0.3s;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 5px;
         }
 
-        .logout-btn:hover {
+        .logout-btn:hover, .edit-btn:hover {
             background-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
         }
-
         
         main {
             padding: 40px 5%;
@@ -197,9 +319,15 @@ $conn->close();
             max-width: 600px;
             background: var(--card-bg);
             border-radius: 16px;
-            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            box-shadow: var(--shadow-lg);
             overflow: hidden;
             border: 1px solid rgba(248, 181, 0, 0.2);
+            transition: var(--transition);
+        }
+        
+        .profile-container:hover {
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+            transform: translateY(-5px);
         }
 
         .profile-header {
@@ -209,12 +337,27 @@ $conn->close();
             justify-content: space-between;
             align-items: center;
             padding: 0 30px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
         }
 
         .profile-title {
             color: #000;
             font-size: 24px;
             font-weight: 600;
+            position: relative;
+            z-index: 1;
             text-shadow: 0 1px 2px rgba(255, 255, 255, 0.3);
         }
 
@@ -237,12 +380,19 @@ $conn->close();
             border: 5px solid var(--accent);
             margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(248, 181, 0, 0.3);
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .profile-pic-container:hover {
+            transform: scale(1.05);
         }
         
         .profile-pic {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            transition: var(--transition);
         }
         
         .profile-info {
@@ -255,12 +405,18 @@ $conn->close();
             color: var(--primary-dark);
             font-weight: 600;
             margin-bottom: 5px;
+            display: inline-block;
+            padding: 5px 15px;
+            background-color: var(--accent);
+            border-radius: 20px;
         }
         
         .full-name {
             font-size: 24px;
             font-weight: 600;
             margin-bottom: 20px;
+            position: relative;
+            display: inline-block;
         }
         
         .profile-form {
@@ -285,12 +441,21 @@ $conn->close();
             border: 1px solid #ddd;
             border-radius: 8px;
             font-size: 16px;
-            transition: all 0.3s;
+            transition: var(--transition);
+            background-color: #f9f9f9;
         }
+        
         .form-input:focus {
             border-color: var(--primary);
             outline: none;
             box-shadow: 0 0 0 3px rgba(248, 181, 0, 0.1);
+            background-color: #fff;
+        }
+        
+        .form-input:disabled {
+            background-color: #e9ecef;
+            opacity: 1;
+            cursor: not-allowed;
         }
 
         .profile-pic-edit {
@@ -307,6 +472,11 @@ $conn->close();
             border-radius: 50%;
             overflow: hidden;
             border: 5px solid var(--accent);
+            transition: var(--transition);
+        }
+        
+        .profile-pic-preview:hover {
+            transform: scale(1.05);
         }
         
         .form-actions {
@@ -327,17 +497,18 @@ $conn->close();
             border-radius: 8px;
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: var(--transition);
             border: none;
             display: flex;
             align-items: center;
             gap: 8px;
+            font-size: 16px;
         }
         
         .btn-primary {
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             color: #000;
-            box-shadow: 0 4px 15px rgba(248, 181, 0, 0.3);
+            box-shadow: var(--shadow-md);
         }
 
         .btn-primary:hover {
@@ -354,30 +525,81 @@ $conn->close();
 
         .btn-secondary:hover {
             background-color: #e1e1e1;
-        }
-                
-        .edit-btn {
-            background-color: rgba(0, 0, 0, 0.1);
-            color: #000;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 30px;
-            cursor: pointer;
-            font-weight: 500;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        .edit-btn:hover {
-            background-color: rgba(0, 0, 0, 0.2);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-sm);
         }
         
         .hidden {
             display: none;
         }
         
+        /* Success message */
+        .success-message {
+            position: fixed;
+            top: 100px;
+            right: 30px;
+            background-color: var(--success);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transform: translateX(150%);
+            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+        
+        .success-message.show {
+            transform: translateX(0);
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .profile-container {
+            animation: fadeIn 0.6s ease-out;
+        }
+        
+        .profile-pic-container {
+            animation: float 4s ease-in-out infinite;
+        }
+
+        .remove-photo-btn {
+            background-color: #ff6b6b;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: var(--transition);
+        }
+        
+        .remove-photo-btn:hover {
+            background-color: #ff5252;
+            transform: translateY(-2px);
+        }
+        
+        .remove-photo-btn i {
+            font-size: 12px;
+        }
+
+        /* Responsive styles */
         @media (max-width: 768px) {
             header {
                 padding: 15px 20px;
@@ -394,38 +616,23 @@ $conn->close();
             .profile-header {
                 padding: 0 20px;
             }
-        }
-
-        /* Add some subtle animations */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .profile-container {
-            animation: fadeIn 0.5s ease-out;
-        }
-
-        .remove-photo-btn {
-            background-color: #ff6b6b;
-            color: white;
-            border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+            
+            .btn {
+                padding: 12px 20px;
+                font-size: 14px;
+            }
         }
         
-        .remove-photo-btn:hover {
-            background-color: #ff5252;
-        }
-        
-        .remove-photo-btn i {
-            font-size: 12px;
+        @media (max-width: 480px) {
+            .form-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
         }
     </style>
 </head>
@@ -511,6 +718,13 @@ $conn->close();
                 </form>
             </div>
         </div>
+        
+        <?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
+        <div id="successMessage" class="success-message">
+            <i class="fas fa-check-circle"></i>
+            <span>Profile updated successfully!</span>
+        </div>
+        <?php endif; ?>
     </main>
     
     <script>
@@ -522,11 +736,29 @@ $conn->close();
             const changeProfilePic = document.getElementById('changeProfilePic');
             const profilePicInput = document.getElementById('profile_pic');
             const profilePicPreview = document.getElementById('profilePicPreview');
+            const successMessage = document.getElementById('successMessage');
+            
+            // Dark Mode Functionality - Auto apply based on localStorage
+            // Check for saved dark mode preference
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+            // Apply dark mode on page load if enabled
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
             
             // Toggle between preview and edit modes
             function toggleEditMode() {
                 previewMode.classList.toggle('hidden');
                 editMode.classList.toggle('hidden');
+                
+                // Smooth scroll to top when editing
+                if (!editMode.classList.contains('hidden')) {
+                    window.scrollTo({
+                        top: 0,
+                        behavior: 'smooth'
+                    });
+                }
             }
             
             // Event listeners
@@ -548,14 +780,37 @@ $conn->close();
                 }
             });
             
+            // Show success message if form was submitted
+            if (successMessage) {
+                setTimeout(() => {
+                    successMessage.classList.add('show');
+                    
+                    // Hide after 5 seconds
+                    setTimeout(() => {
+                        successMessage.classList.remove('show');
+                    }, 5000);
+                }, 300);
+            }
+            
             // If form was submitted with errors, show edit mode
             if (window.location.search.includes('error')) {
                 toggleEditMode();
             }
-        });
+            
+            // Add hover effect to profile picture in preview mode
+            const profilePicContainer = document.querySelector('.profile-pic-container');
+            if (profilePicContainer) {
+                profilePicContainer.addEventListener('mouseenter', function() {
+                    this.style.transform = 'scale(1.05) rotate(5deg)';
+                });
+                
+                profilePicContainer.addEventListener('mouseleave', function() {
+                    this.style.transform = 'scale(1) rotate(0)';
+                });
+            }
 
-                    // Update the preview image when changing or removing profile picture
-                    const form = document.getElementById('editMode');
+            // Update the preview image when changing or removing profile picture
+            const form = document.getElementById('editMode');
             form.addEventListener('submit', function() {
                 // This ensures the preview updates after form submission
                 setTimeout(() => {
@@ -563,6 +818,7 @@ $conn->close();
                     previewImg.src = 'uploads/profiles/' + '<?php echo $profile_pic; ?>?' + new Date().getTime();
                 }, 100);
             });
+        });
     </script>
 </body>
 </html>

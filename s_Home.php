@@ -465,12 +465,7 @@ $conn->close();
 
         .quizzes-card #quizzes-card-header {
             position: absolute;
-            background-color: white;
             width: 20%;
-        }
-
-        body.dark-mode .quizzes-card #quizzes-card-header {
-            background-color: #2d2d2d;
         }
 
         #quizzes-cont {
@@ -603,13 +598,8 @@ $conn->close();
 
         .high-score-header {
             position: absolute;
-            background-color: white;
             width: 20%;
             display: flex;
-        }
-
-        body.dark-mode .high-score-header {
-            background-color: #2d2d2d;
         }
 
         .high-score-card .star {
@@ -697,13 +687,8 @@ $conn->close();
 
         .difficult-question-header {
             position: absolute;
-            background-color: white;
             width: 20%;
             display: flex;
-        }
-
-        body.dark-mode .difficult-question-header {
-            background-color: #2d2d2d;
         }
 
         .difficult-question-card h3 {
@@ -1168,7 +1153,7 @@ $conn->close();
                         <i class="fa-solid fa-question question"></i></i>
                             <h3>Difficult Questions</h3>
                         </div>
-                        <br><br>
+                        <br><br><br>
                         <?php 
                         if ($difficult_questions_result && $difficult_questions_result->num_rows > 0) { ?>
                             <table>

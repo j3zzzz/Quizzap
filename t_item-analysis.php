@@ -229,6 +229,17 @@ $conn->close();
             } 
         };
 
+        // Apply dark mode colors if enabled
+        if (document.body.classList.contains('dark-mode')) {
+          options.backgroundColor = '#1a1a1a';
+          options.chart.titleTextStyle.color = '#e0e0e0';
+          options.legend.textStyle.color = '#e0e0e0';
+          options.hAxis.textStyle.color = '#e0e0e0';
+          options.vAxis.textStyle.color = '#e0e0e0';
+          options.vAxis.baselineColor = '#e0e0e0';
+          options.vAxis.gridlines.color = '#333';
+        }
+
         var chart = new google.visualization.ColumnChart(document.getElementById('columnchart_material'));
 
         chart.draw(googleData, options);
@@ -295,6 +306,17 @@ $conn->close();
 
         };
 
+        // Apply dark mode colors if enabled
+        if (document.body.classList.contains('dark-mode')) {
+          options.backgroundColor = '#1a1a1a';
+          options.chart.titleTextStyle.color = '#e0e0e0';
+          options.legend.textStyle.color = '#e0e0e0';
+          options.hAxis.textStyle.color = '#e0e0e0';
+          options.vAxis.textStyle.color = '#e0e0e0';
+          options.vAxis.baselineColor = '#e0e0e0';
+          options.vAxis.gridlines.color = '#333';
+        }
+
         var chart = new google.visualization.ColumnChart(document.getElementById('columnchart'));
         chart.draw(data, options);
       }
@@ -336,6 +358,12 @@ $conn->close();
     color: #333;
     line-height: 1.6;
     overflow-x: hidden;
+    transition: background-color 0.3s, color 0.3s;
+  }
+
+  body.dark-mode {
+    background-color: #1a1a1a;
+    color: #e0e0e0;
   }
 
   /* Header and Main Content */
@@ -363,6 +391,10 @@ $conn->close();
     padding: 10px;
   }
 
+  body.dark-mode .sum h1 {
+    color: #e0e0e0;
+  }
+
   /* Side Navigation */
   .side-nav {
     position: fixed;
@@ -377,6 +409,11 @@ $conn->close();
     z-index: 1000;
     overflow-y: auto;
     box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+  }
+
+  body.dark-mode .side-nav {
+    background-color: #333;
+    color: #e0e0e0;
   }
 
   .side-nav.open {
@@ -448,6 +485,14 @@ $conn->close();
     color: #F8B500;
   }
 
+  body.dark-mode #back {
+    color: #888;
+  }
+
+  body.dark-mode #back:hover {
+    color: #F8B500;
+  }
+
   /* Quiz Items */
   .quiz-items {
     padding: 20px;
@@ -492,6 +537,10 @@ $conn->close();
     color: #2c3e50;
   }
 
+  body.dark-mode #filter label {
+    color: #e0e0e0;
+  }
+
   #filter select {
     padding: 8px 15px;
     border-radius: 5px;
@@ -500,6 +549,12 @@ $conn->close();
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 1rem;
+  }
+
+  body.dark-mode #filter select {
+    background-color: #333;
+    color: #e0e0e0;
+    border-color: #555;
   }
 
   #filter select:focus {
@@ -518,6 +573,11 @@ $conn->close();
     box-shadow: 0 2px 10px rgba(0,0,0,0.05);
   }
 
+  body.dark-mode #graph-area {
+    background: #2d2d2d;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+
   #columnchart_material, #columnchart {
     width: 100%;
     height: 500px;
@@ -534,12 +594,20 @@ $conn->close();
     font-size: 1.1rem;
   }
 
+  body.dark-mode .side-nav p {
+    color: #e0e0e0;
+  }
+
   /* No data message */
   #no-data {
     text-align: center;
     padding: 20px;
     color: #666;
     font-style: italic;
+  }
+
+  body.dark-mode #no-data {
+    color: #999;
   }
 
   /* Responsive Adjustments */
@@ -629,6 +697,10 @@ $conn->close();
     background: #f1f1f1;
   }
 
+  body.dark-mode ::-webkit-scrollbar-track {
+    background: #333;
+  }
+
   ::-webkit-scrollbar-thumb {
     background: #F8B500;
     border-radius: 4px;
@@ -637,6 +709,10 @@ $conn->close();
   /* Sidebar scrollbar */
   .side-nav::-webkit-scrollbar-track {
     background: #34495e;
+  }
+
+  body.dark-mode .side-nav::-webkit-scrollbar-track {
+    background: #1a1a1a;
   }
 
   .side-nav::-webkit-scrollbar-thumb {
@@ -653,6 +729,10 @@ $conn->close();
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
+  }
+
+  body.dark-mode .no-data-message {
+    color: #999;
   }
 </style>
 
@@ -727,6 +807,15 @@ $conn->close();
 
   document.addEventListener('DOMContentLoaded', function() {
     closeNav();
+    
+    // Dark Mode Functionality - Auto apply based on localStorage
+    // Check for saved dark mode preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+
+    // Apply dark mode on page load if enabled
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+    }
   });
 </script>
 

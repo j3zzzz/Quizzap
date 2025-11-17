@@ -109,9 +109,9 @@ $subject_id = $_GET['subject_id'];
         }
 
         label{
-            color: black;
+            color: #555;
             font-family: Fredoka;
-            font-size: 20px;
+            font-size: 14px;
             font-weight: 500;
         }
 
@@ -123,12 +123,19 @@ $subject_id = $_GET['subject_id'];
             font-size: 22px;
             margin-left: 15%;
             font-weight: 500;
+            color: black;
+            margin-right: 8px;
+        }
+
+        input [type=timer] {
+            width: 50%;
         }
 
         label[for=title]{
             font-size: 22px;
             margin-left: 2%;
             font-weight: 500;
+            color: black;
         }
 
         #title{
@@ -140,7 +147,6 @@ $subject_id = $_GET['subject_id'];
             border-radius: 10px;
             padding: 10px;
             border: 3px solid #B9B6B6;
-            margin-top: 1%;
             font-family: Fredoka;
             font-size: 17px;
             background-color: white;
@@ -154,7 +160,7 @@ $subject_id = $_GET['subject_id'];
         }
 
         input[type=number]{
-            width: 10%;
+            width: 30%;
             border-radius: 10px;
             padding: 10px;
             border: 3px solid #B9B6B6;
@@ -200,6 +206,25 @@ $subject_id = $_GET['subject_id'];
         
         .form-group {
             margin-bottom: 20px;
+        }
+
+        .modal-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border 0.3s;
+            background-color: white;
+            color: black;
         }
 
         .matching-pair-container {
@@ -258,6 +283,31 @@ $subject_id = $_GET['subject_id'];
             background-color: #3d3d3d;
             color: #e0e0e0;
             border-color: #555;
+        }
+
+        body.dark-mode .form-group label {
+            color: #e0e0e0;
+        }
+
+        body.dark-mode .form-input {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        .form-input:focus {
+            border-color: #f8b500;
+            outline: none;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group .form-input {
+            flex: 1;
         }
 
         .actions {
@@ -387,6 +437,183 @@ $subject_id = $_GET['subject_id'];
             border-radius: 50%;
             object-fit: cover;
         }
+
+        /* Quiz Settings Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            width: 700px;
+            max-width: 90%;
+            padding: 30px;
+            border-radius: 12px;
+            background-color: #f9f9f9;
+            margin: 5% auto auto auto;
+            font-family: Fredoka;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        .close-modal {
+            cursor: pointer;
+            font-weight: bold;
+            float: right;
+            font-size: 24px;
+        }
+
+        .settings-container {
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+            
+        .setting-group {
+            background: #f3f3f3;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #f8b500;
+            width: 100%;
+        }
+
+        body.dark-mode .setting-group {
+            background: #3d3d3d;
+        }
+
+        .setting-header {
+            display: flex;
+            margin-bottom: 5px;
+            font-family: Fredoka;
+        }
+
+        .setting-header h3 {
+            color: #333;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        body.dark-mode .setting-header h3 {
+            color: #e0e0e0;
+        }
+
+        .hint {
+            display: block;
+            color: #888;
+            font-size: 11px;
+            margin-top: 5px;
+            font-style: italic;
+            font-family: Fredoka;
+        }
+
+        body.dark-mode .hint {
+            color: #aaa;
+        }
+
+        .modal-footer {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        body.dark-mode .modal-footer {
+            border-top-color: #555;
+        }
+
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            font-family: Fredoka;
+            font-size: 16px;
+        }
+
+        .save-btn:hover {
+            background-color: #3e8e41;
+        }
+
+        .cancel-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            font-family: Fredoka;
+            font-size: 16px;
+        }
+
+        .cancel-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .secondary-btn {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+
+        .secondary-btn:hover {
+            background-color: #e6a700;
+        }
+
+        .btn-settings {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: Fredoka;
+            margin-right: 10px;
+            box-shadow: 0 5px 0 0 #BC8900;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .quiz-header input {
+            flex: 1;
+            margin-right: 20px;
+            font-size: 18px;
+        }
+
+        .quiz-timer {
+            float: right;
+        }
     </style>    
 </head>
 <body>
@@ -406,14 +633,20 @@ $subject_id = $_GET['subject_id'];
         <form id="quiz-form" method="POST" action="t_save_quiz.php">
             <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
             <input type="hidden" name="quiz_type" value="Matching Type">
+            <input type="hidden" name="end_date" value="">
+            <input type="hidden" name="start_date" value="">
 
-            <div class="form-group">
+            <div class="quiz_header">
                 <label for="title">Quiz Title:</label>
                 <input type="text" id="title" name="title" required>
-        
-                <label for="timer">Timer (minutes):</label>
-                <input type="number" id="timer" name="timer" min="1" required>
+
+                <div class="quiz-timer">
+                    <label for="timer">Timer (minutes):</label>
+                    <input type="number" id="timer" name="timer" min="1" required>
+                </div>
             </div>
+
+            <br>
 
             <div id="questionsContainer"></div>
 
@@ -427,11 +660,65 @@ $subject_id = $_GET['subject_id'];
                 <button type="button" class="btn btn-back" onclick="goBack()">
                     <i class="fas fa-arrow-left"></i> Back
                 </button>
-                <button type="submit" class="btn btn-saveQuiz">
-                    <i class="fas fa-save"></i> Save Quiz
-                </button>
+                <div>
+                    <button type="button" class="btn-settings" onclick="openQuizSettings()">
+                        <i class="fas fa-cog"></i> Quiz Settings
+                    </button>
+                    <button type="submit" class="btn btn-saveQuiz">
+                        <i class="fas fa-save"></i> Save Quiz
+                    </button>
+                </div>
             </div>
         </form>
+    </div>
+
+    <!-- Quiz Settings Modal -->
+    <div id="quiz-settings-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 style="color: #f8b500; text-align: center; margin-bottom: 25px;">Quiz Availability Settings</h2>
+            
+            <div class="settings-container">
+                <!-- Single centered Time Settings group -->
+                <div class="setting-group">
+                    <div class="setting-header">
+                        <i class="fas fa-calendar-alt" style="color: #f8b500; margin-right: 10px;"></i>
+                        <h3>Time Settings</h3>
+                    </div>
+                    
+                    <div class="modal-form-group">
+                        <label for="start-date">
+                            <i class="fas fa-play-circle" style="color: #4CAF50;"></i> Start Date:
+                        </label>
+                        <div class="input-group">
+                            <input type="datetime-local" id="start-date" name="start_date" class="form-input" min="">
+                            <button type="button" onclick="setStartDateToday()" class="secondary-btn">
+                                <i class="fas fa-clock"></i> Now
+                            </button>
+                        </div>
+                        <small class="hint">Leave empty to make available immediately</small>
+                    </div>
+                    <br>
+                    <div class="modal-form-group">
+                        <label for="end-date">
+                            <i class="fas fa-stop-circle" style="color: #f44336;"></i> End Date:
+                        </label>
+                        <input type="datetime-local" id="end-date" name="end_date" class="form-input" min="" required>
+                        <small class="hint">Students won't be able to take the quiz after this date</small>
+                    </div>
+                </div>
+                
+                <!-- Footer buttons -->
+                <div class="modal-footer">
+                    <button type="button" onclick="closeModal()" class="cancel-btn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" onclick="saveQuizSettings()" class="save-btn">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -464,7 +751,8 @@ $subject_id = $_GET['subject_id'];
             questionDiv.innerHTML = `
                 <div class="form-group">
                     <div class="question-number">Question ${questionNumber}</div>
-                    <input type="text" name="questions[]" required placeholder="Enter question or instruction">
+                    <label>Instructions (optional):</label>
+                    <input type="text" name="instructions[]" placeholder="Additional instructions for this question"> <br> <br>
                 </div>
                 <div class="matching-pairs-section">
                     <label>Matching Pairs:</label>
@@ -558,9 +846,116 @@ $subject_id = $_GET['subject_id'];
             window.history.back();
         }
 
+        // Quiz Settings Modal Functions
+        function openQuizSettings() {
+            const modal = document.getElementById('quiz-settings-modal');
+            modal.style.display = 'block';
+            
+            // Set minimum dates to current date/time
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            document.getElementById('start-date').min = minDateTime;
+            document.getElementById('end-date').min = minDateTime;
+            
+            // Also ensure end date is after start date if start date is set
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            
+            startDateInput.addEventListener('change', function() {
+                endDateInput.min = this.value;
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('quiz-settings-modal').style.display = 'none';
+        }
+
+        function setStartDateToday() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('start-date').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            // Also update end date min if needed
+            const endDateInput = document.getElementById('end-date');
+            if (!endDateInput.value || new Date(endDateInput.value) <= now) {
+                // Add 1 hour as default end time
+                now.setHours(now.getHours() + 1);
+                const endYear = now.getFullYear();
+                const endMonth = String(now.getMonth() + 1).padStart(2, '0');
+                const endDay = String(now.getDate()).padStart(2, '0');
+                const endHours = String(now.getHours()).padStart(2, '0');
+                const endMinutes = String(now.getMinutes()).padStart(2, '0');
+                
+                endDateInput.value = `${endYear}-${endMonth}-${endDay}T${endHours}:${endMinutes}`;
+                endDateInput.min = document.getElementById('start-date').value;
+            }
+        }
+
+        function saveQuizSettings() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            
+            // Validate end date is after start date if start date is set
+            if (startDate && new Date(endDate) <= new Date(startDate)) {
+                alert('End date must be after start date');
+                return;
+            }
+            
+            // Create hidden inputs in the main form
+            const form = document.getElementById('quiz-form');
+            
+            // Remove any existing hidden inputs
+            ['start_date', 'end_date'].forEach(name => {
+                const existing = form.querySelector(`input[name="${name}"]`);
+                if (existing) existing.remove();
+            });
+            
+            // Add new hidden inputs
+            if (startDate) {
+                const startInput = document.createElement('input');
+                startInput.type = 'hidden';
+                startInput.name = 'start_date';
+                startInput.value = startDate;
+                form.appendChild(startInput);
+            }
+            
+            const endInput = document.createElement('input');
+            endInput.type = 'hidden';
+            endInput.name = 'end_date';
+            endInput.value = endDate;
+            form.appendChild(endInput);
+            
+            // Update the hidden inputs that already exist
+            document.querySelector('input[name="start_date"]').value = startDate;
+            document.querySelector('input[name="end_date"]').value = endDate;
+            
+            closeModal();
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             const addQuestionBtn = document.getElementById('addQuestionBtn');
             addQuestionBtn.addEventListener('click', addQuestion);
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('quiz-settings-modal');
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
 
             // Add first question automatically
             addQuestion();
@@ -568,6 +963,13 @@ $subject_id = $_GET['subject_id'];
 
         document.getElementById('quiz-form').addEventListener('submit', function(e) {
             e.preventDefault();       
+
+            // Check if settings have been saved
+            if (!document.querySelector('input[name="end_date"]').value) {
+                alert('Please set quiz availability settings before submitting');
+                openQuizSettings();
+                return;
+            }
             
             const formData = new FormData(this);
             const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {

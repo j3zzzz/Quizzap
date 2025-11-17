@@ -209,6 +209,18 @@ $conn->close();
             margin-top: 3px;
         }
 
+        header .actions .profile img {
+            width: 40px;
+            height: 40px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f5a623;
+            font-size: 1.5rem;
+        }
+
         nav p{
             font-family: Fredoka;
             color: white;
@@ -823,7 +835,7 @@ $conn->close();
 <header>
     <div class="logo"><img src="img/logo1.png" onclick="window.location.href='s_Home.php';" style="cursor: pointer;" width="200px" height="80px"></div>
     <div class="actions">
-        <div class="profile"><img src="img/default.png" width="50px" height="50px"></div>
+        <div class="profile"><img src="uploads/profiles/default-profile.jpg" width="50px" height="50px"></div>
     </div>
 </header>
 

@@ -167,7 +167,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             margin-bottom: 3%;
             border: 2px solid #f8b500;
             border-radius: 15px;
-            padding: 20px;
+            padding: 40px;
             background-color: white;
             box-shadow: 5px 6px 0 0 #BC8900;
         }
@@ -178,18 +178,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         label{
-            color: black;
+            color: #555;
             font-family: Fredoka;
-            font-size: 22px;
+            font-size: 14px;
+            font-weight: 500;
         }
 
         body.dark-mode label {
             color: #e0e0e0;
-        }
-
-        label[for=timer]{
-            font-size: 25px;
-            margin-left: 13%;
         }
 
         label[for=title]{
@@ -207,7 +203,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             border-radius: 10px;
             padding: 10px;
             border: 3px solid #B9B6B6;
-            margin-top: 1%;
             font-family: Fredoka;
             font-size: 20px;
             background-color: white;
@@ -221,7 +216,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         input[type=number]{
-            width: 6%;
+            width: 30%;
             border-radius: 10px;
             padding: 10px;
             border: 3px solid #B9B6B6;
@@ -250,6 +245,159 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         body.dark-mode .question {
             background-color: #3d3d3d;
+        }
+
+        .question-container {
+            background-color: #fff5e1;
+            padding: 30px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border: 2px solid #f8b500;
+        }
+
+        body.dark-mode .question-container {
+            background-color: #3d3d3d;
+        }
+
+        .question-number {
+            font-family: Fredoka;
+            font-size: 25px;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .btn-removeQuestion {
+            margin-top: 2%;
+            background-color: #f44336;
+            color: white;
+            font-family: Fredoka;
+            font-weight: 500;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-back {
+            background-color: white;
+            color: #B9B6B6;
+            border: 2px solid #B9B6B6;
+            font-family: Fredoka;
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        body.dark-mode .btn-back {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        .btn-saveQuiz {
+            background-color: #f8b500;
+            color: white;
+            font-family: Fredoka;
+            font-weight: 500;
+            box-shadow: 0 5px 0 0 #BC8900;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-settings {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: Fredoka;
+            margin-right: 10px;
+            box-shadow: 0 5px 0 0 #BC8900;
+        }
+
+        .actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: space-between;
+        }
+
+        .add-question-btn {
+            width: 120px;
+            height: 40px;
+            padding: 10px;
+            border: 2px solid #f8b500;
+            border-radius: 5px;
+            background-color: white;
+            color: #f8b500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: Fredoka;
+            font-weight: 500;
+        }
+
+        body.dark-mode .add-question-btn {
+            background-color: #3d3d3d;
+            color: #f8b500;
+        }
+
+        .add-question-btn:hover {
+            background-color: #f8b500;
+            color: white;
+        }
+
+        .number-buttons {
+            display: flex;
+            margin-top: 20px;
+            align-items: center;
+        }
+
+        /* Hide remove buttons when there's only one */
+        .single-question .btn-removeQuestion {
+            display: none;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .quiz-timer {
+            float: right;
+        }
+
+        .quiz-timer label {
+            margin: 0;
+        }
+
+        label[for=timer]{
+            font-size: 22px;
+            margin-left: 15%;
+            font-weight: 500;
+            color: black;
+            margin-right: 8px;
+        }
+
+        input [type=timer] {
+            width: 50%;
+        }
+
+        label[for=title]{
+            font-size: 22px;
+            font-weight: 500;
+            color: black;
         }
 
         .ans-btn{
@@ -409,6 +557,235 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .profile-pic {
             border: 2px solid #f8b500;
         }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .modal-form-group {
+            margin-bottom: 15px;
+        }
+
+        .modal-form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+            font-size: 14px;
+        }
+
+        body.dark-mode .modal-form-group label {
+            color: #e0e0e0;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border 0.3s;
+            background-color: white;
+            color: black;
+        }
+
+        body.dark-mode .form-input {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
+        .form-input:focus {
+            border-color: #f8b500;
+            outline: none;
+        }
+
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .input-group .form-input {
+            flex: 1;
+        }
+
+        /* Quiz Settings Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            width: 700px;
+            max-width: 90%;
+            padding: 30px;
+            border-radius: 12px;
+            background-color: #f9f9f9;
+            margin: 5% auto auto auto;
+            font-family: Fredoka;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        .close-modal {
+            cursor: pointer;
+            font-weight: bold;
+            float: right;
+            font-size: 24px;
+        }
+
+        .settings-container {
+            width: 100%;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+            
+        .setting-group {
+            background: #f3f3f3;
+            border-radius: 10px;
+            padding: 20px;
+            border-left: 4px solid #f8b500;
+            width: 100%;
+        }
+
+        body.dark-mode .setting-group {
+            background: #3d3d3d;
+        }
+
+        .setting-header {
+            display: flex;
+            margin-bottom: 5px;
+            font-family: Fredoka;
+        }
+
+        .setting-header h3 {
+            color: #333;
+            font-size: 18px;
+            margin: 0;
+        }
+
+        body.dark-mode .setting-header h3 {
+            color: #e0e0e0;
+        }
+
+        .hint {
+            display: block;
+            color: #888;
+            font-size: 11px;
+            margin-top: 5px;
+            font-style: italic;
+            font-family: Fredoka;
+        }
+
+        body.dark-mode .hint {
+            color: #aaa;
+        }
+
+        .modal-footer {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+
+        body.dark-mode .modal-footer {
+            border-top-color: #555;
+        }
+
+        .save-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            font-family: Fredoka;
+            font-size: 16px;
+        }
+
+        .save-btn:hover {
+            background-color: #3e8e41;
+        }
+
+        .cancel-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            font-family: Fredoka;
+            font-size: 16px;
+        }
+
+        .cancel-btn:hover {
+            background-color: #d32f2f;
+        }
+
+        .secondary-btn {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 12px;
+            transition: background-color 0.3s;
+        }
+
+        .secondary-btn:hover {
+            background-color: #e6a700;
+        }
+
+        .btn-settings {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: Fredoka;
+            margin-right: 10px;
+            box-shadow: 0 5px 0 0 #BC8900;
+        }
+
+        .quiz-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .quiz-header input {
+            flex: 1;
+            margin-right: 20px;
+            font-size: 18px;
+        }
+
+        .quiz-timer {
+            float: right;
+        }
     </style>    
 </head>
 <body>
@@ -426,37 +803,97 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     <div class="create-q-cont">
     <div class="container">
-        <form id="quiz-form" action="" method="POST"><br>
-            <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
+        <form id="quiz-form" method="POST" action="t_save_quiz.php">
+        <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
+        <input type="hidden" name="quiz_type" value="Identification">
+        <input type="hidden" name="end_date" value="">
+        <input type="hidden" name="start_date" value="">
+
+        <div class="quiz_header">
             <label for="title">Quiz Title:</label>
             <input type="text" id="title" name="title" required>
 
-            <label for="timer">Timer (minutes):</label>
-            <input type="number" id="timer" name="timer" required><br><br><br>
-
-            <div id="questions-container">
-                <div class="question-box" id="question-1">
-                    <label for="question_1">Question 1:</label><br>
-                    <input type="text" id="question_1" name="questions[]" rows="3" cols="50" required><br><br>
-                    <label for="correct_answer_1">Correct Answer :</label><br>
-                    <input type="text" id="correct_answer_1" name="correct_answer[]" required><br><br>
-                </div>
-            </div><br><br>
-
-            <div class="question-number-buttons" id="question-number-buttons">
-                <button type="button" class="question-number-button" onclick="showQuestion(1)">1</button>
-                <span class="add-icon" onclick="addQuestion()">&#43;</span>
+            <div class="quiz-timer">
+                <label for="timer">Timer (minutes):</label>
+                <input type="number" id="timer" name="timer" min="1" required>
             </div>
-            <br>
-            <input type="hidden" id="quiz_type" name="quiz_type" value="Identification">
-            <input class="submit-btn"type="submit" value="Save Quiz">
+        </div>
+
+        <br>
+
+        <div id="questionsContainer"></div>
+
+        <div class="number-buttons" id="numberButtons">
+            <button type="button" class="add-question-btn" id="addQuestionBtn">
+                <i class="fas fa-plus"></i> Add Question
+            </button>
+        </div>
+
+        <div class="actions">
+            <button type="button" class="btn btn-back" onclick="goBack()">
+                <i class="fas fa-arrow-left"></i> Back
+            </button>
+            <div>
+                <button type="button" class="btn-settings" onclick="openQuizSettings()">
+                    <i class="fas fa-cog"></i> Quiz Settings
+                </button>
+                <button type="submit" class="btn btn-saveQuiz">
+                    <i class="fas fa-save"></i> Save Quiz
+                </button>
+            </div>
+        </div>
+    </form>
+    </div>
+
+    <!-- Quiz Settings Modal -->
+    <div id="quiz-settings-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeModal()">&times;</span>
+            <h2 style="color: #f8b500; text-align: center; margin-bottom: 25px;">Quiz Availability Settings</h2>
             
-        </form>
+            <div class="settings-container">
+                <div class="setting-group">
+                    <div class="setting-header">
+                        <i class="fas fa-calendar-alt" style="color: #f8b500; margin-right: 10px;"></i>
+                        <h3>Time Settings</h3>
+                    </div>
+                    
+                    <div class="modal-form-group">
+                        <label for="start-date">
+                            <i class="fas fa-play-circle" style="color: #4CAF50;"></i> Start Date:
+                        </label>
+                        <div class="input-group">
+                            <input type="datetime-local" id="start-date" name="start_date" class="form-input" min="">
+                            <button type="button" onclick="setStartDateToday()" class="secondary-btn">
+                                <i class="fas fa-clock"></i> Now
+                            </button>
+                        </div>
+                        <small class="hint">Leave empty to make available immediately</small>
+                    </div>
+                    
+                    <div class="modal-form-group">
+                        <label for="end-date">
+                            <i class="fas fa-stop-circle" style="color: #f44336;"></i> End Date:
+                        </label>
+                        <input type="datetime-local" id="end-date" name="end_date" class="form-input" min="" required>
+                        <small class="hint">Students won't be able to take the quiz after this date</small>
+                    </div>
+                </div>
+                
+                <div class="modal-footer">
+                    <button type="button" onclick="closeModal()" class="cancel-btn">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="button" onclick="saveQuizSettings()" class="save-btn">
+                        <i class="fas fa-save"></i> Save Settings
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
         // Dark Mode Functionality - Auto apply based on localStorage
-        // Check for saved dark mode preference
         const isDarkMode = localStorage.getItem('darkMode') === 'true';
 
         // Apply dark mode on page load if enabled
@@ -464,109 +901,226 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             document.body.classList.add('dark-mode');
         }
 
-        let questionCount = 1;
+        let currentQuestions = 0;
+        const maxQuestions = 20;
 
         function addQuestion() {
-            questionCount++;
-            console.log('Adding question:', questionCount);
+            if (currentQuestions >= maxQuestions) {
+                alert('Maximum number of questions reached!');
+                return;
+            }
 
-            const questionsDiv = document.getElementById('questions-container');
-            const newQuestionNumberButtonsDiv = document.getElementById('question-number-buttons');
+            const container = document.getElementById('questionsContainer');
+            const questionDiv = document.createElement('div');
+            questionDiv.className = 'question-container';
+            if (currentQuestions === 0) {
+                questionDiv.classList.add('single-question');
+            }
+            const questionNumber = currentQuestions + 1;
 
-            const newQuestionDiv = document.createElement('div');
-            newQuestionDiv.className = 'question-box';
-            newQuestionDiv.setAttribute('id', `question-${questionCount}`);
-            newQuestionDiv.style.display = 'none'; // Hide initially
-
-            newQuestionDiv.innerHTML = `
-                <label for="question_${questionCount}">Question ${questionCount}:</label><br>
-                <input type="text" id="question_${questionCount}" name="questions[]" rows="3" cols="50" required><br><br>
-                <label for="correct_answer_${questionCount}">Correct Answer :</label><br>
-                <input type="text" id="correct_answer_${questionCount}" name="correct_answer[]" required><br><br>
+            questionDiv.innerHTML = `
+                <div class="form-group">
+                    <div class="question-number">Question ${questionNumber}</div>
+                    <label>Instructions (optional):</label>
+                    <input type="text" name="instructions[]" placeholder="Additional instructions for this question"> <br> <br>
+                    <label>Question:</label>
+                    <input type="text" name="questions[]" required placeholder="Enter question text">
+                    <label style="margin-top: 10px; display: block;">Correct Answer:</label>
+                    <input type="text" name="correct_answer[]" required placeholder="Enter correct answer">
+                </div>
+                <button type="button" class="btn btn-removeQuestion" onclick="removeQuestion(this)">
+                    <i class="fas fa-trash"></i> Remove Question
+                </button>
             `;
-            questionsDiv.appendChild(newQuestionDiv);
 
-            const buttonContainer = document.getElementById('question-number-buttons');
-            const newButton = document.createElement('button');
-            newButton.type = 'button';
-            newButton.classList.add('question-number-button');
-            newButton.textContent = questionCount;
-            newButton.addEventListener('click', (function(qnumber) {
-                return function() {
-                    showQuestion(qnumber);
-                };
-            })(questionCount));
-
-            newQuestionNumberButtonsDiv.insertBefore(newButton, newQuestionNumberButtonsDiv.querySelector('.add-icon'));
-
-            showQuestion(questionCount);
-        }    
-
-        function showQuestion(number) {
-            console.log("Switching to question:", number);
-
-            const allQuestions = document.querySelectorAll('.question-box');
-            allQuestions.forEach((question, index) => {
-                console.log("Hiding question:", index + 1);
-                question.style.display = 'none';
-            });
-
-            const selectedQuestion = document.getElementById(`question-${number}`);
-            if (selectedQuestion) {    
-                console.log("Showing question:", number);
-                selectedQuestion.style.display = 'block';
-            } else {
-                console.log("Question not found:", number);
-            }
-
-            const allButtons = document.querySelectorAll('.question-number-button');
-            allButtons.forEach((button) => {
-                button.classList.remove('active');
-            });
-
-            const activeButton = Array.from(allButtons).find(button => button.textContent == number);
-            if (activeButton) {
-                console.log("Setting active button for question:", number);
-                activeButton.classList.add('active');
-            } else {
-                console.log("Active button not found for question:", number);
-            }
-        }        
-        
-        function initQuizForm() {
-            showQuestion(1); // Show the first question on load
+            container.appendChild(questionDiv);
+            currentQuestions++;
+            
+            // Update single-question class for all questions
+            updateQuestionRemoveButtons();
         }
 
-        window.onload = function() {
-            initQuizForm();
+        function removeQuestion(button) {
+            if (document.querySelectorAll('.question-container').length > 1) {
+                const question = button.closest('.question-container');
+                question.remove();
+                currentQuestions--;
+                updateQuestionNumbers();
+                updateQuestionRemoveButtons();
+            }
+        }
 
-        document.getElementById('quiz-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    
-        const formData = new FormData(this);
-        const allQuestionsFilled = Array.from(document.querySelectorAll('.question-box')).every(questionDiv => {
-            const inputs = questionDiv.querySelectorAll('input[type="text"]');
-            return Array.from(inputs).every(input => input.value.trim() !== '');
+        function updateQuestionRemoveButtons() {
+            const questions = document.querySelectorAll('.question-container');
+            questions.forEach(question => {
+                if (questions.length === 1) {
+                    question.classList.add('single-question');
+                } else {
+                    question.classList.remove('single-question');
+                }
+            });
+        }
+
+        function updateQuestionNumbers() {
+            const questions = document.querySelectorAll('.question-container');
+            questions.forEach((question, index) => {
+                const numberDiv = question.querySelector('.question-number');
+                numberDiv.textContent = `Question ${index + 1}`;
+            });
+            currentQuestions = questions.length;
+        }
+
+        function goBack() {
+            window.history.back();
+        }
+
+        function profileDropdown() {
+            // Add your profile dropdown functionality here
+        }
+
+        // Quiz Settings Modal Functions
+        function openQuizSettings() {
+            const modal = document.getElementById('quiz-settings-modal');
+            modal.style.display = 'block';
+            
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            const minDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            document.getElementById('start-date').min = minDateTime;
+            document.getElementById('end-date').min = minDateTime;
+            
+            const startDateInput = document.getElementById('start-date');
+            const endDateInput = document.getElementById('end-date');
+            
+            startDateInput.addEventListener('change', function() {
+                endDateInput.min = this.value;
+            });
+        }
+
+        function closeModal() {
+            document.getElementById('quiz-settings-modal').style.display = 'none';
+        }
+
+        function setStartDateToday() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            
+            document.getElementById('start-date').value = `${year}-${month}-${day}T${hours}:${minutes}`;
+            
+            const endDateInput = document.getElementById('end-date');
+            if (!endDateInput.value || new Date(endDateInput.value) <= now) {
+                now.setHours(now.getHours() + 1);
+                const endYear = now.getFullYear();
+                const endMonth = String(now.getMonth() + 1).padStart(2, '0');
+                const endDay = String(now.getDate()).padStart(2, '0');
+                const endHours = String(now.getHours()).padStart(2, '0');
+                const endMinutes = String(now.getMinutes()).padStart(2, '0');
+                
+                endDateInput.value = `${endYear}-${endMonth}-${endDay}T${endHours}:${endMinutes}`;
+                endDateInput.min = document.getElementById('start-date').value;
+            }
+        }
+
+        function saveQuizSettings() {
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+
+            if (startDate && new Date(endDate) <= new Date(startDate)) {
+                alert('End date must be after start date');
+                return;
+            }
+            
+            const form = document.getElementById('quiz-form');
+            
+            ['start_date', 'end_date'].forEach(name => {
+                const existing = form.querySelector(`input[name="${name}"]`);
+                if (existing) existing.remove();
+            });
+            
+            if (startDate) {
+                const startInput = document.createElement('input');
+                startInput.type = 'hidden';
+                startInput.name = 'start_date';
+                startInput.value = startDate;
+                form.appendChild(startInput);
+            }
+            
+            const endInput = document.createElement('input');
+            endInput.type = 'hidden';
+            endInput.name = 'end_date';
+            endInput.value = endDate;
+            form.appendChild(endInput);
+            
+            document.querySelector('input[name="start_date"]').value = startDate;
+            document.querySelector('input[name="end_date"]').value = endDate;
+            
+            closeModal();
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const addQuestionBtn = document.getElementById('addQuestionBtn');
+            addQuestionBtn.addEventListener('click', addQuestion);
+
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                const modal = document.getElementById('quiz-settings-modal');
+                if (event.target === modal) {
+                    closeModal();
+                }
+            });
+
+            // Add first question automatically
+            addQuestion();
         });
 
-        if (!allQuestionsFilled) {
-            alert('Please fill all questions and answers before submitting.');
-            return;
-        }
-        
-        fetch('t_save_quiz.php', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.json()).then(data => {
-            if (data.success) {
-                alert(data.message); // Show success message
-                window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`; // Redirect to subject dashboard
-            } else {
-                console.error('Error creating quiz: ' + data.message);
+        document.getElementById('quiz-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!document.querySelector('input[name="end_date"]').value) {
+                alert('Please set quiz availability settings before submitting');
+                openQuizSettings();
+                return;
             }
-        })
-    });
-};
+            
+            const formData = new FormData(this);
+            const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
+                const inputs = questionDiv.querySelectorAll('input[type="text"][required]');
+                return Array.from(inputs).every(input => input.value.trim() !== '');
+            });
+
+            if (!allQuestionsFilled) {
+                alert('Please fill all required questions and answers before submitting.');
+                return;
+            }
+            
+            fetch('t_save_quiz.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`;
+                } else {
+                    alert('Error creating quiz: ' + data.message);
+                }
+            })
+            .catch(error => {
+                alert('Failed to save quiz: ' + error.message);
+                console.error('Fetch error:', error);
+            });
+        });
     </script>
 
 </body>

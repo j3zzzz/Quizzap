@@ -290,6 +290,18 @@ if (!$subject_id) {
             margin-top: 3px;
         }
 
+        header .actions .profile img {
+            width: 40px;
+            height: 40px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f5a623;
+            font-size: 1.5rem;
+        }
+
         nav p{
             font-family: Purple Smile;
             color: white;
@@ -477,7 +489,7 @@ if (!$subject_id) {
     <header>
         <div class="logo"><img src="img/logo1.png" width="200px" height="80px"></div>
         <div class="actions">
-            <div class="profile"><img src="img/default.png" width="50px" height="50px"></div>
+            <div class="profile"><img src="img/default-profile.jpg" width="50px" height="50px"></div>
         </div>
     </header>
 

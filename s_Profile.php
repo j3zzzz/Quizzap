@@ -209,13 +209,13 @@ $conn->close();
          
         /* Handle */
         ::-webkit-scrollbar-thumb {
-          background: #CF5300; 
+          background: #f8b500; 
           border-radius: 10px;
         }
 
         /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
-          background: #A34404; 
+          background: #f8b500; 
         }
 
         header {
@@ -311,7 +311,7 @@ $conn->close();
         }
         
         .profile-container {
-            width: 60%;
+            width: 50%;
             max-width: 900px;
             background: var(--card-bg);
             border-radius: 16px;
@@ -327,7 +327,7 @@ $conn->close();
         }
 
         .profile-header {
-            height: 80px;
+            height: 60px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             display: flex;
             justify-content: space-between;
@@ -350,7 +350,7 @@ $conn->close();
 
         .profile-title {
             color: #000;
-            font-size: 28px;
+            font-size: 25px;
             font-weight: 600;
             position: relative;
             z-index: 1;
@@ -364,7 +364,7 @@ $conn->close();
         }
 
         .profile-content {
-            padding: 40px;
+            padding: 25px;
         }
         
         .profile-preview {
@@ -375,12 +375,11 @@ $conn->close();
         }
         
         .profile-pic-container {
-            width: 180px;
-            height: 180px;
+            width: 140px;
+            height: 140px;
             border-radius: 50%;
             overflow: hidden;
             border: 6px solid var(--accent);
-            margin-bottom: 20px;
             box-shadow: var(--shadow-lg);
             transition: var(--transition);
             position: relative;

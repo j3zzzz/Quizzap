@@ -122,9 +122,10 @@ $conn->close();
         }
 
         body, html {
+            font-family: 'Fredoka';
             height: 100%;
-            overflow-x: hidden;
             transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
         }
 
         body.dark-mode {
@@ -133,9 +134,11 @@ $conn->close();
         }
 
         .container {
+            font-family: 'Fredoka';
             display: flex;
             min-height: 100vh;
-            position: relative;
+            flex-direction: column;
+            width: 100%;
         }
 
         /* Sidebar styling */
@@ -143,30 +146,24 @@ $conn->close();
             position: fixed;
             width: 250px;
             height: 100vh;
-            background-color: white;
-            color: #f8b500;
+            background-color: #f8b500;
+            color: #ffffff;
             padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
             transition: all 0.3s ease;
-            z-index: 999;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            transform: translateX(0);
+            z-index: 1000;
+            overflow-y: auto;
         }
 
         body.dark-mode .sidebar {
             background-color: #333;
-            color: #f8b500;
         }
 
         .sidebar.collapsed {
-            width: 90px;
+            width: 70px;
             padding: 2rem 0.5rem;
-        }
-
-        .sidebar.mobile-hidden {
-            transform: translateX(-100%);
         }
 
         .sidebar .logo {
@@ -175,6 +172,7 @@ $conn->close();
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .logo {
@@ -185,7 +183,7 @@ $conn->close();
         .toggle-btn {
             background: none;
             border: none;
-            color: #f8b500;
+            color: white;
             font-size: 1.5rem;
             cursor: pointer;
             display: flex;
@@ -194,44 +192,29 @@ $conn->close();
             padding: 5px;
             border-radius: 4px;
             transition: background 0.2s;
-        }
-
-        body.dark-mode .toggle-btn {
-            color: #f8b500;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .toggle-btn:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        .mobile-toggle {
-            display: none;
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            background: #f8b500;
-            color: white;
-            border: none;
-            padding: 0.5rem;
-            border-radius: 5px;
-            z-index: 1000;
-            font-size: 1.2rem;
-        }
-
         .sidebar .menu {
-            margin-top: 30%;
+            margin-top: 40%;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
+            gap: 0.5rem;
         }
 
-        .sidebar.collapsed .menu{
+        .sidebar.collapsed .menu {
             align-items: center;
             margin-top: 45%;
         }
 
         .sidebar .menu a {
-            color: #f8b500;
+            color: #ffffff;
             text-decoration: none;
             padding: 1rem;
             display: flex;
@@ -241,12 +224,8 @@ $conn->close();
             transition: background 0.3s;
             font-family: 'Fredoka';
             letter-spacing: 1px;
-            margin-bottom: .5rem;
             width: 100%;
-        }
-
-        body.dark-mode .sidebar .menu a {
-            color: #f8b500;
+            min-height: 50px;
         }
 
         .sidebar.collapsed .menu a {
@@ -260,7 +239,7 @@ $conn->close();
             transition: opacity 0.2s;
             font-family: 'Fredoka';
             font-weight: bold;
-            font-size: 20px;
+            font-size: clamp(16px, 1.5vw, 20px);
         }
 
         .sidebar.collapsed .menu a span {
@@ -273,14 +252,14 @@ $conn->close();
 
         .sidebar .menu a:hover,
         .sidebar .menu a.active {
-            background-color: #f8b500;
-            color: white;
+            background-color: white;
+            color: #f8b500;
         }
 
         body.dark-mode .sidebar .menu a:hover,
         body.dark-mode .sidebar .menu a.active {
-            background-color: #f8b500;
-            color: white;
+            background-color: #444;
+            color: #f8b500;
         }
 
         .sidebar .menu a i {
@@ -288,15 +267,12 @@ $conn->close();
             min-width: 20px;
             text-align: center;
             font-size: clamp(1rem, 1.2vw, 1.5rem);
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .menu a i {
             margin-right: 0;
             font-size: 1.2rem;
-        }
-
-        .sidebar.collapsed .toggle-btn{
-            margin: auto;
         }
 
         .sidebar.collapsed .logo-img {
@@ -307,13 +283,143 @@ $conn->close();
             display: block !important;
         }
 
-       /* Dashboard content area */
-       .content {
+        .sidebar.collapsed hr {
+            margin: 0.5rem auto;
+            width: 50%;
+        }
+
+        /* Top Navigation for ALL screen sizes - UPDATED */
+        .top-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8b500;
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+        
+        body.dark-mode .top-nav {
+            background-color: #333;
+        }
+        
+        .top-nav .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .top-nav .logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .top-nav .menu {
+            display: flex !important;
+            position: static;
+            flex-direction: row;
+            background: none;
+            box-shadow: none;
+            width: auto;
+            padding: 0;
+            margin: 0;
+            gap: 1.5rem;
+        }
+        
+        .top-nav .menu a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1.4rem;
+            margin-right: 0;
+        }
+        
+        .top-nav .menu a span {
+            display: none;
+        }
+        
+        .top-nav .menu a:hover,
+        .top-nav .menu a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .top-nav .menu a::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .top-nav .menu a:hover::after {
+            opacity: 1;
+        }
+        
+        /* Profile in top nav */
+        .top-nav-profile {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .top-nav-profile .profile {
+            width: 45px;
+            height: 45px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f5a623;
+            font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            border: 2px solid white;
+        }
+        
+        body.dark-mode .top-nav-profile .profile {
+            background-color: #333;
+        }
+        
+        .top-nav-toggle {
+            display: none !important;
+        }
+
+        /* Dashboard content area */
+        .content {
             flex: 1;
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
             transition: margin-left 0.3s ease, background-color 0.3s;
+            width: calc(100% - 250px);
+            min-height: 100vh;
         }
 
         body.dark-mode .content {
@@ -322,7 +428,8 @@ $conn->close();
         }
 
         .content.expanded {
-            margin-left: 90px;
+            margin-left: 70px;
+            width: calc(100% - 70px);
         }
 
         .content span {
@@ -333,13 +440,16 @@ $conn->close();
         .content-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            width: 100%;
         }
 
         .content-header h1 {
-            width: 830%;
-            font-size: 2rem;
+            width: 100%;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             color: #333333;
             font-family: Fredoka;
             padding: 10px;
@@ -365,6 +475,7 @@ $conn->close();
         .content-header .actions {
             display: flex;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .content-header .actions button {
@@ -383,9 +494,10 @@ $conn->close();
             background-color: #e5941f;
         }
 
+        /* Profile in content header for larger screens */
         .content-header .actions .profile {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background-color: #ffffff;
             border-radius: 50%;
             display: flex;
@@ -393,6 +505,9 @@ $conn->close();
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
         }
 
         body.dark-mode .content-header .actions .profile {
@@ -401,173 +516,37 @@ $conn->close();
 
         .profile-pic {
             border: 2px solid #f8b500;
+            object-fit: cover;
         }
 
-        .subject-button {
-            color: black;
-            font-family: Fredoka;
-            font-size: 24px;
-            background-color: white;
-            display: inline-block;
-            border-radius: 6px;
-            border: 2px solid #f8b500;
-            text-decoration: none;
-            text-align: left;
-            padding: 12px 30px;
-            width: 30%;
-            margin: auto;
-            margin-top: 2%;
-            margin-bottom: 2%;
-            margin-right: 1%;
-            transition: transform .2s;
-            box-shadow: 0 6px 0 0 rgba(0, 0, 0, 0.2);
-            
-        }
-
-        body.dark-mode .subject-button {
-            background-color: #2d2d2d;
-            color: #e0e0e0;
-        }
-
-        .subject-button a:hover{
-            background-color: #F8B500;
-            color: white;
-        }
-
-        .subject-button span:hover{
-            color: white;
-        }
-
-        .subject-button:hover {
-            background-color: #F8B500;
-            color: white;
-        }
-
-        body.dark-mode .subject-button:hover {
-            background-color: #F8B500;
-            color: white;
-        }
-
-        .subject-button:active {
-            background-color: #F8B500;
-            box-shadow: 3px 4px 0 0 rgba(0, 0, 0, 0.3);
-        }
-
-        .subject-button a:active {
-            background-color: #A34404;
-        }
-
-        .subject-button span {
-            font-size: 15px;
-            font-family: Fredoka;
-            color: #f8b500;
-        }
-
-        body.dark-mode .subject-button span {
-            color: #f8b500;
-        }
-
-        /* width */
-        ::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
-        }
-
-        /* Track */
-        ::-webkit-scrollbar-track {
-          box-shadow: inset 0 0 5px grey; 
-          border-radius: 5px;
-        }
-         
-        /* Handle */
-        ::-webkit-scrollbar-thumb {
-          background: #ccc; 
-          border-radius: 10px;
-        }
-
-        /* Handle on hover */
-        ::-webkit-scrollbar-thumb:hover {
-          background: #ccc; 
-        }
-
-        .btn{
-            float: left;
-            margin-top: 2%;
-            margin-left: 7%;
-            width: 130px;
-            padding: 10px;
-            border-radius: 10px;
-            background-color: #FFEFE4;
-            color: #A34404;
-            border: 2px solid #FFEFE4;
-            font-family: Purple Smile;
-            box-shadow: 5px 6px 0 0 rgba(0, 0, 0, 0.2);
-            cursor: pointer;
-        }
-
-        .btn:hover{
-            background-color: #A34404;
-            color: #FFEFE4;
-            border: 2px solid #A34404;
-        }
-
-        .create-q-button a {
-            float: right;
-            margin-top: 2%;
-            margin-right: 4%;
-            width: 15%;
-            padding: 10px;
-            border-radius: 10px;
-            background-color: #F8B500;
-            color: white;
-            border: 2px solid #F8B500;
-            font-family: Fredoka;
-            font-size: 18px;
-            box-shadow: 0 6px 0 0 #BC8900;
-            cursor: pointer;
-            text-decoration: none;
-        }
-
-        .create-q-button a:hover {
-            background-color: white;
-            color: #f8b500;
-        }
-
-        .create-q-button a:active {
-            background-color: #f8b500;
-            color: white;
-            box-shadow: 0 3px 0 -0.5px #BC8900;
-        }
-
-        .quiz {
+        .quiz-container {
             background-color: white;
             border: 3px solid #DCDCDC;
             border-radius: 15px;
-            padding: 50px;
-            width: 100%; /* Changed from 200% to 100% */
+            padding: clamp(20px, 3vw, 50px);
+            width: 100%;
             max-width: 1000px;
-            margin: 2% auto 0 auto; /* Centered horizontally, removed negative margin */
+            margin: 2% auto 0 auto;
             overflow: auto;
             box-shadow: 2px 4px 2px 0 rgba(0, 0, 0, 0.2);
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
         }
 
-        body.dark-mode .quiz {
+        body.dark-mode .quiz-container {
             background-color: #2d2d2d;
             border-color: #444;
         }
 
         .quiz-btn {
             background-color: white;
-            align-items: center;
-            display: inline-grid;
+            display: flex;
             justify-content: center;
             align-items: center;
-            margin-top: 2%;
-            margin-right: 4%;
-            margin-bottom: 1.5%;
-            width: 21%;
-            padding: 8px 15px;
-            padding-bottom: 8px;
+            margin: 0;
+            width: 100%;
+            padding: 12px 15px;
             border: 2px solid #f8b500;
             border-radius: 8px;
             box-shadow: 0 4px 0 0 #BC8900;
@@ -575,9 +554,12 @@ $conn->close();
             text-align: center;
             font-family: Fredoka;
             font-weight: 500;
-            font-size: 22px;
+            font-size: clamp(16px, 2vw, 22px);
             color: black;
             cursor: pointer;
+            min-height: 60px;
+            transition: all 0.3s ease;
+            position: relative;
         }
 
         body.dark-mode .quiz-btn {
@@ -597,10 +579,13 @@ $conn->close();
         }
 
         .quiz-btn:hover {
-          -ms-transform: scale(1.5); /* IE 9 */
-          -webkit-transform: scale(1.5); /* Safari 3-8 */
-          transform: scale(1.2); 
-          transition: transform .2s;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 0 #BC8900;
+        }
+
+        .quiz-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 0 #BC8900;
         }
 
         .quiz-btn .tooltiptext {
@@ -614,14 +599,12 @@ $conn->close();
             border-radius: 6px;
             padding: 5px 0;
             border: 2px solid #f8b500;
-
-            /* Position the tooltip */
             position: absolute;
             z-index: 5;
-            bottom: 105%;
+            bottom: 100%;
             left: 50%;
-            margin-left: -90px;
-            margin-bottom: 2%;
+            transform: translateX(-50%);
+            margin-bottom: 5px;
             opacity: 0;
             transition: opacity 0.7s;
         }
@@ -643,16 +626,10 @@ $conn->close();
             border-color: #F8B500 transparent transparent transparent;
         }
 
-        .quiz-btn:hover .tooltiptext{
+        .quiz-btn:hover .tooltiptext {
             visibility: visible;
             opacity: 1;
         }
-
-        .quiz-btn:active {
-            background-color: #f8b500;
-            color: white;
-            box-shadow: 0 4px 0 0 #BC8900;
-        } 
 
         .no-quiz-btn {
             position: relative;
@@ -660,6 +637,7 @@ $conn->close();
             margin: auto;
             margin-top: 3px;
             padding: 3px 0;
+            grid-column: 1 / -1;
         }
 
         .img-no-quiz {
@@ -680,82 +658,42 @@ $conn->close();
         }
 
         .modal {
-            display: none; /* Hidden by default */
-            position: fixed; /* Stay in place */
-            z-index: 4; /* Sit on top */
-            padding-top: 100px; /* Location of the box */
+            display: none;
+            position: fixed;
+            z-index: 1002;
             left: 0;
             top: 0;
-            width: 100%; /* Full width */
-            height: 100%; /* Full height */
-            overflow: auto; /* Enable scroll if needed */
-            background-color: rgb(0,0,0); /* Fallback color */
-            background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
         }
 
         /* Modal Animation */
-        @-webkit-keyframes animatetop {
-        from {top:-100%; opacity:0} 
-        to {top:-5%; opacity:1}
-        }
-
         @keyframes animatetop {
-        from {top:-100%; opacity:0}
-        to {top:-5%; opacity:1}
-        }
-
-        @media (max-width: 768px) {
-            .modal-content {
-                width: 80%;
-            }
-        }
-
-         /* Scroll Bar */
-        /* width */
-        ::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
-        }
-
-        /* Track */
-        ::-webkit-scrollbar-track {
-          box-shadow: inset 0 0 5px grey; 
-          border-radius: 10px;
-        }
-         
-        /* Handle */
-        ::-webkit-scrollbar-thumb {
-          background: #f8b500; 
-          border-radius: 10px;
-        }
-
-        /* Handle on hover */
-        ::-webkit-scrollbar-thumb:hover {
-          background: #f8b500; 
+            from {top:-100px; opacity:0} 
+            to {top:0; opacity:1}
         }
 
         .modal-body {
             overflow: auto;
-            height: 65%;
+            height: 100%;
             width: 100%;
-        }   
+        } 
 
-        .modal-content{
+        .modal-content {
             position: relative;
             background-color: #FFFFFF;
             border-radius: 20px;
-            padding: 30px 40px;
-            width: 50%;
-            height: 80%;
-            margin: auto;
-            top: 5%;
-            left: 30%;
-            transform: translateX(-50%);
-            -webkit-animation-name: animatetop;
-            -webkit-animation-duration: 0.4s;
-            animation-name: animatetop;
-            animation-duration: 0.4s;
-            z-index: 4;
+            padding: clamp(20px, 3vw, 30px) clamp(25px, 4vw, 40px);
+            width: min(90%, 600px);
+            height: auto;
+            max-height: 80vh;
+            margin: 10vh auto;
+            animation: animatetop 0.4s;
+            z-index: 1003;
+            left: 0;
+            transform: none;
         }
 
         body.dark-mode .modal-content {
@@ -764,8 +702,7 @@ $conn->close();
         }
 
         #ready {
-            font-size: 18px;
-            font-weight: 500;
+            font-size: clamp(16px, 2vw, 18px);
             color: black;
             font-family: Fredoka;
             text-align: left;
@@ -780,38 +717,37 @@ $conn->close();
         .modal-content button {
             font-family: Fredoka;
             color: white;
-            font-size: 18px;
-            width: 40%;
+            font-size: clamp(16px, 2vw, 18px);
+            width: min(200px, 80%);
             background-color: #F8B500;
-            padding: 10px 15px;
+            padding: 12px 20px;
             border: none;
             border-radius: 10px;
-            margin-top: 3%;
-            margin-left: 2%;
+            margin: 20px auto 0;
             cursor: pointer;
-            box-shadow: 0 6px 0 0 #BC8900;
+            box-shadow: 0 4px 0 0 #BC8900;
+            display: block;
+            min-height: 44px;
+            transition: all 0.3s ease;
         }
 
         .modal-content button:hover {
             background-color: white;
             color: #f8b500;
             border: 2px solid #f8b500;
-            -ms-transform: scale(1.5); /* IE 9 */
-            -webkit-transform: scale(1.5); /* Safari 3-8 */
-            transform: scale(1.2); 
-            transition: transform .2s;
-            box-shadow: 0 4px 0 0 #BC8900;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 0 #BC8900;
         }
 
         .modal-content button:active {
             background-color: #f8b500;
             color: white;
-            transform: translateY(4px);
-            box-shadow: 0 4px 0 0 #BC8900;
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 0 #BC8900;
         }
-        .modal-dialog{
+
+        .modal-dialog {
             background: none;
-            margin-top: 1%;
             -webkit-animation-name: animatetop;
             -webkit-animation-duration: 0.6s;
             animation-name: animatetop;
@@ -820,29 +756,32 @@ $conn->close();
         }
 
         .modal-dialog img {
-            height: 150px;
-            width: 50%;
-            display: flex;
-            position: absolute;
-            margin: auto;
-            margin-top: 3%;
-            margin-left: 20%;
-            -webkit-animation-name: animatetop;
-            -webkit-animation-duration: 0.1s;
-            animation-name: animatetop;
-            animation-duration: 0.1s;
+            height: auto;
+            max-height: 150px;
+            width: auto;
+            max-width: 60%;
+            display: block;
+            margin: 20px auto;
+            animation: animatetop 0.1s;
             z-index: 2;
             filter: drop-shadow(6px -1px 5px black);
         }
 
         /* The Close Button */
         .close {
-          color: black;
-          float: right;
-          margin-top: -4%;
-          font-size: 28px;
-          font-weight: bold;
-          transition: 1.0s;
+            color: black;
+            float: right;
+            margin-top: -10px;
+            font-size: 28px;
+            font-weight: bold;
+            transition: 0.3s;
+            line-height: 1;
+            cursor: pointer;
+            min-height: 44px;
+            min-width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         body.dark-mode .close {
@@ -851,89 +790,93 @@ $conn->close();
 
         .close:hover,
         .close:focus {
-          color: #f8b500;
-          text-decoration: none;
-          cursor: pointer;
+            color: #ed5e00;
+            text-decoration: none;
+            transform: scale(1.1);
         }
 
-        #quiz-details {
-            overflow: auto;
-        }
-
-        #quiz-details h1 {
+        .modal-body h1 {
             font-family: Fredoka;
-            font-size: xx-large ;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             text-align: center;
             margin-top: 1%;
             color: #f8b500;
+            line-height: 1.2;
         }
 
-        #quiz-details h2 {
+        .modal-body h2 {
             font-family: Fredoka;
             margin-top: 4%;
             padding-bottom: 5px;
             padding-top: 1px;
             letter-spacing: 1px;
             text-align: left;
+            font-size: clamp(1rem, 2vw, 1.2rem);
         }
 
-        #quiz-details span {
+        body.dark-mode .modal-body h2 {
+            color: #e0e0e0;
+        }
+
+        .modal-body span {
             font-family: Fredoka;
             float: right;
-            right: 5%;
-            margin-top: -6.5%;
-            font-size: 20px;
-            position: relative;
+            font-size: clamp(16px, 2vw, 18px);
+            font-weight: lighter;
             text-align: center;
+            margin-top: -2rem;
         }
 
-        #quiz-details .availability-span {
+        body.dark-mode .modal-body span {
+            color: #e0e0e0;
+        }
+
+        .modal-body .availability-span {
             line-height: 1.3;
-            margin-top: -5%;
-            width: 290px;
+            margin-top: 0.5rem;
+            float: none;
+            display: block;
+            text-align: left;
         }
 
         .dropdown-content {
-            width: 300px;
-            right: 1%;
+            width: min(300px, 90vw);
+            right: 0;
             display: none;
             position: absolute;
             background-color: #F8B500;
             border-radius: 15px;
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
+            z-index: 1001;
             padding: 10px 0;
-            top: 15%;
+            top: 100%;
+            margin-top: 10px;
         }
 
         .dropdown-content:before {
-            content: " " ;
+            content: " ";
             position: absolute;
             background: #F8B500;
-            width: 30px;
-            height: 30px;
-            top: 1px;
-            right: 23px;
-            transform: rotate(135deg);
-            z-index: -1 !important;
+            width: 20px;
+            height: 20px;
+            top: -5px;
+            right: 20px;
+            transform: rotate(45deg);
+            z-index: -1;
         }
 
         .dropdown-content button {
-            background-color: white;     
-            justify-content: center;
-            align-items: center;
-            align-self: center;
-            font-family: Purple Smile;
-            font-size: 18px;
+            background-color: white;
+            font-family: 'Fredoka';
+            color: white;
+            font-size: clamp(16px, 2vw, 18px);
             font-weight: lighter;
             border: 2px solid white !important;
-            color: black;
-            width: 86% !important;
-            padding: 13px 20px !important;
-            margin: 8px 20px !important;
+            width: 90% !important;
+            padding: 12px 20px !important;
+            margin: 8px auto !important;
             text-decoration: none;
             display: block;
-            float: none;
             text-align: center;
             background-color: transparent;
             transition: background-color 0.3s, color 0.3s;
@@ -941,27 +884,460 @@ $conn->close();
             cursor: pointer;
             letter-spacing: 1px;
             box-sizing: border-box;
-            z-index: 1 !important;  
+            min-height: 44px;
         }
 
-    .dropdown-content a:hover, .dropdown-content button:hover{
-        background-color: white !important;
-        color: #F8B500;
-    }
+        .dropdown-content a:hover, .dropdown-content button:hover {
+            background-color: white !important;
+            color: #F8B500;
+        }
 
-    .show {
-         display: block;
-    }
+        .show {
+            display: block;
+        }
 
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: clamp(50px, 8vw, 60px);
+            height: clamp(50px, 8vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: background-color 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+            transform: scale(1.05);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
+        }
+
+        /* Updated Mobile Responsive Styles - Icon Navigation */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .top-nav {
+                display: flex;
+                height: 70px;
+                padding: 0.75rem;
+            }
+            
+            .top-nav .logo {
+                flex: 1;
+            }
+            
+            .top-nav .logo img {
+                height: 35px;
+            }
+            
+            .top-nav .menu {
+                gap: 1rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.6rem;
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.3rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .content {
+                padding: 1rem;
+                margin-left: 0;
+                width: 100%;
+                margin-top: 70px;
+            }
+            
+            .content.expanded {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .mobile-menu-toggle {
+                display: none;
+            }
+            
+            .quiz-container {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                padding: 15px;
+            }
+            
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .content-header > div:first-child {
+                flex: 1;
+                text-align: left;
+            }
+            
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: 0;
+                left: auto;
+            }
+            
+            .quiz-btn .tooltiptext {
+                display: none;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+
+        /* For screens larger than 768px - Show sidebar and content header profile */
+        @media (min-width: 769px) {
+            .top-nav {
+                display: none;
+            }
+            
+            .content-header .actions {
+                display: flex;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .top-nav {
+                height: 60px;
+                padding: 0.5rem;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.75rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.5rem;
+                min-height: 40px;
+                min-width: 40px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.2rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .content {
+                padding: 0.75rem;
+                margin-top: 60px;
+            }
+            
+            .quiz-container {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                padding: 10px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 5vh auto;
+            }
+            
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                padding: 0 0.5rem;
+            }
+            
+            .content-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .content-header p {
+                font-size: 0.85rem;
+            }
+            
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: 2%;
+            }
+            
+            .dark-mode-toggle {
+                bottom: 10px;
+                right: 10px;
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 425px) {
+            .top-nav {
+                padding: 0.4rem;
+                height: 55px;
+            }
+            
+            .top-nav .logo img {
+                height: 25px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.5rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.4rem;
+                min-height: 38px;
+                min-width: 38px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 55px;
+            }
+
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                padding: 0 0.5rem;
+            }
+            
+            .content-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .content-header p {
+                font-size: 0.85rem;
+            }
+
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: 5%;
+            }
+            
+            .quiz-container{
+                align-items: flex-start;
+            }
+            
+            .quiz-container {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 15px;
+                margin: 2vh auto;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .top-nav {
+                padding: 0.3rem;
+                height: 50px;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.4rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.3rem;
+                min-height: 36px;
+                min-width: 36px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 50px;
+            }
+            
+            .quiz-container {
+                padding: 0.5rem;
+            }
+            
+            .content-header .actions {
+                justify-content: center;
+                margin-top: 0.5rem;
+            }
+            
+            .dropdown-content {
+                width: 500%;
+                right: 5%;
+            }
+
+            .dropdown-content button{
+                font-size: 11px;
+                width: 90%;
+            }
+
+            /* Additional 375px specific fixes */
+            .content-header {
+                margin-top: 0;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .content-header > div:first-child {
+                width: 100%;
+            }
+            
+            .content-header .actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .modal-content {
+                padding: 25px;
+                margin: 1vh auto;
+            }
+            
+            .modal-body h1 {
+                font-size: 1.1rem;
+            }
+            
+            .modal-body h2 {
+                font-size: 0.85rem;
+            }
+        }
+
+        /* Utility classes for better responsive behavior */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Improve focus accessibility */
+        button:focus-visible,
+        a:focus-visible,
+        .quiz-btn:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Prevent horizontal scroll */
+        body {
+            overflow-x: hidden;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <!-- Mobile Toggle Button -->
-        <button class="mobile-toggle" onclick="toggleMobileSidebar()">
-            <i class="fas fa-bars"></i>
-        </button>
+    <!-- Top Navigation for Mobile - UPDATED WITH PROFILE -->
+    <nav class="top-nav" id="topNav">
+        <div class="logo">
+            <img src="img/logo 6.png" alt="QuizZap Logo">
+        </div>
+        <div class="menu" id="topNavMenu">
+            <a href="s_Classes.php" title="Classes">
+                <i class="fa-solid fa-list"></i>
+                <span>Classes</span>
+            </a>
+            <a href="s_quiz.php" class="active" title="Quizzes">
+                <i class="fa-regular fa-circle-question"></i>
+                <span>Quizzes</span>
+            </a>
+            <a href="s_scores.php?subject_id=<?php echo $subject_id;?>" title="Scores">
+                <i class="fa-solid fa-list-ol"></i>
+                <span>Scores</span>
+            </a>
+        </div>
+        <div class="top-nav-profile">
+            <div class="profile" onclick="profileDropdown()">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <div id="dropdown" class="dropdown-content">
+                    <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i>  Profile</button> 
+                    <form action="logout.php" method="POST">
+                        <button><i class="fa-solid fa-right-from-bracket"></i>  Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Hamburger button removed -->
+    </nav>
 
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="container">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <header>
@@ -969,11 +1345,11 @@ $conn->close();
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="logo">
-                    <img src="img/logo1.png" width="200px" height="80px" class="logo-img">
-                    <img src="img/logo 2.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
+                    <img src="img/logo4.png" width="200px" height="80px" class="logo-img">
+                    <img src="img/logo 6.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
                 </div>
             </header>
-            <hr style="border: 1px solid #f8b500;">
+            <hr style="border: 1px solid white;">
             <div class="menu">
                 <a href="s_Classes.php" title="Classes">
                     <i class="fa-solid fa-list"></i>
@@ -993,9 +1369,10 @@ $conn->close();
         <!-- Content Area -->
         <div class="content">
             <div class="content-header">
-                <div><br>
+                <div>
                     <h1><?php echo htmlspecialchars($subject_name); ?></h1><br>
                 </div>
+                <!-- Profile in content header for larger screens -->
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
                         <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -1008,84 +1385,74 @@ $conn->close();
                     </div>
                 </div>
             </div>
-    <center>
-
-        <div class="quiz">
-            <?php 
-                if ($result->num_rows > 0) {
-                    while ($row = $result->fetch_assoc()) {
-                        $takenClass = $row['is_taken'] ? 'taken' : '';
-                        $tooltip = '';
-                        if ($row['is_taken']) {
-                            $attemptDate = date('M d, Y', strtotime($row['last_attempt']));
-                            $tooltip = "<span class='tooltiptext'Quiz Taken<br>Score: {$row['last_score']}<br>Date Taken: {$attemptDate}</span>";
+            
+            <div class="quiz-container">
+                <?php 
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) {
+                            $takenClass = $row['is_taken'] ? 'taken' : '';
+                            $tooltip = '';
+                            if ($row['is_taken']) {
+                                $attemptDate = date('M d, Y', strtotime($row['last_attempt']));
+                                $tooltip = "<span class='tooltiptext'>Quiz Taken<br>Score: {$row['last_score']}<br>Date Taken: {$attemptDate}</span>";
+                            }
+                            echo "<a class='quiz-btn quiz-link {$takenClass}' data-quiz-id='" . $row['quiz_id'] . "'>" . $row['title'] . $tooltip . "</a>";
                         }
-                        echo "<a class='quiz-btn quiz-link {$takenClass}' data-quiz-id='" . $row['quiz_id'] . "'>" . $row['title'] . $tooltip . "</a>";
-                    }
-                } else {
-                    echo "<div class='no-quiz-btn'>";
-                    echo "<p>No quizzes available for this subject.</p>";
-                } 
-            ?>
+                    } else {
+                        echo "<div class='no-quiz-btn'>";
+                        echo "<p>No quizzes available for this subject.</p>";
+                        echo "</div>";
+                    } 
+                ?>
+            </div>
         </div>
+    </div>
 
     <div id="quiz-info-modal" class="modal">
-        
-            <div class="modal-content">
-                
-                <!-- Modal content -->    
-                <span class="close">&times;</span>
-                <h2 id="ready">Are you Ready to Ace this Quiz?</h2><br>
-                
-                <div class="modal-body">    
-                    <div id="quiz-details"></div>
-                </div>    
-                    <button id="start-quiz-button">QuizZap!</button>
+        <div class="modal-content">
+            <!-- Modal content -->    
+            <span class="close">&times;</span>
+            <h2 id="ready">Are you Ready to Ace this Quiz?</h2><br>
+            
+            <div class="modal-body">    
+                <div id="quiz-details"></div>
+            </div>    
+            <button id="start-quiz-button">QuizZap!</button>
+        </div>
     </div>
 
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const sidebar = document.querySelector('.sidebar');
-            const content = document.querySelector('.content');
-            const toggleBtn = document.getElementById('toggleSidebar');
+        // Sidebar toggle functionality
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const sidebar = document.getElementById('sidebar');
+        const content = document.querySelector('.content');
 
-            // Check if sidebar state is saved in localStorage
-            const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('expanded');
             
-            // Set initial state based on localStorage
-            if (isSidebarCollapsed) {
-                sidebar.classList.add('collapsed');
-                content.classList.add('expanded');
-            }
-
-            // Toggle sidebar when button is clicked
-            if (toggleBtn) {
-                toggleBtn.addEventListener('click', function() {
-                    sidebar.classList.toggle('collapsed');
-                    content.classList.toggle('expanded');
-                    
-                    // Save state to localStorage
-                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-                });
-            }
-
-            // Dark Mode Functionality - Auto apply based on localStorage
-            // Check for saved dark mode preference
-            const isDarkMode = localStorage.getItem('darkMode') === 'true';
-
-            // Apply dark mode on page load if enabled
-            if (isDarkMode) {
-                document.body.classList.add('dark-mode');
-            }
+            // Save state to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
         });
 
+        // Profile dropdown functionality
         function profileDropdown() {
-            document.getElementById("dropdown").classList.toggle("show");
+            // Close all dropdowns first
+            const allDropdowns = document.querySelectorAll('.dropdown-content.show');
+            allDropdowns.forEach(drop => {
+                drop.classList.remove('show');
+            });
+            
+            // Toggle the clicked dropdown
+            const dropdowns = document.querySelectorAll('.dropdown-content');
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.toggle('show');
+            });
         }
 
         // Close the dropdown if clicked outside
         window.onclick = function(event) {
-            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic') && !event.target.closest('.profile')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
                     var openDropdown = dropdowns[i];
@@ -1096,7 +1463,7 @@ $conn->close();
             }
         }
 
-        
+        // Quiz modal functionality
         document.addEventListener("DOMContentLoaded", function() {
             // Get the modal and elements inside it
             var modal = document.getElementById("quiz-info-modal");
@@ -1104,7 +1471,6 @@ $conn->close();
             var quizDetails = document.getElementById("quiz-details");
             var startQuizButton = document.getElementById("start-quiz-button");
 
-            // Add this function in the script section of select_quiz.php
             function formatDateRange(startDate, endDate) {
                 if (!startDate || !endDate) {
                     return "Always available";
@@ -1177,28 +1543,66 @@ $conn->close();
             }
         });
 
-        function toggleMobileSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            sidebar.classList.toggle('mobile-hidden');
+        // Dark Mode Toggle Functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
+
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Apply dark mode if previously enabled
+        if (isDarkMode) {
+            body.classList.add('dark-mode');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
         }
 
-        // Close mobile sidebar when clicking outside
-        document.addEventListener('click', function(event) {
-            const sidebar = document.getElementById('sidebar');
-            const mobileToggle = document.querySelector('.mobile-toggle');
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
             
-            if (!sidebar.contains(event.target) && !mobileToggle.contains(event.target) && window.innerWidth <= 768) {
-                sidebar.classList.add('mobile-hidden');
+            // Update button icon and save preference
+            if (body.classList.contains('dark-mode')) {
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('darkMode', 'false');
             }
         });
 
         // Handle window resize
         window.addEventListener('resize', function() {
-            const sidebar = document.getElementById('sidebar');
-            if (window.innerWidth > 768) {
-                sidebar.classList.remove('mobile-hidden');
-            }
+            // No need for mobile menu toggle anymore
         });
+
+        // Handle touch events for better mobile interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            // Improve touch targets for mobile
+            const touchElements = document.querySelectorAll('a, button, .quiz-btn');
+            touchElements.forEach(element => {
+                element.style.minHeight = '44px';
+                element.style.minWidth = '44px';
+                element.style.display = 'flex';
+                element.style.alignItems = 'center';
+                element.style.justifyContent = 'center';
+            });
+            
+            // Prevent zoom on double tap for buttons (iOS)
+            document.addEventListener('touchstart', function() {}, {passive: true});
+        });
+
+        // Optimize sidebar for touch
+        sidebar.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        }, {passive: true});
+
+        // Check if sidebar state is saved in localStorage
+        const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+        
+        // Set initial state based on localStorage
+        if (isSidebarCollapsed) {
+            sidebar.classList.add('collapsed');
+            content.classList.add('expanded');
+        }
     </script>
 </body>
 </html>

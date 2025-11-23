@@ -318,6 +318,129 @@ $conn->close();
         width: 50%;
     }
 
+    /* Top Navigation for ALL screen sizes */
+    .top-nav {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: #f8b500;
+        padding: 1rem;
+        z-index: 1000;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        align-items: center;
+        justify-content: space-between;
+        height: 70px;
+    }
+    
+    body.dark-mode .top-nav {
+        background-color: #333;
+    }
+    
+    .top-nav .logo {
+        display: flex;
+        align-items: center;
+    }
+    
+    .top-nav .logo img {
+        height: 40px;
+        width: auto;
+    }
+    
+    .top-nav .menu {
+        display: flex !important;
+        position: static;
+        flex-direction: row;
+        background: none;
+        box-shadow: none;
+        width: auto;
+        padding: 0;
+        margin: 0;
+        gap: 1.5rem;
+    }
+    
+    .top-nav .menu a {
+        color: #ffffff;
+        text-decoration: none;
+        padding: 0.75rem;
+        display: flex;
+        align-items: center;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: background 0.3s;
+        min-height: 44px;
+        min-width: 44px;
+        justify-content: center;
+        position: relative;
+    }
+    
+    .top-nav .menu a i {
+        font-size: 1.4rem;
+        margin-right: 0;
+    }
+    
+    .top-nav .menu a span {
+        display: none;
+    }
+    
+    .top-nav .menu a:hover,
+    .top-nav .menu a.active {
+        background-color: rgba(255, 255, 255, 0.2);
+    }
+    
+    .top-nav .menu a::after {
+        content: attr(title);
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: #333;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        white-space: nowrap;
+        opacity: 0;
+        transition: opacity 0.3s;
+        pointer-events: none;
+    }
+    
+    .top-nav .menu a:hover::after {
+        opacity: 1;
+    }
+    
+    /* Profile in top nav */
+    .top-nav-profile {
+        display: flex;
+        align-items: center;
+        position: relative;
+    }
+    
+    .top-nav-profile .profile {
+        width: 45px;
+        height: 45px;
+        background-color: #ffffff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #f5a623;
+        font-size: 1.5rem;
+        cursor: pointer;
+        flex-shrink: 0;
+        position: relative;
+        border: 2px solid white;
+    }
+    
+    body.dark-mode .top-nav-profile .profile {
+        background-color: #333;
+    }
+    
+    .top-nav-toggle {
+        display: none !important;
+    }
+
     /* Dashboard content area */
     .content {
         flex: 1;
@@ -401,6 +524,7 @@ $conn->close();
         background-color: #e5941f;
     }
 
+    /* Profile in content header for larger screens */
     .content-header .actions .profile {
         width: 50px;
         height: 50px;
@@ -577,58 +701,56 @@ $conn->close();
     .high-score-card {
         background-color: #ffffff;
         padding: 1.5rem;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        border-radius: 16px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
         min-height: 260px;
         width: 100%;
-        transition: background-color 0.3s;
+        transition: all 0.3s ease;
         display: flex;
         flex-direction: column;
+        position: relative;
+        overflow: hidden;
     }
 
     body.dark-mode .high-score-card {
         background-color: #2d2d2d;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
     }
 
     .high-score-header {
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         flex-shrink: 0;
+        gap: 12px;
     }
 
-    .high-score-card .star {
-        color: #e5941f;
-        float: left;
-        line-height: 1;
-        font-size: clamp(30px, 4vw, 40px);
-        margin-right: 2%;
-    } 
-    
-    .high-score-card h3 {
-        display: flex;
-        align-items: center;
+    .header-text h3 {
+        margin: 0;
         font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+        color: #333;
+        font-weight: 600;
     }
 
-    body.dark-mode .high-score-card h3 {
+    body.dark-mode .header-text h3 {
         color: #e0e0e0;
     }
 
-    .high-score-card h4 {
-        color: #6666;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: lighter;
-        margin-top: 1rem;
-        text-align: center;
-        font-size: clamp(1rem, 1.5vw, 1.2rem);
+    .header-text p {
+        margin: 4px 0 0 0;
+        color: #999;
+        font-size: 0.9rem;
     }
 
-    body.dark-mode .high-score-card h4 {
+    body.dark-mode .header-text p {
         color: #b0b0b0;
+    }
+
+    .high-score-card .star {
+        color: #F8B500;
+        font-size: clamp(26px, 4vw, 32px);
+        margin-top: 4px;
+        flex-shrink: 0;
     }
 
     #high-score-quiz {
@@ -639,46 +761,178 @@ $conn->close();
         overflow-y: auto;
     }
 
-    .quiz-title {
-        width: 100%;
-        height: fit-content;
-        padding: 8px;
-        font-size: clamp(14px, 1.5vw, 16px);
-        color: #333333;
+    .high-score-item {
         display: flex;
         align-items: center;
+        justify-content: space-between;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        border-left: 4px solid #F8B500;
+    }
+
+    body.dark-mode .high-score-item {
+        background: #3a3a3a;
+    }
+
+    .high-score-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark-mode .high-score-item:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Performance-based styling */
+    .high-score-item[data-performance="excellent"] {
+        border-left-color: #4CAF50;
+    }
+
+    .high-score-item[data-performance="good"] {
+        border-left-color: #2196F3;
+    }
+
+    .high-score-item[data-performance="average"] {
+        border-left-color: #FF9800;
+    }
+
+    .high-score-item[data-performance="needs-improvement"] {
+        border-left-color: #F44336;
+    }
+
+    .score-info {
+        flex: 1;
+    }
+
+    .quiz-title {
+        font-weight: 600;
+        font-size: 1rem;
+        color: #333;
+        margin-bottom: 4px;
     }
 
     body.dark-mode .quiz-title {
         color: #e0e0e0;
     }
 
-    .score {
-        margin-bottom: 1%;
-        color: white;
-        width: 100%;
+    .quiz-subject {
+        font-size: 0.85rem;
+        color: #666;
+        margin-bottom: 4px;
     }
 
-    .score p {
-        border-radius: 5px;
-        background-color: #F8B500;
-        text-align: center;
-        padding: 8px 12px;
-        font-size: clamp(14px, 1.5vw, 16px);
+    body.dark-mode .quiz-subject {
+        color: #b0b0b0;
     }
 
-    .high-score-item {
-        display: grid;
-        grid-template-columns: 2fr 1fr;
-        gap: 1rem;
+    .attempt-date {
+        font-size: 0.75rem;
+        color: #999;
+    }
+
+    body.dark-mode .attempt-date {
+        color: #888;
+    }
+
+    .score-display {
+        display: flex;
+        flex-direction: column;
         align-items: center;
-        padding: 0.5rem;
-        background: #f8f8f8;
-        border-radius: 8px;
+        gap: 6px;
     }
 
-    body.dark-mode .high-score-item {
-        background: #3a3a3a;
+    .score-circle {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: conic-gradient(#F8B500 0%, #F8B500 var(--score-percent), #f0f0f0 var(--score-percent), #f0f0f0 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    body.dark-mode .score-circle {
+        background: conic-gradient(#F8B500 0%, #F8B500 var(--score-percent), #3a3a3a var(--score-percent), #3a3a3a 100%);
+    }
+
+    .score-circle::before {
+        content: '';
+        position: absolute;
+        width: 50px;
+        height: 50px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    body.dark-mode .score-circle::before {
+        background: #2d2d2d;
+    }
+
+    .score-value {
+        position: relative;
+        z-index: 1;
+        font-weight: 700;
+        font-size: 1rem;
+        color: #333;
+    }
+
+    body.dark-mode .score-value {
+        color: #e0e0e0;
+    }
+
+    .performance-indicator {
+        font-size: 0.7rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .performance-indicator.excellent {
+        background-color: #4CAF50;
+        color: white;
+    }
+
+    .performance-indicator.good {
+        background-color: #2196F3;
+        color: white;
+    }
+
+    .performance-indicator.average {
+        background-color: #FF9800;
+        color: white;
+    }
+
+    .performance-indicator.needs-improvement {
+        background-color: #F44336;
+        color: white;
+    }
+
+    .no-scores-message {
+        text-align: center;
+        padding: 2rem 1rem;
+        color: #999;
+    }
+
+    .no-scores-message i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: #ddd;
+    }
+
+    .no-scores-message h4 {
+        margin: 0 0 0.5rem 0;
+        font-weight: 500;
+    }
+
+    .no-scores-message p {
+        margin: 0;
+        font-size: 0.9rem;
     }
 
     .difficult-question-card {
@@ -690,6 +944,7 @@ $conn->close();
         display: flex;
         flex-direction: column;
         min-height: 300px;
+        width: 100%;
     }
 
     body.dark-mode .difficult-question-card {
@@ -698,7 +953,6 @@ $conn->close();
     }
 
     .difficult-question-header {
-        margin-bottom: 1rem;
         display: flex;
         align-items: center;
         flex-shrink: 0;
@@ -728,10 +982,12 @@ $conn->close();
         border-radius: 5px;
         width: 100%;
         font-size: clamp(0.8rem, 1.2vw, 1rem);
+        width: ;
     }
 
-    table, th, td {
-        padding: 0.75rem;
+    th, td {
+        padding: 0.85rem;
+        font-size: 12px;
     }
 
     td {
@@ -821,6 +1077,10 @@ $conn->close();
         min-height: 44px;
     }
 
+    .dropdown-content button i{
+        margin-right: 4px;
+    }
+
     .dropdown-content a:hover, .dropdown-content button:hover {
         background-color: white !important;
         color: #F8B500;
@@ -889,7 +1149,7 @@ $conn->close();
         font-family: Fredoka;
         color: white;
         font-size: clamp(16px, 2vw, 18px);
-        width: min(200px, 80%)\;
+        width: min(200px, 80%);
         background-color: #F8B500;
         padding: 12px 20px;
         border: none;
@@ -1047,57 +1307,237 @@ $conn->close();
         background-color: #444;
     }
 
-    /* Mobile Menu Toggle Button */
-    .mobile-menu-toggle {
-        display: none;
-        position: fixed;
-        top: 15px;
-        left: 15px;
-        z-index: 1001;
-        background: #f8b500;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        padding: 12px;
-        font-size: 1.2rem;
-        cursor: pointer;
-        min-height: 44px;
-        min-width: 44px;
-        align-items: center;
-        justify-content: center;
-    }
-
-    /* Enhanced Responsive Design */
-    @media (max-width: 1200px) {
-        .cards {
-            grid-template-columns: 1fr;
-            gap: 1.5rem;
+    
+    /* Updated Mobile Responsive Styles - Icon Navigation */
+    @media (max-width: 768px) {
+        .sidebar {
+            display: none;
         }
         
-        .sidebar {
-            width: 220px;
+        .top-nav {
+            display: flex;
+            height: 70px;
+            padding: 0.75rem;
+        }
+        
+        .top-nav .logo {
+            flex: 1;
+        }
+        
+        .top-nav .logo img {
+            height: 35px;
+        }
+        
+        .top-nav .menu {
+            gap: 1rem;
+        }
+        
+        .top-nav .menu a {
+            padding: 0.6rem;
+            min-height: 44px;
+            min-width: 44px;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1.3rem;
+        }
+        
+        .top-nav-profile .profile {
+            width: 40px;
+            height: 40px;
         }
         
         .content {
-            margin-left: 220px;
-            width: calc(100% - 220px);
+            padding: 1rem;
+            margin-left: 0;
+            width: 100%;
+            margin-top: 70px;
         }
         
         .content.expanded {
-            margin-left: 70px;
-            width: calc(100% - 70px);
+            margin-left: 0;
+            width: 100%;
+        }
+        
+        .mobile-menu-toggle {
+            display: none;
+        }
+        
+        .cards {
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        
+        .quizzes-card, .high-score-card, .difficult-question-card {
+            padding: 1rem;
+            min-height: auto;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Adjust icon sizes for mobile */
+        .quizzes-card .bolt,
+        .high-score-card .star,
+        .difficult-question-card .question {
+            font-size: 28px;
+            margin-right: 4%;
+        }
+        
+        .quizzes-card h3,
+        .high-score-card h3,
+        .difficult-question-card h3 {
+            font-size: 1.3rem;
+        }
+        
+        .quizzes-card h5 {
+            font-size: 0.9rem;
+        }
+        
+        #quizzes-cont a {
+            font-size: 0.9rem;
+            padding: 12px 10px;
+            min-height: 44px;
+        }
+        
+        /* Improve table readability on mobile */
+        table {
+            font-size: 0.8rem;
+            display: block;
+            overflow-x: auto;
+        }
+        
+        table, th, td {
+            padding: 0.9rem;
+        }
+        
+        /* Adjust high score items for mobile */
+        .high-score-item {
+        padding: 0.75rem;
+    }
+    
+    .score-circle {
+        width: 50px;
+        height: 50px;
+    }
+    
+    .score-circle::before {
+        width: 42px;
+        height: 42px;
+    }
+    
+    .score-value {
+        font-size: 0.9rem;
+    }
+    
+    .quiz-title {
+        font-size: 0.9rem;
+    }
+    
+    .quiz-subject {
+        font-size: 0.8rem;
+    }
+    
+    .performance-indicator {
+        font-size: 0.65rem;
+    }
+            
+        .content-header {
+            margin-top: 0;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 1rem;
+        }
+        
+        .content-header > div:first-child {
+            flex: 1;
+            text-align: left;
+        }
+        
+        /* Hide profile in content header on mobile */
+        .content-header .actions {
+            display: none;
+        }
+        
+        .dropdown-content {
+            right: -10000px;
+        }
+        
+        .content-header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+        
+        .content-header p {
+            font-size: 0.9rem;
+        }
+        
+        .dropdown-content {
+            right: 0;
+            left: auto;
+        }
+        
+        .quiz-sub .tooltiptext {
+            display: none;
+        }
+        
+        table {
+            display: block;
+            overflow-x: auto;
+        }
+        
+        #high-score-quiz {
+            gap: 0.75rem;
+        }
+        
+        .high-score-item {
+            grid-template-columns: 1fr;
+            text-align: center;
+            gap: 0.5rem;
         }
     }
 
-    @media (max-width: 992px) {
-        .sidebar {
-            width: 200px;
+    /* For screens larger than 768px - Show sidebar and content header profile */
+    @media (min-width: 769px) {
+        .top-nav {
+            display: none;
+        }
+        
+        .content-header .actions {
+            display: flex;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .top-nav {
+            height: 60px;
+            padding: 0.5rem;
+        }
+        
+        .top-nav .logo img {
+            height: 30px;
+        }
+        
+        .top-nav .menu {
+            gap: 0.75rem;
+        }
+        
+        .top-nav .menu a {
+            padding: 0.5rem;
+            min-height: 40px;
+            min-width: 40px;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1.2rem;
+        }
+        
+        .top-nav-profile .profile {
+            width: 35px;
+            height: 35px;
         }
         
         .content {
-            margin-left: 200px;
-            width: calc(100% - 200px);
-            padding: 1.5rem;
+            padding: 0.75rem;
+            margin-top: 60px;
         }
         
         .cards {
@@ -1105,443 +1545,337 @@ $conn->close();
         }
         
         .quizzes-card, .high-score-card, .difficult-question-card {
-            min-height: 250px;
+            padding: 0.75rem;
+        }
+        
+        .modal-content {
+            width: 95%;
+            padding: 20px;
+            margin: 5vh auto;
+        }
+        
+        .content-header {
+            margin-top: 0;
+            flex-direction: row;
+            align-items: flex-start;
+            padding: 0 0.5rem;
+        }
+        
+        .content-header h1 {
+            font-size: 1.3rem;
+        }
+        
+        .content-header p {
+            font-size: 0.85rem;
+        }
+        
+        /* Hide profile in content header on mobile */
+        .content-header .actions {
+            display: none;
+        }
+        
+        .dropdown-content {
+            right: 2%;
+        }
+        
+        .content-header .actions {
+            gap: 0.5rem;
+        }
+        
+        .content-header .actions a {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+        
+        .dark-mode-toggle {
+            bottom: 10px;
+            right: 10px;
+            width: 50px;
+            height: 50px;
+        }
+        
+        #quizzes-cont a {
+            padding: 10px 12px;
+            font-size: 0.9rem;
+        }
+        
+        /* Additional 576px specific fixes */
+        .quizzes-card .bolt,
+        .high-score-card .star,
+        .difficult-question-card .question {
+            font-size: 26px;
+            margin-right: 3%;
+        }
+        
+        .quizzes-card h3,
+        .high-score-card h3,
+        .difficult-question-card h3 {
+            font-size: 1.2rem;
+        }
+        
+        table, th, td {
+            padding: 0.4rem;
+            font-size: 0.75rem;
         }
     }
 
-    @media (max-width: 768px) {
-    .sidebar {
-        transform: translateX(-100%);
-        width: 280px;
-    }
-    
-    .sidebar.mobile-open {
-        transform: translateX(0);
-    }
-    
-    .content {
-        padding: 1rem;
-        margin-left: 0;
-        width: 100%;
-    }
-    
-    .content.expanded {
-        margin-left: 0;
-        width: 100%;
-    }
-    
-    .mobile-menu-toggle {
-        display: flex;
-    }
-    
-    .cards {
-        grid-template-columns: 1fr;
-        gap: 1rem;
-    }
-    
-    .quizzes-card, .high-score-card, .difficult-question-card {
-        padding: 1rem;
-        min-height: auto;
-        margin-bottom: 0.5rem;
-    }
-    
-    /* Adjust icon sizes for mobile */
-    .quizzes-card .bolt,
-    .high-score-card .star,
-    .difficult-question-card .question {
-        font-size: 28px;
-        margin-right: 4%;
-    }
-    
-    .quizzes-card h3,
-    .high-score-card h3,
-    .difficult-question-card h3 {
-        font-size: 1.3rem;
-    }
-    
-    .quizzes-card h5 {
-        font-size: 0.9rem;
-    }
-    
-    #quizzes-cont a {
-        font-size: 0.9rem;
-        padding: 12px 10px;
-        min-height: 44px;
-    }
-    
-    /* Improve table readability on mobile */
-    table {
-        font-size: 0.8rem;
-        display: block;
-        overflow-x: auto;
-    }
-    
-    table, th, td {
-        padding: 0.5rem;
-    }
-    
-    /* Adjust high score items for mobile */
-    .high-score-item {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 0.5rem;
-        padding: 0.75rem;
-    }
-    
-    .quiz-title {
-        font-size: 0.9rem;
-    }
-    
-    .score p {
-        font-size: 0.9rem;
-        padding: 6px 10px;
-    }
+    @media (max-width: 425px) {
+        .top-nav {
+            padding: 0.4rem;
+            height: 55px;
+        }
         
-    .content-header {
-        margin-top: 8%;
-        flex-direction: row;
-        align-items: flex-start;
-        gap: 1rem;
-    }
-    
-    .content-header > div:first-child {
-        flex: 1;
-        text-align: left;
-    }
-    
-    .content-header .actions {
-        margin-top: 0;
-        align-items: flex-start;
-    }
-    
-    .dropdown-content {
-        right: -10000px;
-    }
-    
-    .content-header h1 {
-        font-size: 1.5rem;
-        margin-bottom: 0.25rem;
-    }
-    
-    .content-header p {
-        font-size: 0.9rem;
-    }
-    
-    .dropdown-content {
-        right: 0;
-        left: auto;
-    }
-    
-    .quiz-sub .tooltiptext {
-        display: none;
-    }
-    
-    table {
-        display: block;
-        overflow-x: auto;
-    }
-    
-    #high-score-quiz {
-        gap: 0.75rem;
-    }
-    
-    .high-score-item {
-        grid-template-columns: 1fr;
-        text-align: center;
-        gap: 0.5rem;
-    }
-}
+        .top-nav .logo img {
+            height: 25px;
+        }
+        
+        .top-nav .menu {
+            gap: 0.5rem;
+        }
+        
+        .top-nav .menu a {
+            padding: 0.4rem;
+            min-height: 38px;
+            min-width: 38px;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1.1rem;
+        }
+        
+        .top-nav-profile .profile {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .content {
+            padding: 0.5rem;
+            margin-top: 55px;
+        }
 
-@media (max-width: 576px) {
-    .sidebar {
-        width:80%;
-        z-index: 1002;
-    }
-    
-    .content {
-        padding: 0.75rem;
-    }
-    
-    .cards {
-        grid-template-columns: 1fr;
-    }
-    
-    .quizzes-card, .high-score-card, .difficult-question-card {
-        padding: 0.75rem;
-    }
-    
-    .modal-content {
-        width: 95%;
-        padding: 20px;
-        margin: 5vh auto;
-    }
-    
-    .content-header {
-        margin-top: 14%;
-        flex-direction: row;
-        align-items: flex-start;
-        padding: 0 0.5rem;
-    }
-    
-    .content-header h1 {
-        font-size: 1.3rem;
-    }
-    
-    .content-header p {
-        font-size: 0.85rem;
-    }
-    
-    .content-header .actions .profile {
-        width: 45px;
-        height: 45px;
-    }
-    
-    .dropdown-content {
-        right: 2%;
-    }
-    
-    .content-header .actions {
-        gap: 0.5rem;
-    }
-    
-    .content-header .actions a {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
-    }
-    
-    .dark-mode-toggle {
-        bottom: 10px;
-        right: 10px;
-        width: 50px;
-        height: 50px;
-    }
-    
-    #quizzes-cont a {
-        padding: 10px 12px;
-        font-size: 0.9rem;
-    }
-    
-    /* Additional 576px specific fixes */
-    .quizzes-card .bolt,
-    .high-score-card .star,
-    .difficult-question-card .question {
-        font-size: 26px;
-        margin-right: 3%;
-    }
-    
-    .quizzes-card h3,
-    .high-score-card h3,
-    .difficult-question-card h3 {
-        font-size: 1.2rem;
-    }
-    
-    table, th, td {
-        padding: 0.4rem;
-        font-size: 0.75rem;
-    }
-}
+        .content-header {
+            margin-top: 0;
+            flex-direction: row;
+            align-items: flex-start;
+            padding: 0 0.5rem;
+        }
+        
+        .content-header h1 {
+            font-size: 1.3rem;
+        }
+        
+        .content-header p {
+            font-size: 0.85rem;
+        }
 
-@media (max-width: 425px) {
-    .content {
-        padding: 1rem;
-        padding: 0 0.5rem 0 0.5rem;
+        /* Hide profile in content header on mobile */
+        .content-header .actions {
+            display: none;
+        }
+        
+        .dropdown-content {
+            right: 5%;
+        }
+        
+        .content-header .actions {
+            gap: 0.5rem;
+        }
+        
+        .content-header .actions a {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+
+        .cards{
+            align-items: flex-start;
+        }
+        
+        .quizzes-card, .high-score-card, .difficult-question-card {
+            padding: 1rem;
+            min-height: auto;
+            margin-bottom: 0.5rem;
+        }
+        
+        .quizzes-card .bolt,
+        .high-score-card .star,
+        .difficult-question-card .question {
+            font-size: 24px;
+            margin-right: 3%;
+        }
+        
+        .quizzes-card h3,
+        .high-score-card h3,
+        .difficult-question-card h3 {
+            font-size: 1.1rem;
+        }
+        
+        #quizzes-cont a {
+            font-size: 0.85rem;
+            padding: 10px 8px;
+        }
+        
+        /* Modal adjustments for small screens */
+        .modal-content {
+            width: 95%;
+            padding: 25px;
+            margin: 2vh auto;
+        }
+        
+        .modal-body h1 {
+            font-size: 1.3rem;
+        }
+        
+        .modal-body h2 {
+            font-size: 0.95rem;
+        }
+        
+        .start-quiz-btn {
+            font-size: 0.5rem;
+            padding: 10px 15px;
+        }
+        
+        /* Additional 425px specific fixes */
+        .content-header .actions {
+            flex-wrap: wrap;
+            justify-content: flex-end;
+        }
+        
+        .content-header .actions a {
+            font-size: 0.85rem;
+            padding: 0.35rem 0.7rem;
+        }
+        
+        .high-score-item {
+            padding: 0.5rem;
+        }
+        
+        .quiz-title, .score p {
+            font-size: 0.85rem;
+        }
     }
 
-    .content-header {
-        margin-top: 20%;
-        flex-direction: row;
-        align-items: flex-start;
-        padding: 0 0.5rem;
-    }
-    
-    .content-header h1 {
-        font-size: 1.3rem;
-    }
-    
-    .content-header p {
-        font-size: 0.85rem;
+    @media (max-width: 375px) {
+        .top-nav {
+            padding: 0.3rem;
+            height: 50px;
+        }
+        
+        .top-nav .logo img {
+            height: 30px;
+        }
+        
+        .top-nav .menu {
+            gap: 0.4rem;
+        }
+        
+        .top-nav .menu a {
+            padding: 0.3rem;
+            min-height: 36px;
+            min-width: 36px;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1rem;
+        }
+        
+        .top-nav-profile .profile {
+            width: 30px;
+            height: 30px;
+        }
+        
+        .content {
+            padding: 0.5rem;
+            margin-top: 50px;
+        }
+        
+        .quizzes-card, .high-score-card, .difficult-question-card {
+            padding: 0.5rem;
+        }
+        
+        #quizzes-cont a {
+            font-size: 0.8rem;
+            padding: 8px 6px;
+        }
+        
+        .content-header .actions a {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.9rem;
+        }
+        
+        .content-header .actions {
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+        
+        .dropdown-content {
+            width: 500%;
+            right: 5%;
+        }
+
+        .dropdown-content button{
+            font-size: 11px;
+            width: 90%;
+        }
+
+        /* Additional 375px specific fixes */
+        .content-header {
+            margin-top: 0;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+        
+        .content-header > div:first-child {
+            width: 100%;
+        }
+        
+        .content-header .actions {
+            width: 100%;
+            justify-content: space-between;
+        }
+        
+        .quizzes-card .bolt,
+        .high-score-card .star,
+        .difficult-question-card .question {
+            font-size: 22px;
+            margin-right: 2%;
+        }
+        
+        .quizzes-card h3,
+        .high-score-card h3,
+        .difficult-question-card h3 {
+            font-size: 1rem;
+        }
+        
+        .quizzes-card h5 {
+            font-size: 0.8rem;
+        }
+        
+        table, th, td {
+            padding: 0.3rem;
+            font-size: 0.7rem;
+        }
+        
+        .modal-content {
+            padding: 25px;
+            margin: 1vh auto;
+        }
+        
+        .modal-body h1 {
+            font-size: 1.1rem;
+        }
+        
+        .modal-body h2 {
+            font-size: 0.85rem;
+        }
+        
+        .start-quiz-btn {
+            font-size: 0.85rem;
+            padding: 5px 9px;
+            width: 100%;
+        }
     }
 
-    .content-header .actions .profile {
-        width: 40px;
-        height: 20px;
-        margin-top: -45%;
-        margin-left: 85%;
-    }
-    
-    .dropdown-content {
-        right: 5%;
-    }
-    
-    .content-header .actions {
-        gap: 0.5rem;
-    }
-    
-    .content-header .actions a {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
-    }
-
-    .cards{
-        align-items: flex-start;
-    }
-    
-    .quizzes-card, .high-score-card, .difficult-question-card {
-        padding: 1rem;
-        min-height: auto;
-        margin-bottom: 0.5rem;
-    }
-    
-    .quizzes-card .bolt,
-    .high-score-card .star,
-    .difficult-question-card .question {
-        font-size: 24px;
-        margin-right: 3%;
-    }
-    
-    .quizzes-card h3,
-    .high-score-card h3,
-    .difficult-question-card h3 {
-        font-size: 1.1rem;
-    }
-    
-    #quizzes-cont a {
-        font-size: 0.85rem;
-        padding: 10px 8px;
-    }
-    
-    /* Modal adjustments for small screens */
-    .modal-content {
-        width: 95%;
-        padding: 25px;
-        margin: 2vh auto;
-    }
-    
-    .modal-body h1 {
-        font-size: 1.3rem;
-    }
-    
-    .modal-body h2 {
-        font-size: 0.95rem;
-    }
-    
-    .start-quiz-btn {
-        font-size: 0.5rem;
-        padding: 10px 15px;
-    }
-    
-    /* Additional 425px specific fixes */
-    .content-header .actions {
-        flex-wrap: wrap;
-        justify-content: flex-end;
-    }
-    
-    .content-header .actions a {
-        font-size: 0.85rem;
-        padding: 0.35rem 0.7rem;
-    }
-    
-    .high-score-item {
-        padding: 0.5rem;
-    }
-    
-    .quiz-title, .score p {
-        font-size: 0.85rem;
-    }
-}
-
-@media (max-width: 375px) {
-    .content {
-        padding: 0.5rem;
-    }
-    
-    .quizzes-card, .high-score-card, .difficult-question-card {
-        padding: 0.5rem;
-    }
-    
-    #quizzes-cont a {
-        font-size: 0.8rem;
-        padding: 8px 6px;
-    }
-    
-    .content-header .actions a {
-        padding: 0.4rem 0.8rem;
-        font-size: 0.9rem;
-    }
-    
-    .content-header .actions {
-        justify-content: center;
-        margin-top: 0.5rem;
-    }
-    
-    .dropdown-content {
-        width: 500%;
-        right: 5%;
-    }
-
-    .dropdown-content button{
-        font-size: 12px;
-        width: 90%;
-    }
-
-    /* Additional 375px specific fixes */
-    .content-header {
-        margin-top: 22%;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.75rem;
-    }
-    
-    .content-header > div:first-child {
-        width: 100%;
-    }
-    
-    .content-header .actions {
-        width: 100%;
-        justify-content: space-between;
-    }
-    
-    .quizzes-card .bolt,
-    .high-score-card .star,
-    .difficult-question-card .question {
-        font-size: 22px;
-        margin-right: 2%;
-    }
-    
-    .quizzes-card h3,
-    .high-score-card h3,
-    .difficult-question-card h3 {
-        font-size: 1rem;
-    }
-    
-    .quizzes-card h5 {
-        font-size: 0.8rem;
-    }
-    
-    table, th, td {
-        padding: 0.3rem;
-        font-size: 0.7rem;
-    }
-    
-    .modal-content {
-        padding: 25px;
-        margin: 1vh auto;
-    }
-    
-    .modal-body h1 {
-        font-size: 1.1rem;
-    }
-    
-    .modal-body h2 {
-        font-size: 0.85rem;
-    }
-    
-    .start-quiz-btn {
-        font-size: 0.85rem;
-        padding: 5px 9px;
-        width: 100%;
-    }
-}
     /* Utility classes for better responsive behavior */
     .sr-only {
         position: absolute;
@@ -1577,10 +1911,34 @@ $conn->close();
 </style>
 </head>
 <body>
-    <!-- Mobile Menu Toggle Button -->
-    <button class="mobile-menu-toggle" id="mobileMenuToggle">
-        <i class="fas fa-bars"></i>
-    </button>
+    <!-- Top Navigation for Mobile - UPDATED WITH PROFILE -->
+    <nav class="top-nav" id="topNav">
+        <div class="logo">
+            <img src="img/logo 6.png" alt="QuizZap Logo">
+        </div>
+        <div class="menu" id="topNavMenu">
+            <a href="s_Home.php" class="active" title="Dashboard">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="s_Classes.php" title="Classes">
+                <i class="fa-regular fa-address-book"></i>
+                <span>Classes</span>
+            </a>
+        </div>
+        <div class="top-nav-profile">
+            <div class="profile" onclick="profileDropdown()">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <div id="dropdown" class="dropdown-content">
+                    <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i>  Profile</button> 
+                    <form action="logout.php" method="POST">
+                        <button><i class="fa-solid fa-right-from-bracket"></i>  Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Hamburger button removed -->
+    </nav>
 
     <!-- Dark Mode Toggle Button -->
     <button class="dark-mode-toggle" id="darkModeToggle">
@@ -1588,7 +1946,7 @@ $conn->close();
     </button>
 
     <div class="container">
-            <!-- Sidebar -->
+        <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <header>
                 <button id="toggleSidebar" class="toggle-btn">
@@ -1619,6 +1977,7 @@ $conn->close();
                     <h1>Hi, <?php echo htmlspecialchars($_SESSION['fname']); ?>!</h1>
                     <p>Are you ready to start your journey to learning and testing your knowledge here?</p>
                 </div>
+                <!-- Profile in content header for larger screens -->
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
                         <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -1663,65 +2022,95 @@ $conn->close();
                 <div class="right-card">
                     <div class="high-score-card">
                         <div class="high-score-header">    
-                            <i class="fa-solid fa-star star"></i>
-                            <h3>Your Latest High Scores</h3>
+                            <i class="fa-solid fa-trophy star"></i>
+                            <div class="header-text">
+                                <h3>Your Latest High Scores</h3>
+                                <p>Your recent quiz achievements</p>
+                            </div>
                         </div>    
-                        
-                        <br> <br>
                         <div id="high-score-quiz">                               
                             <?php 
                             if ($latest_high_score_result->num_rows > 0) {
                                 while ($row = $latest_high_score_result->fetch_assoc()) {
+                                    // Calculate percentage for visual indicator
+                                    $scorePercent = min(100, ($row['highest_score'] / 100) * 100);
+                                    // Determine performance level
+                                    $performanceLevel = $scorePercent >= 90 ? 'excellent' : ($scorePercent >= 75 ? 'good' : ($scorePercent >= 60 ? 'average' : 'needs-improvement'));
                             ?>
-                                <div class="quiz-title"><h5><?php echo htmlspecialchars($row['quiz_title']); ?></h5></div>
-                                <div style="color: #999; text-align: right;">Score: </div>    
-                                <center>
-                                <div class="score"><p><?php echo htmlspecialchars($row['highest_score']); ?></p></div>   
-                                </center>  
+                                <div class="high-score-item" data-performance="<?php echo $performanceLevel; ?>">
+                                    <div class="score-info">
+                                        <div class="quiz-title"><?php echo htmlspecialchars($row['quiz_title']); ?></div>
+                                        <div class="quiz-subject"><?php echo htmlspecialchars($row['subject_name']); ?></div>
+                                        <div class="attempt-date"><?php echo date('M j, Y', strtotime($row['latest_attempt_date'])); ?></div>
+                                    </div>
+                                    <div class="score-display">
+                                        <div class="score-circle" data-percent="<?php echo $scorePercent; ?>">
+                                            <div class="score-value"><?php echo htmlspecialchars($row['highest_score']); ?></div>
+                                        </div>
+                                        <div class="performance-indicator <?php echo $performanceLevel; ?>">
+                                            <?php 
+                                            switch($performanceLevel) {
+                                                case 'excellent': echo 'Excellent!'; break;
+                                                case 'good': echo 'Good Job'; break;
+                                                case 'average': echo 'Not Bad'; break;
+                                                default: echo 'Keep Trying'; break;
+                                            }
+                                            ?>
+                                        </div>
+                                    </div>
+                                </div>   
                             <?php
                                 }
                             } else {
-                                echo "<h4>You don't have any high scores yet.</h4>";
+                                echo '<div class="no-scores-message">
+                                        <i class="fa-solid fa-chart-line"></i>
+                                        <h4>No high scores yet</h4>
+                                        <p>Complete quizzes to see your achievements here</p>
+                                    </div>';
                             }
                             ?>   
                         </div>
                     </div>
                     <br>
-                    <div class="difficult-question-card">
+                                        <div class="difficult-question-card">
                         <div class="difficult-question-header">    
-                        <i class="fa-solid fa-question question"></i></i>
+                            <i class="fa-solid fa-question question"></i>
                             <h3>Difficult Questions</h3>
                         </div>
-                        <br><br><br>
-                        <?php 
-                        if ($difficult_questions_result && $difficult_questions_result->num_rows > 0) { ?>
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <th>Subject</th>
-                                        <th>Quiz</th>
-                                        <th>Question</th>
-                                        <th>Attempts</th>
-                                        <th>Lowest Score</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <?php while ($row = $difficult_questions_result->fetch_assoc()) { ?>
+                        <div class="table-container">
+                            <?php 
+                            if ($difficult_questions_result && $difficult_questions_result->num_rows > 0) { ?>
+                                <table>
+                                    <thead>
                                         <tr>
-                                            <td><?php echo htmlspecialchars($row['subject_name']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['quiz_title']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['question_text']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['total_attempts']); ?></td>
-                                            <td><?php echo htmlspecialchars($row['lowest_score']); ?></td>
+                                            <th>Subject</th>
+                                            <th>Quiz</th>
+                                            <th>Question</th>
+                                            <th>Attempts</th>
+                                            <th>Lowest Score</th>
                                         </tr>
-                                    <?php } ?>
-                                </tbody>
-                            </table>
-                        <?php } else { ?>
-                            <h4>No difficult questions found.</h4>
-                        <?php } ?>
+                                    </thead>
+                                    <tbody>
+                                        <?php while ($row = $difficult_questions_result->fetch_assoc()) { ?>
+                                            <tr>
+                                                <td><?php echo htmlspecialchars($row['subject_name']); ?></td>
+                                                <td><?php echo htmlspecialchars($row['quiz_title']); ?></td>
+                                                <td class="question-cell"><?php echo htmlspecialchars($row['question_text']); ?></td>
+                                                <td><?php echo htmlspecialchars($row['total_attempts']); ?></td>
+                                                <td><?php echo htmlspecialchars($row['lowest_score']); ?></td>
+                                            </tr>
+                                        <?php } ?>
+                                    </tbody>
+                                </table>
+                            <?php } else { ?>
+                                <div class="no-questions-message">
+                                    <i class="fa-solid fa-check-circle"></i>
+                                    <h4>No difficult questions found</h4>
+                                    <p>Great job! You're handling all questions well.</p>
+                                </div>
+                            <?php } ?>
+                        </div>
                     </div>
-                </div>
             </div>
         </div>
     </div>
@@ -1748,33 +2137,24 @@ $conn->close();
             content.classList.toggle('expanded');
         });
 
-        // Mobile menu toggle functionality
-        const mobileMenuToggle = document.getElementById('mobileMenuToggle');
-        
-        mobileMenuToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('mobile-open');
-        });
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', (event) => {
-            if (window.innerWidth <= 576) {
-                const isClickInsideSidebar = sidebar.contains(event.target);
-                const isClickOnMobileToggle = mobileMenuToggle.contains(event.target);
-                
-                if (!isClickInsideSidebar && !isClickOnMobileToggle && sidebar.classList.contains('mobile-open')) {
-                    sidebar.classList.remove('mobile-open');
-                }
-            }
-        });
-
         // Profile dropdown functionality
         function profileDropdown() {
-            document.getElementById("dropdown").classList.toggle("show");
+            // Close all dropdowns first
+            const allDropdowns = document.querySelectorAll('.dropdown-content.show');
+            allDropdowns.forEach(drop => {
+                drop.classList.remove('show');
+            });
+            
+            // Toggle the clicked dropdown
+            const dropdowns = document.querySelectorAll('.dropdown-content');
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.toggle('show');
+            });
         }
 
         // Close the dropdown if clicked outside
         window.onclick = function(event) {
-            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic') && !event.target.closest('.profile')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
                     var openDropdown = dropdowns[i];
@@ -1936,9 +2316,7 @@ $conn->close();
 
         // Handle window resize
         window.addEventListener('resize', function() {
-            if (window.innerWidth > 576 && sidebar.classList.contains('mobile-open')) {
-                sidebar.classList.remove('mobile-open');
-            }
+            // No need for mobile menu toggle anymore
         });
 
         // Handle touch events for better mobile interaction
@@ -1962,19 +2340,25 @@ $conn->close();
             e.stopPropagation();
         }, {passive: true});
 
-        // Improve dropdown for touch devices
-        function profileDropdown() {
-            const dropdown = document.getElementById("dropdown");
-            dropdown.classList.toggle("show");
-            
-            // Close other dropdowns if any
-            const allDropdowns = document.querySelectorAll('.dropdown-content.show');
-            allDropdowns.forEach(drop => {
-                if (drop !== dropdown) {
-                    drop.classList.remove('show');
-                }
-            });
-        }
+        // Animate score circles
+function animateScoreCircles() {
+    const scoreCircles = document.querySelectorAll('.score-circle');
+    
+    scoreCircles.forEach(circle => {
+        const percent = circle.getAttribute('data-percent');
+        circle.style.setProperty('--score-percent', `${percent}%`);
+        
+        // Add animation
+        setTimeout(() => {
+            circle.style.transition = 'all 0.8s ease-out';
+        }, 100);
+    });
+}
+
+// Call this function after the DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    animateScoreCircles();
+});
     </script>
 </body>
 </html>

@@ -61,7 +61,6 @@ $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $result = $stmt->get_result();
 
-
 $conn->close();
 ?>
 <!DOCTYPE html>
@@ -83,6 +82,7 @@ $conn->close();
         body, html {
             height: 100%;
             transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
         }
 
         body.dark-mode {
@@ -92,7 +92,9 @@ $conn->close();
 
         .container {
             display: flex;
-            height: 100vh;
+            min-height: 100vh;
+            flex-direction: column;
+            width: 100%;
         }
 
         /* Sidebar styling */
@@ -107,7 +109,8 @@ $conn->close();
             flex-direction: column;
             justify-content: flex-start;
             transition: all 0.3s ease;
-            z-index: 999;
+            z-index: 1000;
+            overflow-y: auto;
         }
 
         body.dark-mode .sidebar {
@@ -115,7 +118,7 @@ $conn->close();
         }
 
         .sidebar.collapsed {
-            width: 90px;
+            width: 70px;
             padding: 2rem 0.5rem;
         }
 
@@ -125,6 +128,7 @@ $conn->close();
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .logo {
@@ -144,14 +148,12 @@ $conn->close();
             padding: 5px;
             border-radius: 4px;
             transition: background 0.2s;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .toggle-btn:hover {
             background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .toggle-btn{
-            align-items: center;
         }
 
         .sidebar .menu {
@@ -159,9 +161,10 @@ $conn->close();
             display: flex;
             flex-direction: column;
             flex-grow: 1;
+            gap: 0.5rem;
         }
 
-        .sidebar.collapsed .menu{
+        .sidebar.collapsed .menu {
             align-items: center;
             margin-top: 45%;
         }
@@ -177,8 +180,8 @@ $conn->close();
             transition: background 0.3s;
             font-family: 'Fredoka';
             letter-spacing: 1px;
-            margin-bottom: .5rem;
             width: 100%;
+            min-height: 50px;
         }
 
         .sidebar.collapsed .menu a {
@@ -192,7 +195,7 @@ $conn->close();
             transition: opacity 0.2s;
             font-family: 'Fredoka';
             font-weight: bold;
-            font-size: 20px;
+            font-size: clamp(16px, 1.5vw, 20px);
         }
 
         .sidebar.collapsed .menu a span {
@@ -220,33 +223,12 @@ $conn->close();
             min-width: 20px;
             text-align: center;
             font-size: clamp(1rem, 1.2vw, 1.5rem);
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .menu a i {
             margin-right: 0;
             font-size: 1.2rem;
-        }
-
-        .toggle-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 5px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
-        .toggle-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar.collapsed .toggle-btn{
-            margin: auto;
         }
 
         .sidebar.collapsed .logo-img {
@@ -257,24 +239,132 @@ $conn->close();
             display: block !important;
         }
 
-        .sidebar.collapsed .menu a {
-            padding: 1rem 0;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .sidebar.collapsed .menu a span {
-            display: none;
-        }
-
-        .sidebar.collapsed .menu a i {
-            margin-right: 0;
-            font-size: 1.5rem;
-        }
-
         .sidebar.collapsed hr {
             margin: 0.5rem auto;
             width: 50%;
+        }
+
+        /* Top Navigation for ALL screen sizes */
+        .top-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8b500;
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+        
+        body.dark-mode .top-nav {
+            background-color: #333;
+        }
+        
+        .top-nav .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .top-nav .logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .top-nav .menu {
+            display: flex !important;
+            position: static;
+            flex-direction: row;
+            background: none;
+            box-shadow: none;
+            width: auto;
+            padding: 0;
+            margin: 0;
+            gap: 1.5rem;
+        }
+        
+        .top-nav .menu a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1.4rem;
+            margin-right: 0;
+        }
+        
+        .top-nav .menu a span {
+            display: none;
+        }
+        
+        .top-nav .menu a:hover,
+        .top-nav .menu a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .top-nav .menu a::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .top-nav .menu a:hover::after {
+            opacity: 1;
+        }
+        
+        /* Profile in top nav */
+        .top-nav-profile {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .top-nav-profile .profile {
+            width: 45px;
+            height: 45px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f5a623;
+            font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            border: 2px solid white;
+        }
+        
+        body.dark-mode .top-nav-profile .profile {
+            background-color: #333;
+        }
+        
+        .top-nav-toggle {
+            display: none !important;
         }
 
         /* Dashboard content area */
@@ -284,6 +374,8 @@ $conn->close();
             padding: 2rem;
             margin-left: 250px;
             transition: margin-left 0.3s ease, background-color 0.3s;
+            width: calc(100% - 250px);
+            min-height: 100vh;
         }
 
         body.dark-mode .content {
@@ -292,28 +384,29 @@ $conn->close();
         }
 
         .content.expanded {
-            margin-left: 90px;
-        }
-
-        .content span {
-            font-family: Fredoka;
-            font-size: larger;
+            margin-left: 70px;
+            width: calc(100% - 70px);
         }
 
         .content-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            width: 100%;
         }
 
         .content-header h1 {
-            width: 95%;
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             color: #333333;
-            font-family: Fredoka;
-            padding: 10px;
+            font-family: 'Fredoka';
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+            padding-bottom: 10px;
             border-bottom: 1.5px solid #F8B500;
+            width: 100%;
         }
 
         body.dark-mode .content-header h1 {
@@ -322,10 +415,11 @@ $conn->close();
 
         .content-header p {
             color: #999;
-            font-size: 1rem;
+            font-size: clamp(0.9rem, 2vw, 1rem);
             margin-top: 0.5rem;
-            font-family: Fredoka;
+            font-family: 'Fredoka';
             font-weight: 500;
+            line-height: 1.4;
         }
 
         body.dark-mode .content-header p {
@@ -335,27 +429,13 @@ $conn->close();
         .content-header .actions {
             display: flex;
             align-items: center;
-        }
-
-        .content-header .actions button {
-            background-color: #F8B500;
-            color: #ffffff;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-right: 1rem;
-            font-family: Fredoka;
-        }
-
-        .content-header .actions button:hover {
-            background-color: #e5941f;
+            gap: 1rem;
+            flex-shrink: 0;
         }
 
         .content-header .actions .profile {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background-color: #ffffff;
             border-radius: 50%;
             display: flex;
@@ -363,31 +443,41 @@ $conn->close();
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
         }
 
         body.dark-mode .content-header .actions .profile {
             background-color: #333;
         }
 
+        .subjects-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+            padding-bottom: 2rem;
+            width: 100%;
+        }
+
         .subject-button {
             color: black;
             font-family: Fredoka;
             font-weight: 500;
-            font-size: 24px;
+            font-size: clamp(18px, 2vw, 24px);
             background-color: white;
-            display: inline-block;
+            display: flex;
+            flex-direction: column;
             border-radius: 6px;
             border: 2px solid #f8b500;
             text-decoration: none;
             text-align: left;
-            padding: 12px 30px;
-            width: 35%;
-            margin: auto;
-            margin-top: 2%;
-            margin-bottom: 2%;
-            margin-right: 1%;
-            transition: transform .2s;
+            padding: 20px;
+            width: 100%;
+            transition: transform .2s, background-color 0.3s;
             box-shadow: 0 6px 0 0 #BC8900;
+            min-height: 120px;
+            justify-content: center;
         }
 
         body.dark-mode .subject-button {
@@ -398,6 +488,7 @@ $conn->close();
         .subject-button:hover {
             background-color: #F8B500;
             color: white;
+            transform: translateY(-2px);
         }
 
         body.dark-mode .subject-button:hover {
@@ -408,17 +499,34 @@ $conn->close();
         .subject-button:active {
             background-color: #F8B500;
             box-shadow: 3px 4px 0 0 rgba(0, 0, 0, 0.3);
+            transform: translateY(2px);
         }
 
         .subject-button span {
-            font-size: 15px;
+            font-size: clamp(14px, 1.5vw, 15px);
             font-family: Fredoka;
             font-weight: 500;
             color: #f8b500;
+            margin-top: 8px;
         }
 
         body.dark-mode .subject-button span {
             color: #f8b500;
+        }
+
+        .subject-button:hover span {
+            color: white;
+        }
+
+        .no-quiz-con {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+            font-size: 1.2rem;
+        }
+
+        body.dark-mode .no-quiz-con {
+            color: #b0b0b0;
         }
 
         /* width */
@@ -435,56 +543,53 @@ $conn->close();
          
         /* Handle */
         ::-webkit-scrollbar-thumb {
-          background: #CF5300; 
+          background: #F8B500; 
           border-radius: 10px;
         }
 
         /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
-          background: #A34404; 
+          background: #F8B500; 
         }
 
         .dropdown-content {
-            width: 300px;
-            right: -1%;
+            width: min(300px, 90vw);
+            right: 0;
             display: none;
             position: absolute;
             background-color: #F8B500;
             border-radius: 15px;
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
+            z-index: 1001;
             padding: 10px 0;
-            top: 135%;
+            top: 100%;
+            margin-top: 10px;
         }
 
         .dropdown-content:before {
-            content: " " ;
+            content: " ";
             position: absolute;
             background: #F8B500;
-            width: 30px;
-            height: 30px;
-            top: 1px;
-            right: 23px;
-            transform: rotate(135deg);
-            z-index: -1 !important;
+            width: 20px;
+            height: 20px;
+            top: -5px;
+            right: 20px;
+            transform: rotate(45deg);
+            z-index: -1;
         }
 
         .dropdown-content button {
-            background-color: white;     
-            justify-content: center;
-            align-items: center;
-            align-self: center;
+            background-color: white;
             font-family: 'Fredoka';
             color: white;
-            font-size: 18px;
+            font-size: clamp(16px, 2vw, 18px);
             font-weight: lighter;
             border: 2px solid white !important;
-            width: 86% !important;
-            padding: 13px 20px !important;
-            margin: 8px 20px !important;
+            width: 90% !important;
+            padding: 12px 20px !important;
+            margin: 8px auto !important;
             text-decoration: none;
             display: block;
-            float: none;
             text-align: center;
             background-color: transparent;
             transition: background-color 0.3s, color 0.3s;
@@ -492,8 +597,7 @@ $conn->close();
             cursor: pointer;
             letter-spacing: 1px;
             box-sizing: border-box;
-            z-index: 1 !important;  
-            cursor: pointer;
+            min-height: 44px;
         }
 
         .dropdown-content a:hover, .dropdown-content button:hover{
@@ -512,12 +616,478 @@ $conn->close();
 
         .profile-pic {
             border: 2px solid #f8b500;
+            object-fit: cover;
+        }
+
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: clamp(50px, 8vw, 60px);
+            height: clamp(50px, 8vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: background-color 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+            transform: scale(1.05);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
+        }
+
+        /* Mobile Menu Toggle Button */
+        .mobile-menu-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1001;
+            background: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 12px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            min-height: 44px;
+            min-width: 44px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Enhanced Responsive Design */
+        @media (max-width: 1200px) {
+            .subjects-container {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1.5rem;
+            }
+            
+            .sidebar {
+                width: 220px;
+            }
+            
+            .content {
+                margin-left: 220px;
+                width: calc(100% - 220px);
+            }
+            
+            .content.expanded {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+        }
+
+        @media (max-width: 992px) {
+            .sidebar {
+                width: 200px;
+            }
+            
+            .content {
+                margin-left: 200px;
+                width: calc(100% - 200px);
+                padding: 1.5rem;
+            }
+            
+            .subjects-container {
+                grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .top-nav {
+                display: flex;
+                height: 70px;
+                padding: 0.75rem;
+            }
+            
+            .top-nav .logo {
+                flex: 1;
+            }
+            
+            .top-nav .logo img {
+                height: 35px;
+            }
+            
+            .top-nav .menu {
+                gap: 1rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.6rem;
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.3rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .content {
+                padding: 1rem;
+                margin-left: 0;
+                width: 100%;
+                margin-top: 70px;
+            }
+            
+            .content.expanded {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .mobile-menu-toggle {
+                display: none;
+            }
+            
+            .subjects-container {
+                grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+                gap: 1rem;
+            }
+            
+            .subject-button {
+                padding: 15px;
+                min-height: 100px;
+            }
+            
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .content-header > div:first-child {
+                flex: 1;
+                text-align: left;
+            }
+            
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: 0;
+                left: auto;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .top-nav {
+                height: 60px;
+                padding: 0.5rem;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.75rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.5rem;
+                min-height: 40px;
+                min-width: 40px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.2rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .content {
+                padding: 0.75rem;
+                margin-top: 60px;
+            }
+            
+            .subjects-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .subject-button {
+                padding: 15px;
+            }
+            
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                padding: 0 0.5rem;
+            }
+            
+            .content-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: 2%;
+            }
+            
+            .content-header .actions {
+                gap: 0.5rem;
+            }
+            
+            .dark-mode-toggle {
+                bottom: 10px;
+                right: 10px;
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 425px) {
+            .top-nav {
+                padding: 0.4rem;
+                height: 55px;
+            }
+            
+            .top-nav .logo img {
+                height: 25px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.5rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.4rem;
+                min-height: 38px;
+                min-width: 38px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 55px;
+            }
+
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                padding: 0 0.5rem;
+            }
+            
+            .content-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: 5%;
+            }
+            
+            .content-header .actions {
+                gap: 0.5rem;
+            }
+
+            .subjects-container{
+                align-items: flex-start;
+            }
+            
+            .subject-button {
+                padding: 15px;
+                min-height: auto;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .top-nav {
+                padding: 0.3rem;
+                height: 50px;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.4rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.3rem;
+                min-height: 36px;
+                min-width: 36px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 50px;
+            }
+            
+            .subject-button {
+                padding: 12px;
+            }
+            
+            .content-header .actions {
+                justify-content: center;
+                margin-top: 0.5rem;
+            }
+            
+            .dropdown-content {
+                width: 500%;
+                right: 5%;
+            }
+
+            .dropdown-content button{
+                font-size: 12px;
+                width: 90%;
+            }
+
+            /* Additional 375px specific fixes */
+            .content-header {
+                margin-top: 0;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .content-header > div:first-child {
+                width: 100%;
+            }
+            
+            .content-header .actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+        }
+
+        /* For screens larger than 768px - Show sidebar and content header profile */
+        @media (min-width: 769px) {
+            .top-nav {
+                display: none;
+            }
+            
+            .content-header .actions {
+                display: flex;
+            }
+        }
+
+        /* Utility classes for better responsive behavior */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Improve focus accessibility */
+        button:focus-visible,
+        a:focus-visible,
+        .subject-button:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Prevent horizontal scroll */
+        body {
+            overflow-x: hidden;
         }
     </style>
 </head>
 <body>
+    <!-- Top Navigation for Mobile - UPDATED WITH PROFILE -->
+    <nav class="top-nav" id="topNav">
+        <div class="logo">
+            <img src="img/logo 6.png" alt="QuizZap Logo">
+        </div>
+        <div class="menu" id="topNavMenu">
+            <a href="s_Home.php" title="Dashboard">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="s_Classes.php" class="active" title="Classes">
+                <i class="fa-regular fa-address-book"></i>
+                <span>Classes</span>
+            </a>
+        </div>
+        <div class="top-nav-profile">
+            <div class="profile" onclick="profileDropdown()">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <div id="dropdown" class="dropdown-content">
+                    <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i>  Profile</button> 
+                    <form action="logout.php" method="POST">
+                        <button><i class="fa-solid fa-right-from-bracket"></i>  Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Hamburger button removed -->
+    </nav>
 
-<div class="container">
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
+    <div class="container">
         <!-- Sidebar --> 
         <div class="sidebar" id="sidebar">
             <header>
@@ -545,9 +1115,10 @@ $conn->close();
         <!-- Content Area -->
         <div class="content">
             <div class="content-header">
-                <div><br>
-                    <h1>Classes</h1><br>
+                <div>
+                    <h1>Classes</h1>
                 </div>
+                <!-- Profile in content header for larger screens -->
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
                         <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -558,81 +1129,122 @@ $conn->close();
                             </form>
                         </div>
                     </div>
+                </div>
+            </div>
+            
+            <div class="subjects-container">
+                <?php
+                if ($result->num_rows > 0) {
+                    while ($row = $result->fetch_assoc()) {
+                        echo "<a class='subject-button' href='select_quiz.php?subject_id=" . $row['subject_id'] . "'>" . $row['subject_name'] ."<span>". $row['subject_code'] ."</span></a>";
+                    }
+                } else {
+                    echo "<div class='no-quiz-con'>";
+                    echo "<p>No subjects enrolled yet.</p>";
+                    echo "</div>";
+                }
+                ?>
             </div>
         </div>
-<center>
-    <div><br><br>
-        <?php
-        if ($result->num_rows > 0) {
-            while ($row = $result->fetch_assoc()) {
-                echo "<a class='subject-button' href='select_quiz.php?subject_id=" . $row['subject_id'] . "'>" . $row['subject_name'] ."<br><span>". $row['subject_code'] ."</span></a>";
-            }
-        } else {
-            echo "<div class='no-quiz-con'>";
-            echo "<p>No subjects created yet.</p>";
-            echo "</div>";
-        }
-        ?>
-    </div>  
-   
+    </div>
 
-    </center>
-</div>
-</div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const content = document.querySelector('.content');
+            const toggleBtn = document.getElementById('toggleSidebar');
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const body = document.body;
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-    const sidebar = document.querySelector('.sidebar');
-    const content = document.querySelector('.content');
-    const toggleBtn = document.getElementById('toggleSidebar');
-
-    // Check if sidebar state is saved in localStorage
-    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-    
-    // Set initial state based on localStorage
-    if (isSidebarCollapsed) {
-        sidebar.classList.add('collapsed');
-        content.classList.add('expanded');
-    }
-
-    // Toggle sidebar when button is clicked
-    if (toggleBtn) {
-        toggleBtn.addEventListener('click', function() {
-            sidebar.classList.toggle('collapsed');
-            content.classList.toggle('expanded');
+            // Check if sidebar state is saved in localStorage
+            const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
             
-            // Save state to localStorage
-            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+            // Set initial state based on localStorage
+            if (isSidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                content.classList.add('expanded');
+            }
+
+            // Toggle sidebar when button is clicked
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function() {
+                    sidebar.classList.toggle('collapsed');
+                    content.classList.toggle('expanded');
+                    
+                    // Save state to localStorage
+                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+                });
+            }
+
+            // Dark Mode Functionality
+            // Check for saved dark mode preference
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            
+            // Apply dark mode if previously enabled
+            if (isDarkMode) {
+                body.classList.add('dark-mode');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            }
+
+            darkModeToggle.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                
+                // Update button icon and save preference
+                if (body.classList.contains('dark-mode')) {
+                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                    localStorage.setItem('darkMode', 'true');
+                } else {
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    localStorage.setItem('darkMode', 'false');
+                }
+            });
+
+            // Handle window resize
+            window.addEventListener('resize', function() {
+                // No need for mobile menu toggle anymore
+            });
+
+            // Handle touch events for better mobile interaction
+            // Improve touch targets for mobile
+            const touchElements = document.querySelectorAll('a, button, .subject-button');
+            touchElements.forEach(element => {
+                element.style.minHeight = '44px';
+                element.style.minWidth = '44px';
+                element.style.display = 'flex';
+                element.style.alignItems = 'center';
+                element.style.justifyContent = 'center';
+            });
+            
+            // Prevent zoom on double tap for buttons (iOS)
+            document.addEventListener('touchstart', function() {}, {passive: true});
         });
-    }
 
-    // Dark Mode Functionality - Auto apply based on localStorage
-    // Check for saved dark mode preference
-    const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        function profileDropdown() {
+            // Close all dropdowns first
+            const allDropdowns = document.querySelectorAll('.dropdown-content.show');
+            allDropdowns.forEach(drop => {
+                drop.classList.remove('show');
+            });
+            
+            // Toggle the clicked dropdown
+            const dropdowns = document.querySelectorAll('.dropdown-content');
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.toggle('show');
+            });
+        }
 
-    // Apply dark mode on page load if enabled
-    if (isDarkMode) {
-        document.body.classList.add('dark-mode');
-    }
-});
-
-function profileDropdown() {
-    document.getElementById("dropdown").classList.toggle("show");
-}
-
-// Close the dropdown if clicked outside
-window.onclick = function(event) {
-    if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
-        var dropdowns = document.getElementsByClassName("dropdown-content");
-        for (var i = 0; i < dropdowns.length; i++) {
-            var openDropdown = dropdowns[i];
-            if (openDropdown.classList.contains('show')) {
-                openDropdown.classList.remove('show');
+        // Close the dropdown if clicked outside
+        window.onclick = function(event) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic') && !event.target.closest('.profile')) {
+                var dropdowns = document.getElementsByClassName("dropdown-content");
+                for (var i = 0; i < dropdowns.length; i++) {
+                    var openDropdown = dropdowns[i];
+                    if (openDropdown.classList.contains('show')) {
+                        openDropdown.classList.remove('show');
+                    }
+                }
             }
         }
-    }
-}
-</script>
-
+    </script>
 </body>
 </html>

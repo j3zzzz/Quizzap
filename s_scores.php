@@ -77,7 +77,7 @@ $conn->close();
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="font/fontawesome-free-6.5.2-web/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="other resources/fontawesome-free-6.5.2-web/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <title>Rankings</title>
 
@@ -90,9 +90,10 @@ $conn->close();
         }
 
         body, html {
+            font-family: 'Fredoka';
             height: 100%;
-            overflow-x: hidden;
             transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
         }
 
         body.dark-mode {
@@ -101,9 +102,11 @@ $conn->close();
         }
 
         .container {
+            font-family: 'Fredoka';
             display: flex;
             min-height: 100vh;
-            position: relative;
+            flex-direction: column;
+            width: 100%;
         }
 
         /* Sidebar styling */
@@ -111,30 +114,24 @@ $conn->close();
             position: fixed;
             width: 250px;
             height: 100vh;
-            background-color: white;
-            color: #f8b500;
+            background-color: #f8b500;
+            color: #ffffff;
             padding: 2rem 1rem;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;
             transition: all 0.3s ease;
-            z-index: 999;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            transform: translateX(0);
+            z-index: 1000;
+            overflow-y: auto;
         }
 
         body.dark-mode .sidebar {
             background-color: #333;
-            color: #f8b500;
         }
 
         .sidebar.collapsed {
-            width: 90px;
+            width: 70px;
             padding: 2rem 0.5rem;
-        }
-
-        .sidebar.mobile-hidden {
-            transform: translateX(-100%);
         }
 
         .sidebar .logo {
@@ -143,6 +140,7 @@ $conn->close();
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .logo {
@@ -153,7 +151,7 @@ $conn->close();
         .toggle-btn {
             background: none;
             border: none;
-            color: #f8b500;
+            color: white;
             font-size: 1.5rem;
             cursor: pointer;
             display: flex;
@@ -162,40 +160,29 @@ $conn->close();
             padding: 5px;
             border-radius: 4px;
             transition: background 0.2s;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .toggle-btn:hover {
             background-color: rgba(255, 255, 255, 0.1);
         }
 
-        .mobile-toggle {
-            display: none;
-            position: fixed;
-            top: 1rem;
-            left: 1rem;
-            background: #f8b500;
-            color: white;
-            border: none;
-            padding: 0.5rem;
-            border-radius: 5px;
-            z-index: 1000;
-            font-size: 1.2rem;
-        }
-
         .sidebar .menu {
-            margin-top: 30%;
+            margin-top: 40%;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
+            gap: 0.5rem;
         }
 
-        .sidebar.collapsed .menu{
+        .sidebar.collapsed .menu {
             align-items: center;
             margin-top: 45%;
         }
 
         .sidebar .menu a {
-            color: #f8b500;
+            color: #ffffff;
             text-decoration: none;
             padding: 1rem;
             display: flex;
@@ -205,8 +192,8 @@ $conn->close();
             transition: background 0.3s;
             font-family: 'Fredoka';
             letter-spacing: 1px;
-            margin-bottom: .5rem;
             width: 100%;
+            min-height: 50px;
         }
 
         .sidebar.collapsed .menu a {
@@ -220,7 +207,7 @@ $conn->close();
             transition: opacity 0.2s;
             font-family: 'Fredoka';
             font-weight: bold;
-            font-size: 20px;
+            font-size: clamp(16px, 1.5vw, 20px);
         }
 
         .sidebar.collapsed .menu a span {
@@ -233,8 +220,8 @@ $conn->close();
 
         .sidebar .menu a:hover,
         .sidebar .menu a.active {
-            background-color: #f8b500;
-            color: white;
+            background-color: white;
+            color: #f8b500;
         }
 
         body.dark-mode .sidebar .menu a:hover,
@@ -248,15 +235,12 @@ $conn->close();
             min-width: 20px;
             text-align: center;
             font-size: clamp(1rem, 1.2vw, 1.5rem);
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .menu a i {
             margin-right: 0;
             font-size: 1.2rem;
-        }
-
-        .sidebar.collapsed .toggle-btn{
-            margin: auto;
         }
 
         .sidebar.collapsed .logo-img {
@@ -267,13 +251,139 @@ $conn->close();
             display: block !important;
         }
 
-       /* Dashboard content area */
-       .content {
+        .sidebar.collapsed hr {
+            margin: 0.5rem auto;
+            width: 50%;
+        }
+
+        /* Top Navigation for ALL screen sizes */
+        .top-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8b500;
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+        
+        body.dark-mode .top-nav {
+            background-color: #333;
+        }
+        
+        .top-nav .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .top-nav .logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .top-nav .menu {
+            display: flex !important;
+            position: static;
+            flex-direction: row;
+            background: none;
+            box-shadow: none;
+            width: auto;
+            padding: 0;
+            margin: 0;
+            gap: 1.5rem;
+        }
+        
+        .top-nav .menu a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1.4rem;
+            margin-right: 0;
+        }
+        
+        .top-nav .menu a span {
+            display: none;
+        }
+        
+        .top-nav .menu a:hover,
+        .top-nav .menu a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .top-nav .menu a::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .top-nav .menu a:hover::after {
+            opacity: 1;
+        }
+        
+        /* Profile in top nav */
+        .top-nav-profile {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .top-nav-profile .profile {
+            width: 45px;
+            height: 45px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f5a623;
+            font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            border: 2px solid white;
+        }
+        
+        body.dark-mode .top-nav-profile .profile {
+            background-color: #333;
+        }
+
+        /* Dashboard content area */
+        .content {
             flex: 1;
             background-color: #ffffff;
             padding: 2rem;
             margin-left: 250px;
             transition: margin-left 0.3s ease, background-color 0.3s;
+            width: calc(100% - 250px);
+            min-height: 100vh;
         }
 
         body.dark-mode .content {
@@ -282,28 +392,29 @@ $conn->close();
         }
 
         .content.expanded {
-            margin-left: 90px;
-        }
-
-        .content span {
-            font-family: Fredoka;
-            font-size: larger;
+            margin-left: 70px;
+            width: calc(100% - 70px);
         }
 
         .content-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            width: 100%;
         }
 
         .content-header h1 {
-            width: 830%;
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             color: #333333;
-            font-family: Fredoka;
-            padding: 10px;
+            font-family: 'Fredoka';
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
             border-bottom: 1.5px solid #F8B500;
+            padding-bottom: 0.5rem;
+            width: 100%;
         }
 
         body.dark-mode .content-header h1 {
@@ -312,10 +423,11 @@ $conn->close();
 
         .content-header p {
             color: #999;
-            font-size: 1rem;
+            font-size: clamp(0.9rem, 2vw, 1rem);
             margin-top: 0.5rem;
-            font-family: Fredoka;
+            font-family: 'Fredoka';
             font-weight: 500;
+            line-height: 1.4;
         }
 
         body.dark-mode .content-header p {
@@ -325,27 +437,33 @@ $conn->close();
         .content-header .actions {
             display: flex;
             align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
         }
 
-        .content-header .actions button {
+        .content-header .actions a {
             background-color: #F8B500;
             color: #ffffff;
             border: none;
             padding: 0.5rem 1rem;
             border-radius: 5px;
             font-size: 1rem;
+            text-decoration: none;
             cursor: pointer;
-            margin-right: 1rem;
-            font-family: Fredoka;
+            font-family: 'Fredoka';
+            white-space: nowrap;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
         }
 
-        .content-header .actions button:hover {
+        .content-header .actions a:hover {
             background-color: #e5941f;
         }
 
         .content-header .actions .profile {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background-color: #ffffff;
             border-radius: 50%;
             display: flex;
@@ -353,6 +471,9 @@ $conn->close();
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
         }
 
         body.dark-mode .content-header .actions .profile {
@@ -362,22 +483,32 @@ $conn->close();
         table {
             width: 100%;
             border-collapse: collapse;
-            font-family: Fredoka;
+            margin-top: 1rem;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            font-size: clamp(0.8rem, 1.2vw, 1rem);
         }
 
         th {
             background-color: #f8b500;
             color: white;
             font-weight: bold;
-            padding: 20px;
+            padding: clamp(15px, 2vw, 20px);
             text-align: center;
             font-family: Fredoka;
         }
 
         td {
-            padding: 20px;
+            padding: clamp(15px, 2vw, 20px);
             text-align: center;
             font-family: Fredoka;
+            color: #333;
+            word-wrap: break-word;
+        }
+
+        body.dark-mode td {
+            color: #e0e0e0;
         }
 
         tr:nth-child(even) {
@@ -392,80 +523,60 @@ $conn->close();
             background-color: #1a1a1a;
         }
 
-        table tr:first-child th:first-child {
-            border-top-left-radius: 10px;
+        table thead th:first-child {
+            border-top-left-radius: 10px !important;
         }
 
-        table tr:first-child th:last-child {
-            border-top-right-radius: 10px;
+        table thead th:last-child {
+            border-top-right-radius: 10px !important;
         }
 
-        table tr:last-child td:first-child {
+        table tbody tr:last-child td:first-child {
             border-bottom-left-radius: 10px;
         }
 
-        table tr:last-child td:last-child {
+        table tbody tr:last-child td:last-child {
             border-bottom-right-radius: 10px;
         }
 
-        .progress-bar-container {
-            width: 100%;
-            height: 20px;
-            background-color: #e6e6e6;
-            position: relative;
-        }
-
-        .progress-bar {
-            height: 100%;
-            background-color: #4CAF50;
-        }
-
-        .due-date {
-            text-align: right;
-            padding-right: 10px;
-        }
-
         .dropdown-content {
-            width: 300px;
-            right: 1%;
+            width: min(300px, 90vw);
+            right: 0;
             display: none;
             position: absolute;
             background-color: #F8B500;
             border-radius: 15px;
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
+            z-index: 1001;
             padding: 10px 0;
-            top: 15%;
+            top: 100%;
+            margin-top: 10px;
         }
 
         .dropdown-content:before {
-            content: " " ;
+            content: " ";
             position: absolute;
             background: #F8B500;
-            width: 30px;
-            height: 30px;
-            top: 1px;
-            right: 23px;
-            transform: rotate(135deg);
-            z-index: -1 !important;
+            width: 20px;
+            height: 20px;
+            top: -5px;
+            right: 20px;
+            transform: rotate(45deg);
+            z-index: -1;
         }
 
         .dropdown-content button {
-            background-color: white;     
-            justify-content: center;
-            align-items: center;
-            align-self: center;
-            font-family: Purple Smile;
-            font-size: 18px;
+            background-color: white;
+            font-family: 'Fredoka';
+            color: white;
+            font-size: clamp(16px, 2vw, 18px);
             font-weight: lighter;
             border: 2px solid white !important;
-            color: black;
-            width: 86% !important;
-            padding: 13px 20px !important;
-            margin: 8px 20px !important;
+            width: 90% !important;
+            padding: 12px 20px !important;
+            margin: 8px auto !important;
             text-decoration: none;
             display: block;
-            float: none;
             text-align: center;
             background-color: transparent;
             transition: background-color 0.3s, color 0.3s;
@@ -473,55 +584,491 @@ $conn->close();
             cursor: pointer;
             letter-spacing: 1px;
             box-sizing: border-box;
-            z-index: 1 !important;  
+            min-height: 44px;
         }
 
-        .dropdown-content a:hover, .dropdown-content button:hover{
+        .dropdown-content a:hover, .dropdown-content button:hover {
             background-color: white !important;
             color: #F8B500;
         }
 
         .show {
-             display: block;
-        }
-
-        /* width */
-        ::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
-        }
-
-        /* Track */
-        ::-webkit-scrollbar-track {
-          box-shadow: inset 0 0 5px grey; 
-          border-radius: 10px;
-        }
-         
-        /* Handle */
-        ::-webkit-scrollbar-thumb {
-          background: #CF5300; 
-          border-radius: 10px;
-        }
-
-        /* Handle on hover */
-        ::-webkit-scrollbar-thumb:hover {
-          background: #A34404; 
+            display: block;
         }
 
         .profile-pic {
             border: 2px solid #f8b500;
+            object-fit: cover;
         }
 
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: clamp(50px, 8vw, 60px);
+            height: clamp(50px, 8vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: background-color 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+            transform: scale(1.05);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
+        }
+
+        /* Updated Mobile Responsive Styles - Icon Navigation */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .top-nav {
+                display: flex;
+                height: 70px;
+                padding: 0.75rem;
+            }
+            
+            .top-nav .logo {
+                flex: 1;
+            }
+            
+            .top-nav .logo img {
+                height: 35px;
+            }
+            
+            .top-nav .menu {
+                gap: 1rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.6rem;
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.3rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .content {
+                padding: 1rem;
+                margin-left: 0;
+                width: 100%;
+                margin-top: 70px;
+            }
+            
+            .content.expanded {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .mobile-menu-toggle {
+                display: none;
+            }
+            
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .content-header > div:first-child {
+                flex: 1;
+                text-align: left;
+            }
+            
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: -10000px;
+            }
+            
+            .content-header h1 {
+                font-size: 1.5rem;
+                margin-bottom: 0.25rem;
+            }
+            
+            .content-header p {
+                font-size: 0.9rem;
+            }
+            
+            .dropdown-content {
+                right: 0;
+                left: auto;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+            
+            table, th, td {
+                padding: 0.9rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .top-nav {
+                height: 60px;
+                padding: 0.5rem;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.75rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.5rem;
+                min-height: 40px;
+                min-width: 40px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.2rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .content {
+                padding: 0.75rem;
+                margin-top: 60px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 5vh auto;
+            }
+            
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                padding: 0 0.5rem;
+            }
+            
+            .content-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .content-header p {
+                font-size: 0.85rem;
+            }
+            
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: 2%;
+            }
+            
+            .content-header .actions {
+                gap: 0.5rem;
+            }
+            
+            .content-header .actions a {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            
+            .dark-mode-toggle {
+                bottom: 10px;
+                right: 10px;
+                width: 50px;
+                height: 50px;
+            }
+            
+            table, th, td {
+                padding: 0.4rem;
+                font-size: 0.75rem;
+            }
+        }
+
+        @media (max-width: 425px) {
+            .top-nav {
+                padding: 0.4rem;
+                height: 55px;
+            }
+            
+            .top-nav .logo img {
+                height: 25px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.5rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.4rem;
+                min-height: 38px;
+                min-width: 38px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 55px;
+            }
+
+            .content-header {
+                margin-top: 0;
+                flex-direction: row;
+                align-items: flex-start;
+                padding: 0 0.5rem;
+            }
+            
+            .content-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .content-header p {
+                font-size: 0.85rem;
+            }
+
+            /* Hide profile in content header on mobile */
+            .content-header .actions {
+                display: none;
+            }
+            
+            .dropdown-content {
+                right: 5%;
+            }
+            
+            .content-header .actions {
+                gap: 0.5rem;
+            }
+            
+            .content-header .actions a {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            
+            /* Modal adjustments for small screens */
+            .modal-content {
+                width: 95%;
+                padding: 25px;
+                margin: 2vh auto;
+            }
+            
+            /* Additional 425px specific fixes */
+            .content-header .actions {
+                flex-wrap: wrap;
+                justify-content: flex-end;
+            }
+            
+            .content-header .actions a {
+                font-size: 0.85rem;
+                padding: 0.35rem 0.7rem;
+            }
+
+            table, th, td {
+                padding: 0.3rem;
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .top-nav {
+                padding: 0.3rem;
+                height: 50px;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.4rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.3rem;
+                min-height: 36px;
+                min-width: 36px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 50px;
+            }
+            
+            .content-header .actions a {
+                padding: 0.4rem 0.8rem;
+                font-size: 0.9rem;
+            }
+            
+            .content-header .actions {
+                justify-content: center;
+                margin-top: 0.5rem;
+            }
+            
+            .dropdown-content {
+                width: 500%;
+                right: 5%;
+            }
+
+            .dropdown-content button{
+                font-size: 11px;
+                width: 90%;
+            }
+
+            /* Additional 375px specific fixes */
+            .content-header {
+                margin-top: 0;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.75rem;
+            }
+            
+            .content-header > div:first-child {
+                width: 100%;
+            }
+            
+            .content-header .actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            table, th, td {
+                padding: 0.3rem;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* For screens larger than 768px - Show sidebar and content header profile */
+        @media (min-width: 769px) {
+            .top-nav {
+                display: none;
+            }
+            
+            .content-header .actions {
+                display: flex;
+            }
+        }
+
+        /* Utility classes for better responsive behavior */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Improve focus accessibility */
+        button:focus-visible,
+        a:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Prevent horizontal scroll */
+        body {
+            overflow-x: hidden;
+        }
     </style>    
 </head>
 <body>
+    <!-- Top Navigation for Mobile - UPDATED WITH PROFILE -->
+    <nav class="top-nav" id="topNav">
+        <div class="logo">
+            <img src="img/logo 6.png" alt="QuizZap Logo">
+        </div>
+        <div class="menu" id="topNavMenu">
+            <a href="s_Classes.php" title="Classes">
+                <i class="fa-solid fa-list"></i>
+                <span>Classes</span>
+            </a>
+            <a href="select_quiz.php?subject_id=<?php echo $subject_id; ?>" title="Quizzes">
+                <i class="fa-regular fa-circle-question"></i>
+                <span>Quizzes</span>
+            </a>
+            <a href="s_scores.php?subject_id=<?php echo $subject_id;?>" class="active" title="Scores">
+                <i class="fa-solid fa-list-ol"></i>
+                <span>Scores</span>
+            </a>
+        </div>
+        <div class="top-nav-profile">
+            <div class="profile" onclick="profileDropdown()">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <div id="dropdown" class="dropdown-content">
+                    <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i>  Profile</button> 
+                    <form action="logout.php" method="POST">
+                        <button><i class="fa-solid fa-right-from-bracket"></i>  Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- Hamburger button removed -->
+    </nav>
 
-<div class="container">
-        <!-- Mobile Toggle Button -->
-        <button class="mobile-toggle" onclick="toggleMobileSidebar()">
-            <i class="fas fa-bars"></i>
-        </button>
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
 
+    <div class="container">
         <!-- Sidebar -->
         <div class="sidebar" id="sidebar">
             <header>
@@ -529,11 +1076,11 @@ $conn->close();
                     <i class="fas fa-bars"></i>
                 </button>
                 <div class="logo">
-                    <img src="img/logo1.png" width="200px" height="80px" class="logo-img">
-                    <img src="img/logo 2.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
+                    <img src="img/logo4.png" width="200px" height="80px" class="logo-img">
+                    <img src="img/logo 6.png" width="50px" height="50px" class="logo-icon" style="display: none; margin-top: 10%;">
                 </div>
             </header>
-            <hr style="border: 1px solid #f8b500;">
+            <hr style="border: 1px solid white;">
             <div class="menu">
                 <a href="s_Classes.php" title="Classes">
                     <i class="fa-solid fa-list"></i>
@@ -550,12 +1097,13 @@ $conn->close();
             </div>
         </div>
 
-    <!-- Content Area -->
-    <div class="content">
+        <!-- Content Area -->
+        <div class="content">
             <div class="content-header">
-                <div><br>
-                    <h1><?php echo $subject_name; ?></h1><br>
+                <div>
+                    <h1><?php echo $subject_name; ?></h1>
                 </div>
+                <!-- Profile in content header for larger screens -->
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
                         <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -568,76 +1116,62 @@ $conn->close();
                     </div>
                 </div>
             </div>
-    <center>
-
-        <table>
-            <tr>
-                <th>QUIZZES</th>
-                <th>SCORE</th>
-            </tr>
-
-            <?php
-            if ($result->num_rows > 0) {
-                while ($row = $result->fetch_assoc()) { ?>
-            <tr>
-                <td><?php echo htmlspecialchars($row['title']); ?></td>
-                <td><?php echo htmlspecialchars($row['score']); ?></td>
-            </tr>
-
-                <?php }
-            } else { ?>    
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>QUIZZES</th>
+                        <th>SCORE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    if ($result->num_rows > 0) {
+                        while ($row = $result->fetch_assoc()) { ?>
+                    <tr>
+                        <td><?php echo htmlspecialchars($row['title']); ?></td>
+                        <td><?php echo htmlspecialchars($row['score']); ?></td>
+                    </tr>
+                        <?php }
+                    } else { ?>    
                     <tr>
                         <td colspan="2">You don't have any taken quizzes yet.</td>
                     </tr>    
-            <?php } ?>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
-        </table>
-</div>
-
-<script>
-    
-    document.addEventListener('DOMContentLoaded', function() {
-        const sidebar = document.querySelector('.sidebar');
+    <script>
+        // Sidebar toggle functionality
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const sidebar = document.getElementById('sidebar');
         const content = document.querySelector('.content');
-        const toggleBtn = document.getElementById('toggleSidebar');
 
-        // Check if sidebar state is saved in localStorage
-        const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-        
-        // Set initial state based on localStorage
-        if (isSidebarCollapsed) {
-            sidebar.classList.add('collapsed');
-            content.classList.add('expanded');
-        }
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('collapsed');
+            content.classList.toggle('expanded');
+        });
 
-        // Toggle sidebar when button is clicked
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function() {
-                sidebar.classList.toggle('collapsed');
-                content.classList.toggle('expanded');
-                
-                // Save state to localStorage
-                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        // Profile dropdown functionality
+        function profileDropdown() {
+            // Close all dropdowns first
+            const allDropdowns = document.querySelectorAll('.dropdown-content.show');
+            allDropdowns.forEach(drop => {
+                drop.classList.remove('show');
             });
-        }
-
-        // Dark Mode Functionality - Auto apply based on localStorage
-        // Check for saved dark mode preference
-        const isDarkMode = localStorage.getItem('darkMode') === 'true';
-
-        // Apply dark mode on page load if enabled
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
-        }
-    });
-
-    function profileDropdown() {
-            document.getElementById("dropdown").classList.toggle("show");
+            
+            // Toggle the clicked dropdown
+            const dropdowns = document.querySelectorAll('.dropdown-content');
+            dropdowns.forEach(dropdown => {
+                dropdown.classList.toggle('show');
+            });
         }
 
         // Close the dropdown if clicked outside
         window.onclick = function(event) {
-            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic') && !event.target.closest('.profile')) {
                 var dropdowns = document.getElementsByClassName("dropdown-content");
                 for (var i = 0; i < dropdowns.length; i++) {
                     var openDropdown = dropdowns[i];
@@ -648,8 +1182,57 @@ $conn->close();
             }
         }
 
+        // Dark Mode Toggle Functionality
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
 
-</script>
+        // Check for saved dark mode preference
+        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+        
+        // Apply dark mode if previously enabled
+        if (isDarkMode) {
+            body.classList.add('dark-mode');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+        }
 
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            // Update button icon and save preference
+            if (body.classList.contains('dark-mode')) {
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('darkMode', 'false');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            // No need for mobile menu toggle anymore
+        });
+
+        // Handle touch events for better mobile interaction
+        document.addEventListener('DOMContentLoaded', function() {
+            // Improve touch targets for mobile
+            const touchElements = document.querySelectorAll('a, button');
+            touchElements.forEach(element => {
+                element.style.minHeight = '44px';
+                element.style.minWidth = '44px';
+                element.style.display = 'flex';
+                element.style.alignItems = 'center';
+                element.style.justifyContent = 'center';
+            });
+            
+            // Prevent zoom on double tap for buttons (iOS)
+            document.addEventListener('touchstart', function() {}, {passive: true});
+        });
+
+        // Optimize sidebar for touch
+        sidebar.addEventListener('touchstart', function(e) {
+            e.stopPropagation();
+        }, {passive: true});
+    </script>
 </body>
 </html>

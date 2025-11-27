@@ -673,9 +673,9 @@ $conn->close();
         padding: 5px 2px;
         border: 2px solid #dfa200;
         position: absolute;
-        z-index: 5;
-        bottom: 100%;
-        left: 50%;
+        z-index: 10000;
+        bottom: 70%;
+        left: 70%;
         transform: translateX(-50%);
         margin-bottom: 5px;
         opacity: 0;
@@ -1504,6 +1504,25 @@ $conn->close();
         .content-header .actions {
             display: flex;
         }
+
+        .dropdown-content {
+            width: min(260px, 80vw);
+            right: 5px;
+            margin-top: 5px;
+        }
+        
+        .dropdown-content:before {
+            right: 15px;
+            width: 14px;
+            height: 14px;
+            top: -7px;
+        }
+        
+        .dropdown-content button {
+            font-size: 15px;
+            padding: 9px 14px;
+            min-height: 40px;
+        }
     }
 
     @media (max-width: 576px) {
@@ -1674,7 +1693,28 @@ $conn->close();
         }
         
         .dropdown-content {
-            right: 5%;
+            width: min(240px, 75vw);
+            right: 2px;
+            border-radius: 10px;
+        }
+        
+        .dropdown-content:before {
+            right: 12px;
+            width: 12px;
+            height: 12px;
+            top: -6px;
+        }
+        
+        .dropdown-content button {
+            font-size: 14px;
+            padding: 8px 12px;
+            min-height: 38px;
+            margin: 4px auto;
+        }
+        
+        .dropdown-content button i {
+            margin-right: 4px;
+            font-size: 14px;
         }
         
         .content-header .actions {
@@ -1808,13 +1848,19 @@ $conn->close();
         }
         
         .dropdown-content {
-            width: 500%;
-            right: 5%;
+            width: min(220px, 70vw);
+            right: 0;
         }
-
-        .dropdown-content button{
-            font-size: 11px;
-            width: 90%;
+        
+        .dropdown-content:before {
+            right: 10px;
+        }
+        
+        .dropdown-content button {
+            font-size: 13px;
+            padding: 7px 10px;
+            min-height: 36px;
+            letter-spacing: 0.3px;
         }
 
         /* Additional 375px specific fixes */
@@ -1998,7 +2044,7 @@ $conn->close();
                             <h3>The ZAP! Starts Now!</h3>
                             <h5>Start answering quizzes now!</h5>
                         </div>    
-                        <br><br>
+                        <br>
 
                         <div id = "quizzes-cont">
                             <?php

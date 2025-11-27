@@ -480,13 +480,20 @@ $conn->close();
             background-color: #333;
         }
 
-        table {
+        /* UPDATED TABLE STYLES FOR BETTER RESPONSIVENESS */
+        .table-container {
             width: 100%;
-            border-collapse: collapse;
             margin-top: 1rem;
             border-radius: 10px;
             overflow: hidden;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 300px;
             font-size: clamp(0.8rem, 1.2vw, 1rem);
         }
 
@@ -494,25 +501,30 @@ $conn->close();
             background-color: #f8b500;
             color: white;
             font-weight: bold;
-            padding: clamp(15px, 2vw, 20px);
+            padding: clamp(12px, 1.5vw, 18px);
             text-align: center;
             font-family: Fredoka;
+            position: sticky;
+            top: 0;
+            z-index: 10;
         }
 
         td {
-            padding: clamp(15px, 2vw, 20px);
+            padding: clamp(12px, 1.5vw, 18px);
             text-align: center;
             font-family: Fredoka;
             color: #333;
             word-wrap: break-word;
+            border-bottom: 1px solid #e0e0e0;
         }
 
         body.dark-mode td {
             color: #e0e0e0;
+            border-bottom: 1px solid #444;
         }
 
         tr:nth-child(even) {
-            background-color: #f2f2f2;
+            background-color: #f9f9f9;
         }
 
         body.dark-mode tr:nth-child(even) {
@@ -524,11 +536,11 @@ $conn->close();
         }
 
         table thead th:first-child {
-            border-top-left-radius: 10px !important;
+            border-top-left-radius: 10px;
         }
 
         table thead th:last-child {
-            border-top-right-radius: 10px !important;
+            border-top-right-radius: 10px;
         }
 
         table tbody tr:last-child td:first-child {
@@ -537,6 +549,87 @@ $conn->close();
 
         table tbody tr:last-child td:last-child {
             border-bottom-right-radius: 10px;
+        }
+
+        /* Empty state styling */
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: #999;
+        }
+
+        body.dark-mode .empty-state {
+            color: #b0b0b0;
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .empty-state .subtext {
+            font-size: 0.9rem;
+        }
+
+        /* Score badge styling - REMOVED COLOR CODING */
+        .score-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            background-color: #f9d675ff;
+            color: #333;
+            font-weight: bold;
+            min-width: 50px;
+        }
+
+        body.dark-mode .score-badge {
+            background-color: #333;
+            color: #e0e0e0;
+        }
+
+        /* Card layout for small screens */
+        .card-view {
+            display: none;
+        }
+        
+        .score-card {
+            background-color: #ffffff;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        body.dark-mode .score-card {
+            background-color: #2d2d2d;
+        }
+        
+        .score-card-info {
+            flex: 1;
+        }
+        
+        .score-card-title {
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+            color: #333;
+        }
+        
+        body.dark-mode .score-card-title {
+            color: #e0e0e0;
+        }
+        
+        .score-card-score {
+            font-size: 1.1rem;
+            font-weight: bold;
         }
 
         .dropdown-content {
@@ -590,6 +683,10 @@ $conn->close();
         .dropdown-content a:hover, .dropdown-content button:hover {
             background-color: white !important;
             color: #F8B500;
+        }
+
+        .dropdown-content button i{
+            margin-right: 4px;
         }
 
         .show {
@@ -723,13 +820,20 @@ $conn->close();
                 left: auto;
             }
             
+            .table-container {
+                border-radius: 8px;
+                box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            }
+            
             table {
                 display: block;
                 overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
             }
             
-            table, th, td {
-                padding: 0.9rem;
+            th, td {
+                padding: 10px 8px;
+                font-size: 0.85rem;
             }
         }
 
@@ -813,7 +917,7 @@ $conn->close();
                 height: 50px;
             }
             
-            table, th, td {
+            th, td {
                 padding: 0.4rem;
                 font-size: 0.75rem;
             }
@@ -874,7 +978,28 @@ $conn->close();
             }
             
             .dropdown-content {
-                right: 5%;
+                width: min(240px, 75vw);
+                right: 2px;
+                border-radius: 10px;
+            }
+            
+            .dropdown-content:before {
+                right: 12px;
+                width: 12px;
+                height: 12px;
+                top: -6px;
+            }
+            
+            .dropdown-content button {
+                font-size: 14px;
+                padding: 8px 12px;
+                min-height: 38px;
+                margin: 4px auto;
+            }
+            
+            .dropdown-content button i {
+                margin-right: 4px;
+                font-size: 14px;
             }
             
             .content-header .actions {
@@ -904,7 +1029,7 @@ $conn->close();
                 padding: 0.35rem 0.7rem;
             }
 
-            table, th, td {
+            th, td {
                 padding: 0.3rem;
                 font-size: 0.7rem;
             }
@@ -955,13 +1080,19 @@ $conn->close();
             }
             
             .dropdown-content {
-                width: 500%;
-                right: 5%;
+                width: min(220px, 70vw);
+                right: 0;
             }
-
-            .dropdown-content button{
-                font-size: 11px;
-                width: 90%;
+            
+            .dropdown-content:before {
+                right: 10px;
+            }
+            
+            .dropdown-content button {
+                font-size: 13px;
+                padding: 7px 10px;
+                min-height: 36px;
+                letter-spacing: 0.3px;
             }
 
             /* Additional 375px specific fixes */
@@ -981,9 +1112,24 @@ $conn->close();
                 justify-content: space-between;
             }
             
-            table, th, td {
+            th, td {
                 padding: 0.3rem;
                 font-size: 0.7rem;
+            }
+            
+            /* Card view for very small screens */
+            .table-container {
+                background: transparent;
+                box-shadow: none;
+                overflow-x: visible;
+            }
+            
+            table {
+                display: none;
+            }
+            
+            .card-view {
+                display: block;
             }
         }
 
@@ -1102,6 +1248,7 @@ $conn->close();
             <div class="content-header">
                 <div>
                     <h1><?php echo $subject_name; ?></h1>
+                    <p>Your quiz scores for this subject</p>
                 </div>
                 <!-- Profile in content header for larger screens -->
                 <div class="actions">
@@ -1117,29 +1264,76 @@ $conn->close();
                 </div>
             </div>
             
-            <table>
-                <thead>
-                    <tr>
-                        <th>QUIZZES</th>
-                        <th>SCORE</th>
-                    </tr>
-                </thead>
-                <tbody>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>QUIZZES</th>
+                            <th>SCORE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        if ($result->num_rows > 0) {
+                            while ($row = $result->fetch_assoc()) { 
+                                $score = htmlspecialchars($row['score']);
+                        ?>
+                        <tr>
+                            <td><?php echo htmlspecialchars($row['title']); ?></td>
+                            <td>
+                                <span class="score-badge">
+                                    <?php echo $score; ?>
+                                </span>
+                            </td>
+                        </tr>
+                        <?php 
+                            }
+                        } else { 
+                        ?>    
+                        <tr>
+                            <td colspan="2">
+                                <div class="empty-state">
+                                    <i class="fa-solid fa-clipboard-list"></i>
+                                    <p>No quiz scores yet</p>
+                                    <p class="subtext">Take some quizzes to see your scores here</p>
+                                </div>
+                            </td>
+                        </tr>    
+                        <?php } ?>
+                    </tbody>
+                </table>
+                
+                <!-- Card view for very small screens -->
+                <div class="card-view">
                     <?php
                     if ($result->num_rows > 0) {
-                        while ($row = $result->fetch_assoc()) { ?>
-                    <tr>
-                        <td><?php echo htmlspecialchars($row['title']); ?></td>
-                        <td><?php echo htmlspecialchars($row['score']); ?></td>
-                    </tr>
-                        <?php }
-                    } else { ?>    
-                    <tr>
-                        <td colspan="2">You don't have any taken quizzes yet.</td>
-                    </tr>    
+                        // Reset result pointer
+                        $result->data_seek(0);
+                        while ($row = $result->fetch_assoc()) { 
+                            $score = htmlspecialchars($row['score']);
+                    ?>
+                    <div class="score-card">
+                        <div class="score-card-info">
+                            <div class="score-card-title"><?php echo htmlspecialchars($row['title']); ?></div>
+                        </div>
+                        <div class="score-card-score">
+                            <span class="score-badge">
+                                <?php echo $score; ?>
+                            </span>
+                        </div>
+                    </div>
+                    <?php 
+                        }
+                    } else { 
+                    ?>
+                    <div class="empty-state">
+                        <i class="fa-solid fa-clipboard-list"></i>
+                        <p>No quiz scores yet</p>
+                        <p class="subtext">Take some quizzes to see your scores here</p>
+                    </div>
                     <?php } ?>
-                </tbody>
-            </table>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -1233,6 +1427,30 @@ $conn->close();
         sidebar.addEventListener('touchstart', function(e) {
             e.stopPropagation();
         }, {passive: true});
+
+        // Additional function to handle table responsiveness
+        function handleTableResponsiveness() {
+            const tableContainer = document.querySelector('.table-container');
+            const table = document.querySelector('table');
+            const cardView = document.querySelector('.card-view');
+            
+            // Check if we're on a very small screen
+            if (window.innerWidth <= 375) {
+                table.style.display = 'none';
+                cardView.style.display = 'block';
+            } else {
+                table.style.display = 'table';
+                cardView.style.display = 'none';
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            handleTableResponsiveness();
+            
+            // Update on window resize
+            window.addEventListener('resize', handleTableResponsiveness);
+        });
     </script>
 </body>
 </html>

@@ -1,5 +1,7 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Manila');
+
 if (strpos($_SESSION['account_number'], 'S') !== 0) {
     header("Location: login.php");
     exit();
@@ -58,11 +60,17 @@ $attempt_id = null;
 $remaining_time = null;
 $prefilledAnswers = [];
 
+$showModal = false;
+$modalTitle = "";
+$modalMessage = "";
+$modalRedirect = "";
+
 error_log("Student query result: " . ($student ? "Found student ID: " . $student['student_id'] : "No student found"));
 
 if ($student) {
+    // Get the latest attempt (completed or not)
     $attemptQuery = "SELECT * FROM quiz_attempts 
-                    WHERE quiz_id = ? AND account_number = ? AND completed = 0
+                    WHERE quiz_id = ? AND account_number = ? 
                     ORDER BY attempt_id DESC LIMIT 1";
     $stmt = $conn->prepare($attemptQuery);
     $stmt->bind_param("is", $quiz_id, $student_id);
@@ -70,44 +78,70 @@ if ($student) {
     $existingAttempt = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
-    error_log("Existing attempt query result: " . ($existingAttempt ? "Found attempt ID: " . $existingAttempt['attempt_id'] : "No existing attempt found"));
+    // DEBUG: Check quiz timer value
+    error_log("🔍 DEBUG - Quiz timer value: " . $quiz['timer'] . " minutes");
+    error_log("🔍 DEBUG - Quiz timer in seconds: " . ($quiz['timer'] * 60));
     
-if ($student && $existingAttempt) {
-    // EXISTING ATTEMPT - Resume quiz
-    $attempt_id = $existingAttempt['attempt_id'];
-    
-    // Check if time_remaining is already stored in database
-    if ($existingAttempt['time_remaining'] !== null) {
-        // Use the stored remaining time
-        $remaining_time = max(0, (int)$existingAttempt['time_remaining']);
-        error_log("Using stored remaining time: " . $remaining_time . "s");
-    } else {
-        // Calculate remaining time based on elapsed time
+    /*
+    if ($existingAttempt && $existingAttempt['completed']) {
+        $error = "You have already taken this quiz. Only one attempt is allowed.";
+        echo '<script>
+            showAlertModal("Quiz Attempt", "'.addslashes($error).'", "select_quiz.php?subject_id='.$subject_id.'");
+        </script>';    
+        exit();
+    }
+    */
+    if ($existingAttempt && !$existingAttempt['completed']) {
+        // EXISTING ATTEMPT - ALWAYS calculate from original start time
+        $attempt_id = $existingAttempt['attempt_id'];
+        
+        // Calculate elapsed time from the original attempt_time
         $start_time = strtotime($existingAttempt['attempt_time']);
         $current_time = time();
+
+        // DEBUG: Log raw values
+        error_log("🔍 DEBUG - Attempt Time (DB): " . $existingAttempt['attempt_time']);
+        error_log("🔍 DEBUG - Start timestamp: " . $start_time);
+        error_log("🔍 DEBUG - Current timestamp: " . $current_time);
+
         $elapsed = $current_time - $start_time;
-        $quiz_duration_seconds = $quiz['timer'] * 60;
+        error_log("🔍 DEBUG - Elapsed seconds: " . $elapsed);
         
-        // Calculate remaining time based on elapsed time
+        $quiz_duration_seconds = $quiz['timer'] * 60;  // Convert minutes to seconds
+        error_log("🔍 DEBUG - Calculated remaining (before max): " . $remaining_time);
+        
+        // Calculate remaining time (cannot be negative)
         $remaining_time = max(0, $quiz_duration_seconds - $elapsed);
+        error_log("🔍 DEBUG - Calculated remaining (before max): " . $remaining_time);
+
+        error_log("ANTI-CHEAT Timer Calculation: " . 
+                 "Quiz Duration: {$quiz['timer']} min ({$quiz_duration_seconds}s), " .
+                 "Start Time: " . date('Y-m-d H:i:s', $start_time) . ", " .
+                 "Current Time: " . date('Y-m-d H:i:s', $current_time) . ", " .
+                 "Elapsed: {$elapsed}s, " .
+                 "Remaining: {$remaining_time}s (" . floor($remaining_time/60) . ":" . ($remaining_time%60) . ")");
         
-        error_log("Timer calculation - Start: " . date('Y-m-d H:i:s', $start_time) . 
-                  ", Current: " . date('Y-m-d H:i:s', $current_time) . 
-                  ", Elapsed: " . $elapsed . "s, Total duration: " . $quiz_duration_seconds . "s, Remaining: " . $remaining_time . "s");
-
-        // Update the database with the calculated remaining time
+        // If time has expired, block access and mark as completed
+        if ($remaining_time <= 0) {
+            error_log("ANTI-CHEAT: Time expired - auto-completing quiz");
+            
+            // Mark the quiz as completed with 0 score
+            $completeStmt = $conn->prepare("UPDATE quiz_attempts SET completed = 1, score = 0 WHERE attempt_id = ?");
+            $completeStmt->bind_param("i", $attempt_id);
+            $completeStmt->execute();
+            $completeStmt->close();
+    
+            exit();
+        }
+        
+        // Update time_remaining in database
         $updateTimeQuery = "UPDATE quiz_attempts SET time_remaining = ? WHERE attempt_id = ?";
-        $updateStmt = $conn->prepare($updateTimeQuery);
-        $updateStmt->bind_param("ii", $remaining_time, $attempt_id);
-        $updateStmt->execute();
-        $updateStmt->close();
-    }
-
-    // If time has expired, set to 0
-    if ($remaining_time <= 0) {
-        $remaining_time = 0;
-        error_log("⚠️ Time expired!");
-    }
+        $stmt = $conn->prepare($updateTimeQuery);
+        $stmt->bind_param("ii", $remaining_time, $attempt_id);
+        $stmt->execute();
+        $stmt->close();
+        error_log("✅ Updated time_remaining in DB: " . $remaining_time);
+        
         
         // Load saved answers
         $answersQuery = "SELECT question_id, answer FROM student_answers 
@@ -116,42 +150,51 @@ if ($student && $existingAttempt) {
         $stmt->bind_param("ii", $quiz_id, $student['student_id']);
         $stmt->execute();
         $savedAnswers = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-        $stmt->close();
         
-        // Convert to format expected by frontend
         foreach ($savedAnswers as $answer) {
             $decoded = json_decode($answer['answer'], true);
             $prefilledAnswers[$answer['question_id']] = ($decoded !== null) ? $decoded : $answer['answer'];
         }
-    } else {
-        // NEW ATTEMPT - Create new attempt record
-        $insertAttempt = "INSERT INTO quiz_attempts (quiz_id, account_number, attempt_time) 
-                        VALUES (?, ?, NOW())";
-        $stmt = $conn->prepare($insertAttempt);
-        $full_time = $quiz['timer'] * 60;
-        $stmt->bind_param("is", $quiz_id, $student_id);
+        $stmt->close();
         
-        if ($stmt->execute()) {
-            $attempt_id = $conn->insert_id;
-            $remaining_time = $full_time; // Full time for new attempt
-            $prefilledAnswers = []; // No saved answers for new attempt
-            
-            error_log("New attempt created with ID: " . $attempt_id);
-            error_log("Full time: " . $remaining_time . " seconds");
-        } else {
-            error_log("Error creating new attempt: " . $stmt->error);
-            // Fallback to full time if creation fails
-            $remaining_time = $quiz['timer'] * 60;
-        }
+    } else {
+        // NEW ATTEMPT - Create with full time
+        $quiz_duration_seconds = $quiz['timer'] * 60;  // Convert minutes to seconds
+        
+        $insertAttempt = "INSERT INTO quiz_attempts (quiz_id, account_number, attempt_time, time_remaining) 
+                        VALUES (?, ?, NOW(), ?)";
+        $stmt = $conn->prepare($insertAttempt);
+        $stmt->bind_param("isi", $quiz_id, $student_id, $quiz_duration_seconds);
+        $stmt->execute();
+        $attempt_id = $conn->insert_id;
+        $remaining_time = $quiz_duration_seconds;
+        $prefilledAnswers = [];
+        
+        error_log("New attempt created - ID: {$attempt_id}, Full Duration: {$quiz['timer']} min ({$quiz_duration_seconds}s)");
         $stmt->close();
     }
 }
 
+// Final fallback - should not normally reach here
 if (!isset($remaining_time)) {
     $remaining_time = $quiz['timer'] * 60;
-    error_log("⚠️ remaining_time was null, set to default: " . $remaining_time);
+    error_log("WARNING: Fallback remaining_time used: " . $remaining_time);
 }
 
+// Check availability
+$currentDate = date('Y-m-d H:i:s');
+if ($quiz['start_date'] && $currentDate < $quiz['start_date']) {
+    $showModal = true;
+    $modalTitle = "Quiz Not Available";
+    $modalMessage = "This quiz is not available yet. It will be available starting " . date('M j, Y g:i A', strtotime($quiz['start_date']));
+    $modalRedirect = "select_quiz.php?subject_id=" . $subject_id;
+} 
+else if ($quiz['end_date'] && $currentDate > $quiz['end_date']) {
+    $showModal = true;
+    $modalTitle = "Quiz Not Available";
+    $modalMessage = "This quiz is no longer available. It ended on " . date('M j, Y g:i A', strtotime($quiz['end_date']));
+    $modalRedirect = "select_quiz.php?subject_id=" . $subject_id;
+}
 
 $sql = "SELECT * FROM questions WHERE quiz_id = $quiz_id";
 $result = $conn->query($sql);
@@ -388,8 +431,13 @@ $conn->close();
         }
 
         .answer-button.selected {
-              background-color: #f8b500;
-              color: white;
+             background-color: #f8b500;
+            color: white;
+        }
+
+        body.dark-mode .answer-button.selected {
+            background-color: #f8b500 !important;
+            color: white !important;
         }
 
         .answer-input {
@@ -811,15 +859,350 @@ $conn->close();
         ::-webkit-scrollbar-thumb:hover {
           background: #A34404; 
         }
+
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            font-family: Fredoka;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease-out;
+            position: relative;
+            z-index: 1001;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #reloadConfirmModal {
+            z-index: 9999 !important; 
+            background-color: rgba(0,0,0,0.8) !important;
+            backdrop-filter: blur(2px);
+        }
+
+        #reloadConfirmModal .modal-content {
+            z-index: 10000 !important;
+            border: 2px solid #f8b500;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .modal-confirm-btn {
+            background-color: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: Fredoka;
+        }
+
+        .modal-confirm-btn:hover {
+            background-color: #c82333;
+        }
+
+        .modal-cancel-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-family: Fredoka;
+        }
+
+        .modal-cancel-btn:hover {
+            background-color: #5a6268;
+        }
+
+        #timeUpModal {
+            z-index: 10001 !important;
+            background-color: rgba(0,0,0,0.85) !important;
+            backdrop-filter: blur(3px);
+        }
+
+        #timeUpModal .modal-content {
+            z-index: 10002 !important;
+            border: 3px solid #f8b500;
+            animation: modalPulse 0.5s ease-out;
+        }
+
+        #timeUpModal h2 {
+            font-family: Fredoka;
+            color: #f8b500;
+        }
+
+        #timeUpModal p {
+            font-family: Fredoka;
+            color: #333;
+        }
+
+        body.dark-mode #timeUpModal p {
+            color: #e0e0e0;
+        }
+
+        #timeUpModal .modal-confirm-btn {
+            background-color: #f8b500;
+            font-weight: bold;
+            padding: 12px 20px;
+            font-size: 18px;
+            box-shadow: 0 4px 0 0 #BC8900;
+            transition: all 0.2s;
+        }
+
+        #timeUpModal .modal-confirm-btn:hover {
+            background-color: #e0a500;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 0 #BC8900;
+        }
+
+        #timeUpModal .modal-confirm-btn:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 0 #BC8900;
+        }
+
+        /* Pulse animation for attention */
+        @keyframes modalPulse {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* Quiz Alert Modal - matches allZapped style */
+        #quizAlertModal {
+            position: fixed;
+            z-index: 10001;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.6);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #quizAlertModal .modal-content {
+            font-family: Fredoka;
+            background-color: white;
+            padding: 40px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        body.dark-mode #quizAlertModal .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        #quizAlertModal h2 {
+            font-family: Fredoka;
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        body.dark-mode #quizAlertModal h2 {
+            color: #e0e0e0;
+        }
+
+        #quizAlertModal p {
+            font-family: Fredoka;
+            color: #666;
+            font-size: 18px;
+            line-height: 1.6;
+            margin-bottom: 25px;
+        }
+
+        body.dark-mode #quizAlertModal p {
+            color: #b0b0b0;
+        }
+
+        .modal-close-btn {
+            background-color: #f8b500;
+            color: white;
+                border: none;
+                padding: 12px 30px;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 18px;
+                font-family: Fredoka;
+                font-weight: bold;
+                box-shadow: 0 4px 0 0 #BC8900;
+                transition: all 0.2s;
+            }
+
+            .modal-close-btn:hover {
+                background-color: #e6a500;
+                transform: translateY(-2px);
+                box-shadow: 0 6px 0 0 #BC8900;
+            }
+
+            .modal-close-btn:active {
+                transform: translateY(2px);
+                box-shadow: 0 2px 0 0 #BC8900;
+            }
     </style>
 
+    <script>
+        function showAlertModal(title, message, redirectUrl = null) {
+            document.getElementById("modalTitle").textContent = title;
+            document.getElementById("modalMessage").textContent = message;
+            document.getElementById("quizAlertModal").style.display = "flex";
+            
+            if (redirectUrl) {
+                document.getElementById("quizAlertModal").dataset.redirect = redirectUrl;
+            }
+        }
+
+        function handleModalClose() {
+            const modal = document.getElementById("quizAlertModal");
+            const redirectUrl = modal.dataset.redirect;
+            modal.style.display = "none";
+            
+            if (redirectUrl) {
+                window.location.href = redirectUrl;
+            }
+        }
+
+        // Reload confirmation functions
+        let isReloadConfirmed = false;
+        let isModalShowing = false;
+
+        function confirmReload() {
+            isReloadConfirmed = true;
+            isModalShowing = false;
+            document.getElementById("reloadConfirmModal").style.display = "none";
+            
+            // Temporarily disable beforeunload handler
+            window.onbeforeunload = null;
+            
+            if (Object.keys(userAnswers).length > 0) {
+                submitQuiz(true); // Submit with answers
+            } else {
+                // For no answers, we need to force a reload after a small delay
+                setTimeout(() => {
+                    window.location.reload();
+                }, 100);
+            }
+        }
+
+        function cancelReload() {
+            isModalShowing = false;
+            document.getElementById("reloadConfirmModal").style.display = "none";
+        }
+
+        function showReloadConfirmModal() {
+            if (isModalShowing || isReloadConfirmed || isSubmitting) {
+                return false;
+            }
+            
+            isModalShowing = true;
+            document.getElementById("reloadConfirmModal").style.display = "flex";
+            return true;
+        }
+
+        // Handle browser navigation buttons (back/forward)
+        window.addEventListener("popstate", function(e) {
+            if (!isReloadConfirmed && !isSubmitting && !isModalShowing) {
+                e.preventDefault();
+                showReloadConfirmModal();
+                // Push the state back to prevent navigation
+                history.pushState(null, null, window.location.href);
+            }
+        });
+
+        // Push initial state to handle back button
+        history.pushState(null, null, window.location.href);
+    </script>
 
 </head>
 <body>
 
+<!-- Quiz Alert Modal -->
+<div id="quizAlertModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2 id="modalTitle">Alert</h2>
+        <p id="modalMessage"></p>
+        <button onclick="handleModalClose()" class="modal-close-btn">OK</button>
+    </div>
+</div>
+
 <div id="loadingMessage" class="loading-message" style="display: none;">
     <div class="loading-spinner"></div>
     <span id="loadingText">Loading your saved answers...</span>
+</div>
+
+<div id="reloadConfirmModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Confirm Page Navigation</h2>
+        <p>Clicking the back/forward button is prohibited. Your current quiz attempt will be submitted automatically.</p>
+        <div class="modal-buttons">
+            <button onclick="confirmReload()" class="modal-confirm-btn">Yes, Submit Quiz</button>
+            <button onclick="cancelReload()" class="modal-cancel-btn">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<!-- Time Up Modal -->
+<div id="timeUpModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <h2 style="color: #f8b500; margin-bottom: 15px;">
+            <i class="fa-solid fa-clock" style="margin-right: 10px;"></i>Time's Up!
+        </h2>
+        <p style="font-size: 18px; margin-bottom: 20px;">
+            Your time has expired. Your quiz will be submitted automatically.
+        </p>
+        <div class="modal-buttons">
+            <button onclick="confirmTimeUp()" class="modal-confirm-btn" 
+                    style="background-color: #f8b500; width: 100%;">
+                View Results
+            </button>
+        </div>
+    </div>
 </div>
 
 <!-- Auto-save message -->
@@ -886,38 +1269,30 @@ $conn->close();
 
     let remainingTimeSeconds = <?php echo $remaining_time; ?>;
 
-    console.log('🕐 Initial Timer Setup:', {
-        remainingTimeSeconds: remainingTimeSeconds,
-        minutes: Math.floor(remainingTimeSeconds / 60),
-        seconds: remainingTimeSeconds % 60
-    });
-
     // Auto-save variables
-    const AUTO_SAVE_INTERVAL = 10000; // 10 seconds
+    const AUTO_SAVE_INTERVAL = 1000;
     let autoSaveInterval;
     let isSubmitting = false;
     let timerInterval = null;
 
     // Auto-save function
     function autoSaveProgress() {
-        if (Object.keys(userAnswers).length === 0 || isSubmitting) {
-            console.log("No answers to save or quiz is being submitted");
+        // Don't save if submitting or time has expired
+        if (Object.keys(userAnswers).length === 0 || isSubmitting || remainingTimeSeconds <= 0) {
+            console.log("Skipping auto-save: no answers, submitting, or time expired");
             return;
         }
 
-        console.log("Auto-saving progress:", userAnswers);
+        // Calculate current remaining time from the timer display
+        const timerDisplay = document.getElementById('timer').textContent;
+        const [minutes, seconds] = timerDisplay.split(':').map(Number);
+        const currentRemainingTime = minutes * 60 + seconds;
 
-        const autoSaveMessage = document.getElementById('autoSaveMessage');
-        const checkIcon = autoSaveMessage.querySelector('.check-icon-svg');
+        // Update the global variable
+        remainingTimeSeconds = currentRemainingTime;
 
-        autoSaveMessage.style.display = 'flex';
-        autoSaveMessage.className = 'loading-message';
-        document.getElementById('autoSaveText').textContent = 'Auto-saving your progress...';
-        
-        const checkPath = checkIcon.querySelector('.check-icon-path');
-        checkPath.style.strokeDashoffset = '24';
-        checkPath.style.animation = 'none';
-        
+        console.log("Auto-saving progress with time_remaining:", currentRemainingTime);
+
         fetch('s_saveProgress.php', {
             method: 'POST',
             headers: {
@@ -926,35 +1301,20 @@ $conn->close();
             body: JSON.stringify({
                 attempt_id: <?php echo $attempt_id; ?>,
                 answers: userAnswers,
-                quiz_id: <?php echo $quiz_id; ?>
+                quiz_id: <?php echo $quiz_id; ?>,
+                time_remaining: currentRemainingTime
             })
         })
-        .then(response => {
-            const contentType = response.headers.get('content-type');
-            if (!contentType || !contentType.includes('application/json')) {
-                return response.text().then(text => {
-                    throw new Error(`Invalid response: ${text}`);
-                });
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (!data.success) {
-                console.error('Auto-save failed:', data.error);;
-                document.getElementById('autoSaveText').textContent = 'Auto-save failed';
+                console.error('Auto-save failed:', data.error);
             } else {
-                console.log("Auto-save successful");
-                document.getElementById('autoSaveText').textContent = 'Progress saved successfully!';
+                console.log("✅ Auto-save successful, time_remaining updated");
             }
-
-            // Animate the check mark
-            setTimeout(() => {
-                autoSaveMessage.style.display = 'none';
-            }, 2000);
         })
-       .catch(error => {
+        .catch(error => {
             console.error('❌ Auto-save error:', error);
-            autoSaveMessage.style.display = 'none';
         });
     }
 
@@ -999,66 +1359,87 @@ $conn->close();
     }
 
     function restoreAnswerSelections() {
-        console.log("Restoring answer selections to UI...");
+        console.log("🔄 Restoring answer selections to UI...");
+        console.log("📊 Total saved answers:", Object.keys(userAnswers).length);
         
         // Wait for questions to be fully rendered
         const questionCheckInterval = setInterval(() => {
             const renderedElements = document.querySelectorAll('.answer-button, input[type="text"], .drop-zone, .match-item').length;
             
+            console.log(`📊 Rendered elements: ${renderedElements}`);
+            
             if (renderedElements > 0) {
                 clearInterval(questionCheckInterval);
-                console.log(`UI elements ready, restoring ${Object.keys(userAnswers).length} answers`);
+                console.log(`✅ UI elements ready, restoring ${Object.keys(userAnswers).length} answers`);
                 
                 setTimeout(() => {
                     Object.entries(userAnswers).forEach(([questionId, answer]) => {
                         const questionIndex = questions.findIndex(q => q.question_id == questionId);
                         
                         if (questionIndex === -1) {
-                            console.warn(`Question ${questionId} not found in questions array`);
+                            console.warn(`❌ Question ${questionId} not found in questions array`);
                             return;
                         }
                         
-                        console.log(`Restoring answer for Q${questionId} (index ${questionIndex}):`, answer);
+                        console.log(`🔄 Processing Q${questionId} (index ${questionIndex}):`, answer);
                         
                         // Mark question button as answered
                         const questionBtn = document.getElementById(`question-btn-${questionIndex}`);
                         if (questionBtn) {
                             questionBtn.classList.add('answered');
+                            console.log(`✅ Marked question button ${questionIndex} as answered`);
                         }
                         
                         // For current question, restore the UI
                         if (questionIndex === currentQuestion) {
+                            console.log(`🎯 Current question - restoring UI`);
                             restoreCurrentQuestionAnswer(questionId, answer);
                         }
                     });
                 }, 300);
             }
         }, 100);
+        
+        // Safety timeout - stop checking after 5 seconds
+        setTimeout(() => {
+            clearInterval(questionCheckInterval);
+            console.log('⏱️ Question check timeout reached');
+        }, 5000);
     }
 
     function restoreCurrentQuestionAnswer(questionId, answer) {
         console.log(`🔄 Restoring current question ${questionId} answer:`, answer);
         
         if (quizType === 'Multiple Choice' || quizType === 'True or False') {
+            // Wait for buttons to be fully rendered
             setTimeout(() => {
-                const buttons = document.querySelectorAll('.answer-button');
-                console.log(`Found ${buttons.length} answer buttons`);
+                const answersDiv = document.getElementById('answers');
+                if (!answersDiv) {
+                    console.error('❌ Answers div not found');
+                    return;
+                }
+                
+                const buttons = answersDiv.querySelectorAll('.answer-button');
+                console.log(`📊 Found ${buttons.length} answer buttons for question ${questionId}`);
+                
+                if (buttons.length === 0) {
+                    console.warn('⚠️ No buttons found - retrying...');
+                    // Retry once after additional delay
+                    setTimeout(() => restoreCurrentQuestionAnswer(questionId, answer), 300);
+                    return;
+                }
                 
                 let buttonSelected = false;
+                const answerStr = String(answer);
                 
                 buttons.forEach((btn, index) => {
-                    // Use data attribute instead of onclick
                     const btnAnswerId = btn.dataset.answerId;
                     const btnAnswerText = btn.dataset.answerText;
-
-                    // Convert answer to string for comparison
-                    const answerStr = String(answer);
                     
-                    console.log(`Button ${index}:`, {
+                    console.log(`🔍 Button ${index}:`, {
                         answerId: btnAnswerId,
                         answerText: btnAnswerText,
-                        savedAnswer: answer,
-                        savedAnswerType: typeof answer
+                        savedAnswer: answerStr
                     });
                     
                     // Check if answer ID matches OR answer text matches (case-insensitive)
@@ -1071,9 +1452,11 @@ $conn->close();
                 });
                 
                 if (!buttonSelected) {
-                    console.warn(`⚠️ No button matched answer:`, answer);
+                    console.warn(`⚠️ No button matched answer: "${answerStr}"`);
+                    console.log('Available button IDs:', Array.from(buttons).map(b => b.dataset.answerId));
+                    console.log('Available button texts:', Array.from(buttons).map(b => b.dataset.answerText));
                 }
-            }, 400); // Increased delay
+            }, 600); // Increased delay to 600ms
             
         } else if (quizType === 'Identification' || quizType === 'Enumeration' || quizType === 'Fill in the Blanks') {
             setTimeout(() => {
@@ -1081,6 +1464,8 @@ $conn->close();
                 if (input && answer) {
                     input.value = answer;
                     console.log('✅ Set input value:', answer);
+                } else {
+                    console.warn('⚠️ Input field not found or no answer');
                 }
             }, 300);
             
@@ -1090,6 +1475,8 @@ $conn->close();
                     const dropZone = document.querySelector('.drop-zone');
                     const answerId = Array.isArray(answer) ? answer[0] : answer;
                     
+                    console.log('🔄 Restoring drag & drop, answer ID:', answerId);
+                    
                     fetch('s_get_answers.php?question_id=' + questionId)
                         .then(response => response.json())
                         .then(data => {
@@ -1097,9 +1484,12 @@ $conn->close();
                             if (answerData && dropZone) {
                                 dropZone.innerHTML = answerData.answer_text;
                                 dropZone.classList.add('dropped');
-                                console.log('✅ Restored drag and drop');
+                                console.log('✅ Restored drag and drop:', answerData.answer_text);
+                            } else {
+                                console.warn('⚠️ Drop zone or answer data not found');
                             }
-                        });
+                        })
+                        .catch(err => console.error('❌ Error fetching drag & drop answer:', err));
                 }
             }, 300);
             
@@ -1108,6 +1498,8 @@ $conn->close();
                 try {
                     if (Array.isArray(answer)) {
                         const parsedMatches = typeof answer === 'string' ? JSON.parse(answer) : answer;
+                        
+                        console.log('🔄 Restoring matching type, matches:', parsedMatches);
                         
                         if (!window.matchingData) window.matchingData = {};
                         if (!window.matchingData[questionId]) {
@@ -1129,9 +1521,11 @@ $conn->close();
                         });
                         
                         console.log('✅ Restored matching type');
+                    } else {
+                        console.warn('⚠️ Matching answer is not an array');
                     }
                 } catch (error) {
-                    console.error('Error restoring matching:', error);
+                    console.error('❌ Error restoring matching:', error);
                 }
             }, 300);
         }
@@ -1491,6 +1885,8 @@ $conn->close();
                     if (userAnswers[questionId]) {
                         console.log(`🔄 Attempting to restore Q${questionId}:`, userAnswers[questionId]);
                         restoreCurrentQuestionAnswer(questionId, userAnswers[questionId]);
+                    } else {
+                        console.log(`No saved answers for Q${questionId}`);
                     }
                 }, 500);
             })
@@ -1809,7 +2205,13 @@ $conn->close();
         window.isIntentionalSubmit = !isPartialSubmit;
         window.isSubmitting = true;
 
-        clearInterval(autoSaveInterval);
+        if (window.timerInterval) {
+            clearInterval(window.timerInterval);
+        }
+
+        if (autoSaveInterval) {
+            clearInterval(autoSaveInterval);
+        }
 
         // Prepare the data to send
         const submitData = {
@@ -1839,7 +2241,7 @@ $conn->close();
                     score: data.score,
                     total: data.total,
                     wrong_answers: data.wrong_answers,
-                    subject_id: <?php echo $subject_id; ?> // Make sure this is available
+                    subject_id: <?php echo $subject_id; ?> 
                 };
 
                 // Store the result in session via PHP
@@ -1862,83 +2264,64 @@ $conn->close();
                 const errorMsg = data.error || 'Unknown error occurred';
                 alert('Error submitting quiz: ' + errorMsg);
                 window.isSubmitting = false;
+
+                if (remainingTimeSeconds > 0) {
+                    startTimer(remainingTimeSeconds);
+                    autoSaveInterval = setInterval(autoSaveProgress, AUTO_SAVE_INTERVAL);
+                }
             }
         })
         .catch(error => {
             console.error('Error:', error);
             alert('There was an error submitting your quiz. Please try again.');
             window.isSubmitting = false;
-        });   
-    }
 
-    function updateServerTime() {
-        if (remainingTimeSeconds > 0 && <?php echo $attempt_id; ?>) {
-            fetch('s_update_time.php', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    attempt_id: <?php echo $attempt_id; ?>,
-                    time_remaining: remainingTimeSeconds
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (!data.success) {
-                    console.error('Failed to update time on server:', data.error);
-                }
-            })
-            .catch(error => {
-                console.error('Error updating time:', error);
-            });
-        }
+            if (remainingTimeSeconds > 0) {
+                startTimer(remainingTimeSeconds);
+                autoSaveInterval = setInterval(autoSaveProgress, AUTO_SAVE_INTERVAL);
+            }
+        });   
     }
 
     function startTimer(duration) {
         let timer = duration;
         const timerElement = document.getElementById('timer');
         
-        console.log(`Timer started with ${timer} seconds (${Math.floor(timer/60)}:${timer%60})`);
+        console.log(`🕐 Timer started with ${timer} seconds (${Math.floor(timer/60)}:${timer%60})`);
 
         // Clear any existing timer first
         if (window.timerInterval) {
             clearInterval(window.timerInterval);
         }
 
-        function updateTimer() {
-            const minutes = parseInt(timer / 60, 10);
-            const seconds = parseInt(timer % 60, 10);
+        window.timerInterval = setInterval(function () {
+            let minutes = parseInt(timer / 60, 10);
+            let seconds = parseInt(timer % 60, 10);
 
-            const displayMinutes = minutes < 10 ? "0" + minutes : minutes;
-            const displaySeconds = seconds < 10 ? "0" + seconds : seconds;
-            
-            timerElement.textContent = `${displayMinutes}:${displaySeconds}`;
+            minutes = minutes < 10 ? "0" + minutes : minutes;
+            seconds = seconds < 10 ? "0" + seconds : seconds;
 
-            if (timer % 30 === 0) {
-                updateServerTime();
-            }
-            
+            timerElement.textContent = `${minutes}:${seconds}`;
+
+            // Check if time has expired
             if (timer <= 0) {
-                timerElement.textContent = "00:00";
-                console.log('⏰ Timer expired - submitting quiz');
                 clearInterval(window.timerInterval);
-                updateServerTime();
-                submitQuiz(true); // Auto-submit when time runs out
-                return;
+                clearInterval(autoSaveInterval); // STOP AUTO-SAVING
+                
+                console.log('⏰ Timer expired - showing time up modal');
+                
+                // Set flags to prevent multiple submissions
+                window.isSubmitting = true;
+                window.isIntentionalSubmit = true;
+                
+                // Show modal to user
+                showTimeUpModal();
+                
+                return; // Exit the interval
             }
             
-            timer--;
-            remainingTimeSeconds = timer;
-        }
-
-        // Call once immediately to show initial time
-        updateTimer();
-        
-        // Then update every second
-        window.timerInterval = setInterval(updateTimer, 1000);
-
-        updateServerTime();
+            timer--; // Decrement timer
+        }, 1000);
     }
 
     function goToQuestion(index) {
@@ -1946,11 +2329,22 @@ $conn->close();
     }
 
     window.onload = function() {
+        // Check if we need to show modal
+        <?php if ($showModal): ?>
+            showAlertModal(
+                <?php echo json_encode($modalTitle); ?>,
+                <?php echo json_encode($modalMessage); ?>,
+                <?php echo json_encode($modalRedirect); ?>
+            );
+            return; // Stop further initialization
+        <?php endif; ?>
+
         console.log('🚀 Page loaded, initializing quiz...');
         
         window.matchingData = {};
         
         console.log('📥 Loading saved answers...');
+        console.log('📊 Prefilled answers from server:', <?php echo json_encode($prefilledAnswers); ?>);
         restoreSavedAnswers();
         
         setTimeout(() => {
@@ -1958,10 +2352,9 @@ $conn->close();
             showQuestion(0);
         }, 100);
         
-        setTimeout(() => {
-            console.log('🕐 Starting timer with:', remainingTimeSeconds, 'seconds');
-            startTimer(remainingTimeSeconds);
-        }, 200);
+        // FIX: Start timer with the correct remaining time from PHP
+        console.log('🕐 Starting timer with:', remainingTimeSeconds, 'seconds');
+        startTimer(remainingTimeSeconds);
         
         const questionButtonsDiv = document.getElementById('question-buttons');
         questions.forEach((question, index) => {
@@ -1988,14 +2381,68 @@ $conn->close();
 
         setupBackButtonDetection();
 
-        /*
-        if (partialSubmit && Object.keys(userAnswers).length > 0) {
-            submitQuiz(true);
-        }
-        */
-
         console.log('✅ Quiz initialization complete');
     };
+    
+    function showTimeUpModal() {
+        const modal = document.getElementById('timeUpModal');
+        modal.style.display = 'flex';
+    }
+
+    function confirmTimeUp() {
+        document.getElementById('timeUpModal').style.display = 'none';
+        
+        // Submit quiz and redirect to results
+        const submitData = {
+            answers: userAnswers,
+            quiz_id: <?php echo $quiz_id; ?>,
+            partial_submit: true
+        };
+
+        fetch('s_submit_quiz.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(submitData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const resultData = {
+                    quiz_id: <?php echo $quiz_id; ?>,
+                    score: data.score,
+                    total: data.total,
+                    wrong_answers: data.wrong_answers,
+                    subject_id: <?php echo $subject_id; ?>
+                };
+
+                fetch('store_quiz_result.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(resultData)
+                })
+                .then(() => {
+                    window.location.href = 'quiz_result.php';
+                })
+                .catch(error => {
+                    console.error('Error storing result:', error);
+                    window.location.href = 'quiz_result.php';
+                });
+            } else {
+                alert('Error submitting quiz: ' + (data.error || 'Unknown error'));
+                window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error submitting quiz. Redirecting...');
+            window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
+        });
+    }
+
 </script>
 
 </body>

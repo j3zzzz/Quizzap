@@ -1,5 +1,6 @@
 <?php
 session_start();
+date_default_timezone_set('Asia/Manila');
 if (strpos($_SESSION['account_number'], 'S') !== 0) {
     header("Location: login.php");
     exit();
@@ -29,6 +30,7 @@ if (!$data) {
 $answers = $data['answers'] ?? null;
 $quiz_id = $data['quiz_id'] ?? null;
 $attempt_id = $data['attempt_id'] ?? null;
+$time_remaining = $data['time_remaining'] ?? null;
 
 if (!$answers || !$quiz_id || !$attempt_id) {
     header('Content-Type: application/json');
@@ -137,10 +139,10 @@ try {
 
     if ($attempt_id) {
         $update_stmt = $conn->prepare("UPDATE quiz_attempts 
-                                    SET last_saved = NOW()
+                                    SET last_saved = NOW(), time_remaining = ?
                                     WHERE attempt_id = ?");
         if ($update_stmt) {
-            $update_stmt->bind_param("i", $attempt_id);
+            $update_stmt->bind_param("ii", $time_remaining, $attempt_id);
             $update_stmt->execute();
             $update_stmt->close();
             

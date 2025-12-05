@@ -90,10 +90,11 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Profile | RAWRIT</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <title>Student Profile | RAWRIT</title>
     <style>
+        /* Original styles kept exactly as they were */
         :root {
             --primary: #f8b500;
             --primary-light: #ffc740;
@@ -613,15 +614,73 @@ $conn->close();
         .profile-pic-container {
             animation: float 4s ease-in-out infinite;
         }
+
+        /* NEW: Enhanced Responsive Styles */
         
-        /* Responsive styles */
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: clamp(50px, 8vw, 60px);
+            height: clamp(50px, 8vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: background-color 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+            transform: scale(1.05);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
+        }
+
+        /* Enhanced Mobile Responsive Styles */
+        @media (max-width: 1200px) {
+            .profile-container {
+                width: 70%;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .profile-container {
+                width: 80%;
+            }
+            
+            .student-details {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* 768px Responsive Styles */
         @media (max-width: 768px) {
             header {
                 padding: 15px 20px;
+                flex-wrap: wrap;
             }
             
             nav {
                 gap: 12px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .profile-container {
+                width: 90%;
             }
             
             .profile-content {
@@ -630,7 +689,11 @@ $conn->close();
             
             .profile-header {
                 padding: 0 25px;
-                height: 100px;
+                height: auto;
+                min-height: 80px;
+                flex-direction: column;
+                justify-content: center;
+                text-align: center;
             }
             
             .profile-title {
@@ -647,7 +710,7 @@ $conn->close();
             }
             
             .student-details {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
             }
             
             .btn {
@@ -656,7 +719,93 @@ $conn->close();
             }
         }
         
-        @media (max-width: 480px) {
+        /* 576px Responsive Styles */
+        @media (max-width: 576px) {
+            header {
+                padding: 12px 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav {
+                gap: 8px;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            nav a {
+                font-size: 14px;
+                padding: 8px 0;
+                flex: 1;
+                text-align: center;
+                min-height: 44px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .logout-btn {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            
+            .logo img {
+                height: 35px;
+            }
+            
+            main {
+                padding: 20px 15px;
+            }
+            
+            .profile-container {
+                width: 100%;
+            }
+            
+            .profile-header {
+                padding: 20px;
+                height: auto;
+                gap: 10px;
+            }
+            
+            .profile-title {
+                font-size: 22px;
+            }
+            
+            .profile-content {
+                padding: 20px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .full-name {
+                font-size: 22px;
+            }
+            
+            .account-number {
+                font-size: 16px;
+            }
+            
+            .student-details {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+            
+            .detail-group {
+                padding: 15px;
+            }
+            
+            .detail-label {
+                font-size: 13px;
+            }
+            
+            .detail-value {
+                font-size: 16px;
+            }
+            
             .form-actions {
                 flex-direction: column;
                 gap: 10px;
@@ -667,13 +816,186 @@ $conn->close();
                 justify-content: center;
             }
             
-            .profile-header {
-                flex-direction: column;
-                justify-content: center;
-                text-align: center;
-                padding: 20px;
-                height: auto;
+            .dark-mode-toggle {
+                bottom: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
             }
+        }
+
+        /* 480px Responsive Styles */
+        @media (max-width: 480px) {
+            header {
+                padding: 10px;
+            }
+            
+            nav {
+                gap: 6px;
+            }
+            
+            nav a {
+                font-size: 13px;
+                padding: 8px;
+                min-height: 44px;
+                min-width: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .logout-btn {
+                padding: 5px 10px;
+                font-size: 13px;
+            }
+            
+            .logo img {
+                height: 30px;
+            }
+            
+            main {
+                padding: 15px 10px;
+            }
+            
+            .profile-header {
+                padding: 15px;
+            }
+            
+            .profile-title {
+                font-size: 20px;
+            }
+            
+            .profile-content {
+                padding: 15px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .full-name {
+                font-size: 20px;
+            }
+            
+            .account-number {
+                font-size: 14px;
+                padding: 4px 12px;
+            }
+            
+            .student-details {
+                gap: 12px;
+            }
+            
+            .detail-group {
+                padding: 12px;
+            }
+            
+            .detail-label {
+                font-size: 12px;
+            }
+            
+            .detail-value {
+                font-size: 15px;
+            }
+            
+            .form-group {
+                gap: 8px;
+            }
+            
+            .form-label {
+                font-size: 14px;
+            }
+            
+            .form-input {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            .dark-mode-toggle {
+                bottom: 10px;
+                right: 10px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* 375px Responsive Styles */
+        @media (max-width: 375px) {
+            nav a {
+                font-size: 12px;
+                padding: 6px;
+            }
+            
+            .logout-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            
+            .profile-title {
+                font-size: 18px;
+            }
+            
+            .full-name {
+                font-size: 18px;
+            }
+            
+            .account-number {
+                font-size: 13px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 90px;
+                height: 90px;
+            }
+            
+            .student-details {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+            
+            .detail-group {
+                padding: 10px;
+            }
+            
+            .detail-label {
+                font-size: 11px;
+            }
+            
+            .detail-value {
+                font-size: 14px;
+            }
+        }
+
+        /* Utility classes for better responsive behavior */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Improve focus accessibility */
+        button:focus-visible,
+        a:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Prevent horizontal scroll */
+        body {
+            overflow-x: hidden;
         }
     </style>
 </head>
@@ -683,17 +1005,35 @@ $conn->close();
             <img src="img/logo4.png" width="110px" height="80px" class="logo-img" alt="RAWRIT Logo">
         </div>
         <nav>
-            <a href="s_Home.php">Home</a>
-            <a href="s_Classes.php">Classes</a>
-            <a href="studQuizzes.php">Quizzes</a>
-            <a class="active" href="s_Profile.php">Profile</a>
+            <a href="s_Home.php" title="Home">
+                <i class="fa-solid fa-house"></i>
+                <span>Home</span>
+            </a>
+            <a href="s_Classes.php" title="Classes">
+                <i class="fa-regular fa-address-book"></i>
+                <span>Classes</span>
+            </a>
+            <a href="studQuizzes.php" title="Quizzes">
+                <i class="fa-solid fa-file-lines"></i>
+                <span>Quizzes</span>
+            </a>
+            <a class="active" href="s_Profile.php" title="Profile">
+                <i class="fa-solid fa-user"></i>
+                <span>Profile</span>
+            </a>
             <form action="logout.php" method="POST">
                 <button type="submit" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
                 </button>
             </form>
         </nav>
     </header>
+
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <main>
         <div class="profile-container">
             <div class="profile-header">
@@ -808,13 +1148,17 @@ $conn->close();
             const profilePicPreview = document.getElementById('profilePicPreview');
             const successMessage = document.getElementById('successMessage');
             
-            // Dark Mode Functionality - Auto apply based on localStorage
+            // Dark Mode Toggle Functionality
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const body = document.body;
+
             // Check for saved dark mode preference
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
 
             // Apply dark mode on page load if enabled
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
             }
             
             // Toggle between preview and edit modes
@@ -878,6 +1222,20 @@ $conn->close();
                     this.style.transform = 'scale(1) rotate(0)';
                 });
             }
+
+            // Dark mode toggle functionality
+            darkModeToggle.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                
+                // Update button icon and save preference
+                if (body.classList.contains('dark-mode')) {
+                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                    localStorage.setItem('darkMode', 'true');
+                } else {
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    localStorage.setItem('darkMode', 'false');
+                }
+            });
         });
     </script>
 </body>

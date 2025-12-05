@@ -496,6 +496,7 @@ if (isset($_SESSION['enroll_message'])) {
         body, html {
             height: 100%;
             transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
         }
 
         body.dark-mode {
@@ -505,10 +506,131 @@ if (isset($_SESSION['enroll_message'])) {
 
         .container {
             display: flex;
-            height: 100vh;
+            min-height: 100vh;
+            flex-direction: column;
+            width: 100%;
         }
 
-        /* Sidebar styling */
+        /* Top Navigation - Hidden on desktop, shown on mobile */
+        .top-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8b500;
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+        
+        body.dark-mode .top-nav {
+            background-color: #333;
+        }
+        
+        .top-nav .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .top-nav .logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .top-nav .menu {
+            display: flex !important;
+            position: static;
+            flex-direction: row;
+            background: none;
+            box-shadow: none;
+            width: auto;
+            padding: 0;
+            margin: 0;
+            gap: 1.5rem;
+        }
+        
+        .top-nav .menu a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1.4rem;
+            margin-right: 0;
+        }
+        
+        .top-nav .menu a span {
+            display: none;
+        }
+        
+        .top-nav .menu a:hover,
+        .top-nav .menu a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .top-nav .menu a::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .top-nav .menu a:hover::after {
+            opacity: 1;
+        }
+        
+        /* Profile in top nav */
+        .top-nav-profile {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .top-nav-profile .profile {
+            width: 45px;
+            height: 45px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f5a623;
+            font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            border: 2px solid white;
+        }
+        
+        body.dark-mode .top-nav-profile .profile {
+            background-color: #333;
+        }
+
+        /* Sidebar styling - Hidden on mobile */
         .sidebar {
             position: fixed;
             width: 250px;
@@ -520,7 +642,7 @@ if (isset($_SESSION['enroll_message'])) {
             flex-direction: column;
             justify-content: flex-start;
             transition: all 0.3s ease;
-            z-index: 999;
+            z-index: 1000;
         }
 
         body.dark-mode .sidebar {
@@ -528,7 +650,7 @@ if (isset($_SESSION['enroll_message'])) {
         }
 
         .sidebar.collapsed {
-            width: 90px;
+            width: 70px;
             padding: 2rem 0.5rem;
         }
 
@@ -538,6 +660,7 @@ if (isset($_SESSION['enroll_message'])) {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .logo {
@@ -557,14 +680,12 @@ if (isset($_SESSION['enroll_message'])) {
             padding: 5px;
             border-radius: 4px;
             transition: background 0.2s;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .toggle-btn:hover {
             background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .toggle-btn{
-            align-items: center;
         }
 
         .sidebar .menu {
@@ -592,6 +713,7 @@ if (isset($_SESSION['enroll_message'])) {
             letter-spacing: 1px;
             margin-bottom: .5rem;
             width: 100%;
+            min-height: 50px;
         }
 
         .sidebar.collapsed .menu a {
@@ -605,7 +727,7 @@ if (isset($_SESSION['enroll_message'])) {
             transition: opacity 0.2s;
             font-family: 'Fredoka';
             font-weight: bold;
-            font-size: 20px;
+            font-size: clamp(16px, 1.5vw, 20px);
         }
 
         .sidebar.collapsed .menu a span {
@@ -633,33 +755,12 @@ if (isset($_SESSION['enroll_message'])) {
             min-width: 20px;
             text-align: center;
             font-size: clamp(1rem, 1.2vw, 1.5rem);
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .menu a i {
             margin-right: 0;
             font-size: 1.2rem;
-        }
-
-        .toggle-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 1.5rem;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 5px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-
-        .toggle-btn:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-
-        .sidebar.collapsed .toggle-btn{
-            margin: auto;
         }
 
         .sidebar.collapsed .logo-img {
@@ -668,21 +769,6 @@ if (isset($_SESSION['enroll_message'])) {
 
         .sidebar.collapsed .logo-icon {
             display: block !important;
-        }
-
-        .sidebar.collapsed .menu a {
-            padding: 1rem 0;
-            justify-content: center;
-            width: 100%;
-        }
-
-        .sidebar.collapsed .menu a span {
-            display: none;
-        }
-
-        .sidebar.collapsed .menu a i {
-            margin-right: 0;
-            font-size: 1.5rem;
         }
 
         .sidebar.collapsed hr {
@@ -697,6 +783,8 @@ if (isset($_SESSION['enroll_message'])) {
             padding: 2rem;
             margin-left: 250px;
             transition: margin-left 0.3s ease, background-color 0.3s;
+            width: calc(100% - 250px);
+            min-height: 100vh;
         }
 
         body.dark-mode .content {
@@ -705,70 +793,43 @@ if (isset($_SESSION['enroll_message'])) {
         }
 
         .content.expanded {
-            margin-left: 90px;
-        }
-
-        .content span {
-            font-family: Fredoka;
-            font-size: larger;
+            margin-left: 70px;
+            width: calc(100% - 70px);
         }
 
         .content-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            width: 100%;
         }
 
         .content-header h1 {
-            width: 95%;
-            font-size: 2rem;
+            font-size: clamp(1.5rem, 4vw, 2rem);
             color: #333333;
-            font-family: Fredoka;
-            padding: 10px;
-            border-bottom: 1.5px solid #F8B500;
+            font-family: 'Fredoka';
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
         }
 
         body.dark-mode .content-header h1 {
             color: #e0e0e0;
         }
 
-        .content-header p {
-            color: #999;
-            font-size: 1rem;
-            margin-top: 0.5rem;
-            font-family: Fredoka;
-            font-weight: 500;
-        }
-
-        body.dark-mode .content-header p {
-            color: #b0b0b0;
-        }
-
+        /* Profile in content header for larger screens */
         .content-header .actions {
             display: flex;
             align-items: center;
-        }
-
-        .content-header .actions button {
-            background-color: #F8B500;
-            color: #ffffff;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            font-size: 1rem;
-            cursor: pointer;
-            margin-right: 1rem;
-            font-family: Fredoka;
-        }
-
-        .content-header .actions button:hover {
-            background-color: #e5941f;
+            gap: 1rem;
+            flex-shrink: 0;
         }
 
         .content-header .actions .profile {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background-color: #ffffff;
             border-radius: 50%;
             display: flex;
@@ -776,28 +837,378 @@ if (isset($_SESSION['enroll_message'])) {
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
         }
 
         body.dark-mode .content-header .actions .profile {
             background-color: #333;
         }
 
+        .message {
+            font-family: Fredoka;
+            font-weight: 500;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+            background-color: #f8f8f8;
+            border-left: 4px solid #f8b500;
+            width: 100%;
+        }
+
+        body.dark-mode .message {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        /* Subject Filter Styles */
+        .subject-filter-container {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        #subject-filter {
+            font-size: clamp(14px, 1.5vw, 15px);
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            flex-grow: 1;
+            min-width: 200px;
+        }
+
+        body.dark-mode #subject-filter {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
+        /* Bulk Enrollment Toggle Button */
+        .bulk-enrollment-toggle {
+            margin-bottom: 15px;
+            width: 100%;
+        }
+
+        .toggle-bulk-btn {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.3s;
+            width: 100%;
+            font-size: clamp(14px, 1.5vw, 16px);
+            min-height: 44px;
+        }
+
+        .toggle-bulk-btn:hover {
+            background-color: #e5941f;
+        }
+
+        .toggle-bulk-btn i:first-child {
+            margin-right: 8px;
+        }
+
+        #toggleIcon {
+            transition: transform 0.3s ease;
+        }
+
+        .bulk-visible #toggleIcon {
+            transform: rotate(180deg);
+        }
+
+        /* Bulk Enrollment Section */
+        .csv-upload-section {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: clamp(1rem, 2vw, 1.5rem);
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            border: 1px solid #eee;
+            width: 100%;
+        }
+
+        body.dark-mode .csv-upload-section {
+            background-color: #2d2d2d;
+            border-color: #444;
+        }
+
+        .upload-header {
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        body.dark-mode .upload-header {
+            border-bottom-color: #444;
+        }
+
+        .upload-header h2 {
+            color: #333;
+            font-size: clamp(1.2rem, 2vw, 1.5rem);
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.dark-mode .upload-header h2 {
+            color: #e0e0e0;
+        }
+
+        .upload-header p {
+            color: #666;
+            font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+        }
+
+        body.dark-mode .upload-header p {
+            color: #b0b0b0;
+        }
+
+        .upload-steps {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .step {
+            display: flex;
+            gap: 15px;
+            align-items: flex-start;
+        }
+
+        .step-number {
+            background-color: #f8b500;
+            color: white;
+            width: clamp(25px, 3vw, 30px);
+            height: clamp(25px, 3vw, 30px);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+            margin-top: 3px;
+            font-size: clamp(0.8rem, 1.2vw, 1rem);
+        }
+
+        .step-content {
+            flex-grow: 1;
+        }
+
+        .step-content h3 {
+            color: #333;
+            font-size: clamp(1rem, 1.5vw, 1.1rem);
+            margin-bottom: 8px;
+        }
+
+        body.dark-mode .step-content h3 {
+            color: #e0e0e0;
+        }
+
+        .step-content p {
+            color: #555;
+            font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+            margin-bottom: 10px;
+        }
+
+        body.dark-mode .step-content p {
+            color: #b0b0b0;
+        }
+
+        .step-button {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+            font-size: clamp(0.85rem, 1.5vw, 1rem);
+            min-height: 44px;
+        }
+
+        .step-button:hover {
+            background-color: #e5941f;
+        }
+
+        .hint-box {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            border-radius: 4px;
+            font-size: clamp(0.8rem, 1.2vw, 0.9rem);
+            color: #5d4037;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        body.dark-mode .hint-box {
+            background-color: #3a3a2a;
+            border-left-color: #ffc107;
+            color: #e0e0e0;
+        }
+
+        .upload-form {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .file-upload-wrapper {
+            position: relative;
+            flex-grow: 1;
+            min-width: 200px;
+        }
+
+        .file-upload-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 15px;
+            background-color: white;
+            border: 2px dashed #f8b500;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            font-size: clamp(0.85rem, 1.5vw, 1rem);
+            min-height: 44px;
+        }
+
+        body.dark-mode .file-upload-label {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        .file-upload-label:hover {
+            background-color: #fffdf6;
+            border-color: #e5941f;
+        }
+
+        body.dark-mode .file-upload-label:hover {
+            background-color: #3a3a3a;
+        }
+
+        #csv-upload {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0,0,0,0);
+            border: 0;
+        }
+
+        .upload-button {
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+            font-size: clamp(0.85rem, 1.5vw, 1rem);
+            min-height: 44px;
+        }
+
+        .upload-button:hover {
+            background-color: #3d8b40;
+        }
+
+        .upload-notes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .note {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: clamp(0.8rem, 1.2vw, 0.9rem);
+            color: #555;
+            background-color: #f5f5f5;
+            padding: 10px 15px;
+            border-radius: 5px;
+            flex: 1;
+            min-width: 250px;
+        }
+
+        body.dark-mode .note {
+            background-color: #3a3a3a;
+            color: #b0b0b0;
+        }
+
+        .note i {
+            color: #f8b500;
+        }
+
+        /* Enrollment Container */
         .enrollment-container {
             display: flex;
+            flex-direction: column;
             gap: 20px;
             margin-bottom: 20px;
-            flex-direction: column;
+            width: 100%;
+        }
+
+        /* Enroll New Button */
+        .enroll-new-btn {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: clamp(14px, 1.5vw, 16px);
+            font-weight: 500;
+            margin-bottom: 8px;
+            font-family: 'Fredoka';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 44px;
         }
         
+        .enroll-new-btn:hover {
+            background-color: #e5941f;
+        }
+
+        /* Student Tables Container */
         .student-table-container {
-            flex: 1;
             border: 1px solid #ddd;
             border-radius: 8px;
-            padding: 20px;
+            padding: clamp(1rem, 2vw, 1.5rem);
             background-color: #f9f9f9;
-            margin-top: 10px;
-            margin-bottom: 20px;
             overflow-x: auto;
+            width: 100%;
         }
 
         body.dark-mode .student-table-container {
@@ -810,30 +1221,63 @@ if (isset($_SESSION['enroll_message'])) {
             color: #333;
             border-bottom: 1px solid #ddd;
             padding-bottom: 10px;
+            font-size: clamp(1rem, 1.8vw, 1.2rem);
+            margin-bottom: 15px;
         }
 
         body.dark-mode .student-table-container h3 {
             color: #e0e0e0;
             border-bottom-color: #444;
         }
-        
+
+        /* Search Inputs */
+        #available-search, #enrolled-search {
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Fredoka';
+            font-size: clamp(14px, 1.5vw, 15px);
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 15px;
+            min-height: 44px;
+        }
+
+        body.dark-mode #available-search, 
+        body.dark-mode #enrolled-search {
+            background-color: #2d2d2d;
+            border-color: #444;
+            color: #e0e0e0;
+        }
+
+        #available-search:focus, #enrolled-search:focus{
+            outline: none;
+            border-color: #f8b500;
+            box-shadow: 0 0 5px rgba(248, 181, 0, 0.5);
+        }
+
+        /* Student Tables */
         .student-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 25px;
+            margin-top: 15px;
+            min-width: 600px;
         }
         
         .student-table th {
             background-color: #f8b500;
             color: white;
-            padding: 10px;
+            padding: 12px;
             text-align: left;
             font-weight: 500;
+            font-size: clamp(14px, 1.5vw, 15px);
+            white-space: nowrap;
         }
         
         .student-table td {
-            padding: 10px;
+            padding: 12px;
             border-bottom: 1px solid #ddd;
+            font-size: clamp(13px, 1.5vw, 14px);
         }
 
         body.dark-mode .student-table td {
@@ -855,10 +1299,42 @@ if (isset($_SESSION['enroll_message'])) {
         body.dark-mode .student-table tr:hover {
             background-color: #3a3a3a;
         }
-        
+
+        /* Remove Button */
+        .remove-btn {
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: clamp(13px, 1.5vw, 14px);
+            transition: background-color 0.3s;
+            font-family: 'Fredoka';
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            min-height: 36px;
+        }
+
+        .remove-btn:hover {
+            background-color: #c0392b;
+        }
+
+        /* Checkbox styling */
+        input[type="checkbox"] {
+            transform: scale(1.3);
+            cursor: pointer;
+            min-height: 20px;
+            min-width: 20px;
+        }
+
+        /* Enroll Actions */
         .enroll-actions {
-            text-align: center;
+            display: flex;
+            gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
         
         .enroll-btn {
@@ -868,7 +1344,11 @@ if (isset($_SESSION['enroll_message'])) {
             padding: 10px 20px;
             border-radius: 5px;
             cursor: pointer;
-            font-size: 16px;
+            font-size: clamp(14px, 1.5vw, 16px);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 44px;
         }
         
         .enroll-btn:hover {
@@ -879,129 +1359,60 @@ if (isset($_SESSION['enroll_message'])) {
             background-color: #cccccc;
             cursor: not-allowed;
         }
-        
-        .tables-container {
-            display: flex;
-            gap: 20px;
-        }
-        
-        @media (max-width: 768px) {
-            .tables-container {
-                flex-direction: column;
-            }
-        }
 
-        .message {
-            font-family: Fredoka;
-            font-weight: 500;
-        }
-
-        #subject-filter{
-            font-size: 15px;
-            padding: 5px;
-        }
-
-        .enroll-new-btn {
-            float: right;
-            width: 20%;
-            background-color: #f8b500;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 500;
-            margin-top: 20px;
-            margin-bottom: 8px;
+        /* Empty message */
+        .empty-message {
+            color: #666;
+            font-style: italic;
+            padding: 20px;
+            text-align: center;
             font-family: 'Fredoka';
-        }
-        
-        .enroll-new-btn:hover {
-            background-color: #e5941f;
-        }
-        
-        .available-students-container {
-            display: none; /* Hidden by default */
-            margin-bottom: 20px;
-        }
-        
-        .available-students-container.show {
-            display: block; /* Show when toggled */
-        }
-        
-        .tables-container {
-            display: flex;
-            gap: 20px;
+            font-size: clamp(14px, 1.5vw, 16px);
         }
 
-        .remove-btn {
-            background-color: #e74c3c;
-            color: white;
-            border: none;
-            padding: 8px 12px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            transition: background-color 0.3s;
-            font-family: 'Fredoka';
+        body.dark-mode .empty-message {
+            color: #b0b0b0;
         }
 
-        .remove-btn:hover {
-            background-color: #c0392b;
-        }
-
-        .remove-btn i {
-            margin-right: 5px;
-        }
-        
-        @media (max-width: 768px) {
-            .tables-container {
-                flex-direction: column;
-            }
-        }
-
+        /* Dropdown Content */
         .dropdown-content {
-            width: 300px;
-            right: -1%;
+            width: min(300px, 90vw);
+            right: 0;
             display: none;
             position: absolute;
             background-color: #F8B500;
             border-radius: 15px;
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
+            z-index: 1001;
             padding: 10px 0;
-            top: 135%;
+            top: 100%;
+            margin-top: 10px;
         }
 
         .dropdown-content:before {
-            content: " " ;
+            content: " ";
             position: absolute;
             background: #F8B500;
-            width: 30px;
-            height: 30px;
-            top: 1px;
-            right: 23px;
-            transform: rotate(135deg);
-            z-index: -1 !important;
+            width: 20px;
+            height: 20px;
+            top: -5px;
+            right: 20px;
+            transform: rotate(45deg);
+            z-index: -1;
         }
 
         .dropdown-content button {
-            background-color: white;     
-            justify-content: center;
-            align-items: center;
-            align-self: center;
+            background-color: white;
             font-family: 'Fredoka';
             color: white;
-            font-size: 18px;
+            font-size: clamp(15px, 1.8vw, 18px);
             font-weight: lighter;
             border: 2px solid white !important;
-            width: 86% !important;
-            padding: 13px 20px !important;
-            margin: 8px 20px !important;
+            width: 90% !important;
+            padding: 12px 20px !important;
+            margin: 8px auto !important;
             text-decoration: none;
             display: block;
-            float: none;
             text-align: center;
             background-color: transparent;
             transition: background-color 0.3s, color 0.3s;
@@ -1009,11 +1420,14 @@ if (isset($_SESSION['enroll_message'])) {
             cursor: pointer;
             letter-spacing: 1px;
             box-sizing: border-box;
-            z-index: 1 !important;  
-            cursor: pointer;
+            min-height: 44px;
         }
 
-        .dropdown-content a:hover, .dropdown-content button:hover{
+        .dropdown-content button i{
+            margin-right: 4px;
+        }
+
+        .dropdown-content a:hover, .dropdown-content button:hover {
             background-color: white !important;
             color: #F8B500;
         }
@@ -1022,575 +1436,458 @@ if (isset($_SESSION['enroll_message'])) {
             display: block;
         }
 
-        @media (max-width: 992px) {
-        .sidebar {
-            width: 90px;
-            padding: 2rem 0.5rem;
-        }
-        .sidebar .menu a span {
-            display: none;
-        }
-        .sidebar .logo-img {
-            display: none;
-        }
-        .sidebar .logo-icon {
-            display: block !important;
-        }
-        .sidebar .menu a i {
-            margin-right: 0;
-            font-size: 1.5rem;
-        }
-        .content {
-            margin-left: 90px;
-        }
-    }
-
-    @media (max-width: 768px) {
-        .sidebar {
-            transform: translateX(-100%);
-            width: 250px;
-        }
-        .sidebar.active {
-            transform: translateX(0);
-        }
-        .content {
-            margin-left: 0;
-        }
-        .content.expanded {
-            margin-left: 0;
-        }
-        #toggleSidebar {
-            display: block;
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
             position: fixed;
-            left: 10px;
-            top: 10px;
-            z-index: 1000;
-            background: #f8b500;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
             color: white;
             border: none;
-            padding: 10px;
-            border-radius: 5px;
+            border-radius: 50%;
+            width: clamp(50px, 8vw, 60px);
+            height: clamp(50px, 8vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: background-color 0.3s;
+            min-height: 44px;
+            min-width: 44px;
         }
-    }
 
-    /* Improved Table Styling */
-    table {
-        width: 100%;
-        border-collapse: separate;
-        border-spacing: 0;
-        font-family: 'Fredoka', sans-serif;
-        margin: 20px 0;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        border-radius: 10px;
-        overflow: hidden;
-    }
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+            transform: scale(1.05);
+        }
 
-    th {
-        background-color: #f8b500;
-        color: white;
-        padding: 15px;
-        text-align: center;
-        font-weight: 600;
-        position: sticky;
-        top: 0;
-    }
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
+        }
 
-    td {
-        padding: 15px;
-        text-align: left;
-        border-bottom: 1px solid #e0e0e0;
-    }
+        .profile-pic {
+            border: 2px solid #f8b500;
+            object-fit: cover;
+        }
 
-    body.dark-mode td {
-        border-bottom-color: #444;
-    }
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none;
+            }
+            
+            .top-nav {
+                display: flex;
+                height: 70px;
+                padding: 0.75rem;
+            }
+            
+            .top-nav .logo {
+                flex: 1;
+            }
+            
+            .top-nav .logo img {
+                height: 35px;
+            }
+            
+            .top-nav .menu {
+                gap: 1rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.6rem;
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.3rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 40px;
+                height: 40px;
+            }
+            
+            .content {
+                padding: 1rem;
+                margin-left: 0;
+                width: 100%;
+                margin-top: 70px;
+            }
+            
+            .content.expanded {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .content-header h1 {
+                font-size: 1.5rem;
+            }
+            
+            .content-header .actions {
+                display: none;
+            }
+            
+            .subject-filter-container {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            #subject-filter {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .upload-form {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .file-upload-label {
+                justify-content: center;
+            }
+            
+            .upload-button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .upload-notes {
+                flex-direction: column;
+            }
+            
+            .note {
+                min-width: 100%;
+            }
+            
+            .enroll-actions {
+                flex-direction: column;
+            }
+            
+            .enroll-btn {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .student-table-container {
+                padding: 1rem;
+            }
+            
+            .student-table {
+                min-width: 100%;
+            }
+        }
 
-    tr:nth-child(even) {
-        background-color: #f9f9f9;
-    }
+        @media (min-width: 769px) {
+            .top-nav {
+                display: none;
+            }
+            
+            .content-header .actions {
+                display: flex;
+            }
+            
+            .dropdown-content {
+                width: min(260px, 80vw);
+                right: 5px;
+                margin-top: 5px;
+            }
+            
+            .dropdown-content:before {
+                right: 15px;
+                width: 14px;
+                height: 14px;
+                top: -7px;
+            }
+            
+            .dropdown-content button {
+                font-size: 15px;
+                padding: 9px 14px;
+                min-height: 40px;
+            }
+        }
 
-    body.dark-mode tr:nth-child(even) {
-        background-color: #333;
-    }
+        @media (max-width: 576px) {
+            .top-nav {
+                height: 60px;
+                padding: 0.5rem;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.75rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.5rem;
+                min-height: 40px;
+                min-width: 40px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.2rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .content {
+                padding: 0.75rem;
+                margin-top: 60px;
+            }
+            
+            .toggle-bulk-btn,
+            .enroll-new-btn,
+            .step-button,
+            .upload-button,
+            .enroll-btn,
+            .remove-btn {
+                font-size: 14px;
+                padding: 10px 15px;
+            }
+            
+            .student-table th,
+            .student-table td {
+                padding: 8px;
+                font-size: 12px;
+            }
+            
+            .dark-mode-toggle {
+                bottom: 10px;
+                right: 10px;
+                width: 50px;
+                height: 50px;
+            }
+        }
 
-    tr:hover {
-        background-color: #f1f1f1;
-        transition: background-color 0.2s ease;
-    }
+        @media (max-width: 480px) {
+            .top-nav {
+                padding: 0.4rem;
+                height: 55px;
+            }
+            
+            .top-nav .logo img {
+                height: 25px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.5rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.4rem;
+                min-height: 38px;
+                min-width: 38px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 55px;
+            }
 
-    body.dark-mode tr:hover {
-        background-color: #3a3a3a;
-    }
+            .content-header h1 {
+                font-size: 1.3rem;
+            }
+            
+            .content-header p {
+                font-size: 0.85rem;
+            }
+            
+            .step {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .step-number {
+                align-self: flex-start;
+            }
+            
+            .dropdown-content {
+                width: min(220px, 75vw);
+                border-radius: 10px;
+            }
+            
+            .dropdown-content:before {
+                right: 12px;
+                width: 12px;
+                height: 12px;
+                top: -6px;
+            }
+            
+            .dropdown-content button {
+                font-size: 14px;
+                padding: 8px 12px;
+                min-height: 38px;
+                margin: 4px auto;
+            }
+            
+            .student-table-container h3 {
+                font-size: 1rem;
+            }
+            
+            #available-search, #enrolled-search {
+                max-width: 100%;
+            }
+        }
 
-    tr:last-child td {
-        border-bottom: none;
-    }
+        @media (max-width: 375px) {
+            .top-nav {
+                padding: 0.3rem;
+                height: 50px;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.4rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.3rem;
+                min-height: 36px;
+                min-width: 36px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 50px;
+            }
+            
+            .dropdown-content {
+                width: min(200px, 70vw);
+            }
+            
+            .dropdown-content button {
+                font-size: 13px;
+                padding: 7px 10px;
+                min-height: 36px;
+            }
+            
+            .student-table th,
+            .student-table td {
+                padding: 6px;
+                font-size: 11px;
+            }
+        }
 
-    /* Table header rounded corners */
-    thead tr:first-child th:first-child {
-        border-top-left-radius: 10px;
-    }
-
-    thead tr:first-child th:last-child {
-        border-top-right-radius: 10px;
-    }
-
-    /* Table body rounded corners */
-    tbody tr:last-child td:first-child {
-        border-bottom-left-radius: 10px;
-    }
-
-    tbody tr:last-child td:last-child {
-        border-bottom-right-radius: 10px;
-    }
-
-    /* Responsive table */
-    @media (max-width: 768px) {
-        table {
-            display: block;
-            overflow-x: auto;
+        /* Utility classes */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
             white-space: nowrap;
+            border: 0;
+        }
+
+        /* Improve focus accessibility */
+        button:focus-visible,
+        a:focus-visible,
+        input:focus-visible,
+        select:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            box-shadow: inset 0 0 5px grey; 
+            border-radius: 10px;
         }
         
-        th, td {
-            min-width: 120px;
+        ::-webkit-scrollbar-thumb {
+            background: #d3d3d3ff; 
+            border-radius: 10px;
         }
-    }
 
-    /* Checkbox styling */
-    input[type="checkbox"] {
-        transform: scale(1.3);
-        cursor: pointer;
-    }
-
-    /* Empty table message */
-    .empty-message {
-        color: #666;
-        font-style: italic;
-        padding: 20px;
-        text-align: center;
-        font-family: 'Fredoka';
-    }
-
-    body.dark-mode .empty-message {
-        color: #b0b0b0;
-    }
-
-    @media (max-width: 576px) {
-        #csv-cont {
-            flex-direction: column;
-            gap: 15px;
+        ::-webkit-scrollbar-thumb:hover {
+            background: #d3d3d3ff; 
         }
-        #bulk {
-            width: 100%;
-        }
-    }
-
-    /* Profile dropdown responsive */
-    @media (max-width: 576px) {
-        .dropdown-content {
-            width: 250px;
-            right: 0;
-        }
-    }
-
-    /* Filter container responsive */
-    .subject-filter-container {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px;
-    }
-
-    @media (max-width: 576px) {
-        .filter-container {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .filter-container select {
-            margin-left: 0;
-            width: 100%;
-        }
-    }
-
-    /* Message styling */
-    .message {
-        padding: 15px;
-        margin: 15px 0;
-        border-radius: 5px;
-        background-color: #f8f8f8;
-        border-left: 4px solid #f8b500;
-        font-weight: 500;
-    }
-
-    body.dark-mode .message {
-        background-color: #2d2d2d;
-        color: #e0e0e0;
-    }
-
-    /* File container responsive */
-    .file-container {
-        display: flex;
-        align-items: center;
-        padding: 20px 20px;
-    }
-
-    @media (max-width: 576px) {
-        .file-container {
-            width: 100%;
-            justify-content: space-between;
-        }
-    }
-
-    /* Search input styling */
-    #available-search, #enrolled-search {
-        padding: 8px 12px;
-        border: 1px solid #ddd;
-        border-radius: 4px;
-        font-family: 'Fredoka';
-        font-size: 14px;
-        width: 250px;
-        margin-bottom: 10px;
-    }
-
-    body.dark-mode #available-search, 
-    body.dark-mode #enrolled-search {
-        background-color: #2d2d2d;
-        border-color: #444;
-        color: #e0e0e0;
-    }
-
-    #available-search:focus, #enrolled-search:focus{
-        outline: none;
-        border-color: #f8b500;
-        box-shadow: 0 0 5px rgba(248, 181, 0, 0.5);
-    }
-
-    .profile {
-        position: relative;
-        cursor: pointer;
-    }
-
-    .profile-pic {
-        border: 2px solid #f8b500;
-    }
-
-    /* CSV Upload Styles */
-    .csv-upload-section {
-        background-color: #f9f9f9;
-        border-radius: 10px;
-        padding: 25px;
-        margin-bottom: 30px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        border: 1px solid #eee;
-    }
-
-    body.dark-mode .csv-upload-section {
-        background-color: #2d2d2d;
-        border-color: #444;
-    }
-
-    .upload-header {
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid #f0f0f0;
-    }
-
-    body.dark-mode .upload-header {
-        border-bottom-color: #444;
-    }
-
-    .upload-header h2 {
-        color: #333;
-        font-size: 1.5rem;
-        margin-bottom: 5px;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    body.dark-mode .upload-header h2 {
-        color: #e0e0e0;
-    }
-
-    .upload-header p {
-        color: #666;
-        font-size: 0.95rem;
-    }
-
-    body.dark-mode .upload-header p {
-        color: #b0b0b0;
-    }
-
-    .upload-steps {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-        margin-bottom: 25px;
-    }
-
-    .step {
-        display: flex;
-        gap: 15px;
-        align-items: flex-start;
-    }
-
-    .step-number {
-        background-color: #f8b500;
-        color: white;
-        width: 30px;
-        height: 30px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        flex-shrink: 0;
-        margin-top: 3px;
-    }
-
-    .step-content {
-        flex-grow: 1;
-    }
-
-    .step-content h3 {
-        color: #333;
-        font-size: 1.1rem;
-        margin-bottom: 8px;
-    }
-
-    body.dark-mode .step-content h3 {
-        color: #e0e0e0;
-    }
-
-    .step-content p {
-        color: #555;
-        font-size: 0.95rem;
-        margin-bottom: 10px;
-    }
-
-    body.dark-mode .step-content p {
-        color: #b0b0b0;
-    }
-
-    .step-button {
-        background-color: #f8b500;
-        color: white;
-        border: none;
-        padding: 10px 15px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-family: 'Fredoka';
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: background-color 0.3s;
-    }
-
-    .step-button:hover {
-        background-color: #e5941f;
-    }
-
-    .hint-box {
-        background-color: #fff8e1;
-        border-left: 4px solid #ffc107;
-        padding: 10px 15px;
-        border-radius: 4px;
-        font-size: 0.9rem;
-        color: #5d4037;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    body.dark-mode .hint-box {
-        background-color: #3a3a2a;
-        border-left-color: #ffc107;
-        color: #e0e0e0;
-    }
-
-    .upload-form {
-        display: flex;
-        gap: 15px;
-        align-items: center;
-        flex-wrap: wrap;
-    }
-
-    .file-upload-wrapper {
-        position: relative;
-        flex-grow: 1;
-    }
-
-    .file-upload-label {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 12px 15px;
-        background-color: white;
-        border: 2px dashed #f8b500;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: all 0.3s;
-        min-width: 250px;
-    }
-
-    body.dark-mode .file-upload-label {
-        background-color: #2d2d2d;
-        color: #e0e0e0;
-    }
-
-    .file-upload-label:hover {
-        background-color: #fffdf6;
-        border-color: #e5941f;
-    }
-
-    body.dark-mode .file-upload-label:hover {
-        background-color: #3a3a3a;
-    }
-
-    #csv-upload {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0,0,0,0);
-        border: 0;
-    }
-
-    .upload-button {
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-family: 'Fredoka';
-        font-weight: 500;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        transition: background-color 0.3s;
-    }
-
-    .upload-button:hover {
-        background-color: #3d8b40;
-    }
-
-    .upload-notes {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        margin-top: 20px;
-    }
-
-    .note {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 0.9rem;
-        color: #555;
-        background-color: #f5f5f5;
-        padding: 10px 15px;
-        border-radius: 5px;
-    }
-
-    body.dark-mode .note {
-        background-color: #3a3a3a;
-        color: #b0b0b0;
-    }
-
-    .note i {
-        color: #f8b500;
-    }
-
-    /* Bulk Enrollment Toggle Styles */
-    .bulk-enrollment-toggle {
-        margin-bottom: 15px;
-    }
-
-    .toggle-bulk-btn {
-        background-color: #f8b500;
-        color: white;
-        border: none;
-        padding: 12px 20px;
-        border-radius: 5px;
-        cursor: pointer;
-        font-family: 'Fredoka';
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        transition: all 0.3s;
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .toggle-bulk-btn:hover {
-        background-color: #e5941f;
-    }
-
-    .toggle-bulk-btn i:first-child {
-        margin-right: 8px;
-    }
-
-    /* Animation for the chevron icon */
-    #toggleIcon {
-        transition: transform 0.3s ease;
-    }
-
-    /* When section is visible */
-    .bulk-visible #toggleIcon {
-        transform: rotate(180deg);
-    }
-
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .upload-form {
-            flex-direction: column;
-            align-items: stretch;
-        }
-        
-        .file-upload-label {
-            justify-content: center;
-        }
-        
-        .upload-button {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-
-    /* width */
-    ::-webkit-scrollbar {
-      width: 10px;
-      height: 10px;
-    }
-
-    /* Track */
-    ::-webkit-scrollbar-track {
-      box-shadow: inset 0 0 5px grey; 
-      border-radius: 10px;
-    }
-     
-    /* Handle */
-    ::-webkit-scrollbar-thumb {
-      background: #CF5300; 
-      border-radius: 10px;
-    }
-
-    /* Handle on hover */
-    ::-webkit-scrollbar-thumb:hover {
-      background: #A34404; 
-    }
     </style>
 </head>
 <body>
 
+    <!-- Top Navigation for Mobile -->
+    <nav class="top-nav" id="topNav">
+        <div class="logo">
+            <img src="img/logo 6.png" alt="QuizZap Logo">
+        </div>
+        <div class="menu" id="topNavMenu">
+            <a href="t_Home.php" title="Dashboard">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="t_Students.php" class="active" title="Students">
+                <i class="fa-regular fa-address-book"></i>
+                <span>Students</span>
+            </a>
+            <a href="t_SubjectsList.php" title="Subjects">
+                <i class="fa-solid fa-list"></i>
+                <span>Subjects</span>
+            </a>
+        </div>
+        <div class="top-nav-profile">
+            <div class="profile" onclick="profileDropdown()">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <div id="dropdown" class="dropdown-content">
+                    <button onclick="window.location.href='t_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                    <form action="logout.php" method="POST">
+                        <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <div class="container">
-        <!-- Sidebar -->
+        <!-- Sidebar - Hidden on mobile -->
         <div class="sidebar" id="sidebar">
             <header>
                 <button id="toggleSidebar" class="toggle-btn">
@@ -1621,7 +1918,8 @@ if (isset($_SESSION['enroll_message'])) {
         <!-- Content Area -->
         <div class="content">
             <div class="content-header">
-                <h1>Students</h1><br>
+                <h1>Students</h1>
+                <!-- Profile in content header for larger screens -->
                 <div class="actions">
                     <div class="profile" onclick="profileDropdown()">
                         <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -1640,6 +1938,43 @@ if (isset($_SESSION['enroll_message'])) {
                     <?php echo htmlspecialchars($message); ?>
                 </div>
             <?php endif; ?>
+
+            <!-- Subject Filter -->
+            <div class="subject-filter-container">
+                <label for="subject-filter">Select Subject:</label>
+                <select id="subject-filter" onchange="filterSubject()">
+                    <option value="">All Subjects</option>
+                    <?php 
+                    // Reset pointer and fetch all subjects with their details
+                    $subjects_result->data_seek(0);
+                    while ($subject = $subjects_result->fetch_assoc()): 
+                        // Get additional subject details for display
+                        $subject_details_sql = "SELECT grade_level, section FROM subjects WHERE subject_id = ?";
+                        $subject_details_stmt = $conn->prepare($subject_details_sql);
+                        $subject_details_stmt->bind_param("i", $subject['subject_id']);
+                        $subject_details_stmt->execute();
+                        $subject_details = $subject_details_stmt->get_result()->fetch_assoc();
+                        $subject_details_stmt->close();
+                        
+                        $grade_level = $subject_details['grade_level'] ?? '';
+                        $section = $subject_details['section'] ?? '';
+                        
+                        // Format the display text
+                        $display_text = htmlspecialchars($subject['subject_name']);
+                        if (!empty($grade_level)) {
+                            $display_text .= " - Grade " . $grade_level;
+                        }
+                        if (!empty($section)) {
+                            $display_text .= " - " . $section;
+                        }
+                    ?>
+                        <option value="<?php echo htmlspecialchars($subject['subject_id']); ?>" 
+                            <?php echo ($selected_subject == $subject['subject_id'] ? 'selected' : ''); ?>>
+                            <?php echo $display_text; ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
 
             <!-- Bulk Enrollment Toggle Button -->
             <div class="bulk-enrollment-toggle">
@@ -1713,42 +2048,6 @@ if (isset($_SESSION['enroll_message'])) {
                 </div>
             </div>
 
-            <div class="filter-container">
-                <label for="subject-filter">Select Subject:</label>
-                <select id="subject-filter" onchange="filterSubject()">
-                    <option value="">All Subjects</option>
-                    <?php 
-                    // Reset pointer and fetch all subjects with their details
-                    $subjects_result->data_seek(0);
-                    while ($subject = $subjects_result->fetch_assoc()): 
-                        // Get additional subject details for display
-                        $subject_details_sql = "SELECT grade_level, section FROM subjects WHERE subject_id = ?";
-                        $subject_details_stmt = $conn->prepare($subject_details_sql);
-                        $subject_details_stmt->bind_param("i", $subject['subject_id']);
-                        $subject_details_stmt->execute();
-                        $subject_details = $subject_details_stmt->get_result()->fetch_assoc();
-                        $subject_details_stmt->close();
-                        
-                        $grade_level = $subject_details['grade_level'] ?? '';
-                        $section = $subject_details['section'] ?? '';
-                        
-                        // Format the display text
-                        $display_text = htmlspecialchars($subject['subject_name']);
-                        if (!empty($grade_level)) {
-                            $display_text .= " - Grade " . $grade_level;
-                        }
-                        if (!empty($section)) {
-                            $display_text .= " - " . $section;
-                        }
-                    ?>
-                        <option value="<?php echo htmlspecialchars($subject['subject_id']); ?>" 
-                            <?php echo ($selected_subject == $subject['subject_id'] ? 'selected' : ''); ?>>
-                            <?php echo $display_text; ?>
-                        </option>
-                    <?php endwhile; ?>
-                </select>
-            </div>
-
             <div class="enrollment-container">
                 <?php if ($selected_subject): ?>
                     <button id="enroll-new-btn" class="enroll-new-btn">
@@ -1756,55 +2055,53 @@ if (isset($_SESSION['enroll_message'])) {
                     </button>
                     
                     <!-- Available Students Table (hidden by default) -->
-                    <div id="available-students-container" class="available-students-container">
+                    <div id="available-students-container" class="student-table-container" style="display: none;">
                         <form id="enroll-form" method="POST">
                             <input type="hidden" name="subject" value="<?php echo $selected_subject; ?>">
                             
-                            <div class="student-table-container">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                                    <h3 style="margin: 0;">Available Students</h3>
-                                    <div>
-                                        <input type="text" id="available-search" placeholder="Search students..." style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd; width: 250px;">
-                                    </div>
+                            <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+                                <h3 style="margin: 0;">Available Students</h3>
+                                <div>
+                                    <input type="text" id="available-search" placeholder="Search students...">
                                 </div>
-                                <?php if ($all_students_result->num_rows > 0): ?>
-                                    <table class="student-table" id="available-students-table">
-                                        <thead>
-                                            <tr>
-                                                <th>Select</th>
-                                                <th>Name</th>
-                                                <th>Account Number</th>
-                                                <th>Grade Level</th>
-                                                <th>Strand</th>
-                                                <th>Section</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <?php 
-                                            $all_students_result->data_seek(0); // Reset pointer
-                                            while ($student = $all_students_result->fetch_assoc()): ?>
-                                                <tr>
-                                                    <td><input type="checkbox" name="students[]" value="<?php echo htmlspecialchars($student['account_number']); ?>"></td>
-                                                    <td><?php echo htmlspecialchars($student['lname'] . ', ' . $student['fname']); ?></td>
-                                                    <td><?php echo htmlspecialchars($student['account_number']); ?></td>
-                                                    <td><?php echo htmlspecialchars($student['glevel']); ?></td>
-                                                    <td><?php echo htmlspecialchars($student['strand'] ?? '-'); ?></td>
-                                                    <td><?php echo htmlspecialchars($student['section'] ?? '-'); ?></td>
-                                                </tr>
-                                            <?php endwhile; ?>
-                                        </tbody>
-                                    </table>
-                                <?php else: ?>
-                                    <p>No students available to enroll.</p>
-                                <?php endif; ?>
                             </div>
+                            <?php if ($all_students_result->num_rows > 0): ?>
+                                <table class="student-table" id="available-students-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Select</th>
+                                            <th>Name</th>
+                                            <th>Account Number</th>
+                                            <th>Grade Level</th>
+                                            <th>Strand</th>
+                                            <th>Section</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $all_students_result->data_seek(0); // Reset pointer
+                                        while ($student = $all_students_result->fetch_assoc()): ?>
+                                            <tr>
+                                                <td><input type="checkbox" name="students[]" value="<?php echo htmlspecialchars($student['account_number']); ?>"></td>
+                                                <td><?php echo htmlspecialchars($student['lname'] . ', ' . $student['fname']); ?></td>
+                                                <td><?php echo htmlspecialchars($student['account_number']); ?></td>
+                                                <td><?php echo htmlspecialchars($student['glevel']); ?></td>
+                                                <td><?php echo htmlspecialchars($student['strand'] ?? '-'); ?></td>
+                                                <td><?php echo htmlspecialchars($student['section'] ?? '-'); ?></td>
+                                            </tr>
+                                        <?php endwhile; ?>
+                                    </tbody>
+                                </table>
+                            <?php else: ?>
+                                <p class="empty-message">No students available to enroll.</p>
+                            <?php endif; ?>
                             
                             <div class="enroll-actions">
                                 <button type="submit" name="enroll_students" class="enroll-btn" 
                                     <?php echo ($all_students_result->num_rows == 0 ? 'disabled' : ''); ?>>
                                     <i class="fas fa-save"></i> Confirm Enrollment
                                 </button>
-                                <button type="button" id="cancel-enroll-btn" class="enroll-btn" style="background-color: #ccc; margin-left: 10px;">
+                                <button type="button" id="cancel-enroll-btn" class="enroll-btn" style="background-color: #ccc;">
                                     <i class="fas fa-times"></i> Cancel
                                 </button>
                             </div>
@@ -1814,10 +2111,10 @@ if (isset($_SESSION['enroll_message'])) {
 
                 <!-- Enrolled Students Table -->
                 <div class="student-table-container">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                    <div style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
                         <h3 style="margin: 0;"><?php echo $selected_subject ? 'Currently Enrolled Students' : 'All Enrolled Students'; ?></h3>
                         <div>
-                            <input type="text" id="enrolled-search" placeholder="Search enrolled students..." style="padding: 8px 12px; border-radius: 4px; border: 1px solid #ddd; width: 250px;">
+                            <input type="text" id="enrolled-search" placeholder="Search enrolled students...">
                         </div>
                     </div>
                     <?php if ($enrolled_students_result->num_rows > 0): ?>
@@ -1867,7 +2164,7 @@ if (isset($_SESSION['enroll_message'])) {
                             </tbody>
                         </table>
                     <?php else: ?>
-                        <p><?php echo $selected_subject ? 'No students enrolled in this subject yet.' : 'No students enrolled in any of your subjects yet.'; ?></p>
+                        <p class="empty-message"><?php echo $selected_subject ? 'No students enrolled in this subject yet.' : 'No students enrolled in any of your subjects yet.'; ?></p>
                     <?php endif; ?>
                 </div>
             </div>
@@ -1879,6 +2176,8 @@ if (isset($_SESSION['enroll_message'])) {
         const sidebar = document.querySelector('.sidebar');
         const content = document.querySelector('.content');
         const toggleBtn = document.getElementById('toggleSidebar');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const body = document.body;
 
         // Check if sidebar state is saved in localStorage
         const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
@@ -1900,14 +2199,27 @@ if (isset($_SESSION['enroll_message'])) {
             });
         }
 
-        // Dark Mode Functionality - Auto apply based on localStorage
-        // Check for saved dark mode preference
+        // Dark mode functionality
         const isDarkMode = localStorage.getItem('darkMode') === 'true';
 
         // Apply dark mode on page load if enabled
         if (isDarkMode) {
             document.body.classList.add('dark-mode');
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
         }
+
+        darkModeToggle.addEventListener('click', () => {
+            body.classList.toggle('dark-mode');
+            
+            // Update button icon and save preference
+            if (body.classList.contains('dark-mode')) {
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                localStorage.setItem('darkMode', 'true');
+            } else {
+                darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                localStorage.setItem('darkMode', 'false');
+            }
+        });
 
         // Bulk Enrollment Toggle Functionality
         const bulkToggleBtn = document.getElementById('toggleBulkEnrollment');
@@ -2015,14 +2327,16 @@ if (isset($_SESSION['enroll_message'])) {
         
         if (enrollNewBtn && availableStudentsContainer) {
             enrollNewBtn.addEventListener('click', function() {
-                availableStudentsContainer.classList.add('show');
+                availableStudentsContainer.style.display = 'block';
                 enrollNewBtn.style.display = 'none';
+                // Scroll to the available students section
+                availableStudentsContainer.scrollIntoView({ behavior: 'smooth' });
             });
             
             if (cancelEnrollBtn) {
                 cancelEnrollBtn.addEventListener('click', function() {
-                    availableStudentsContainer.classList.remove('show');
-                    enrollNewBtn.style.display = 'block';
+                    availableStudentsContainer.style.display = 'none';
+                    enrollNewBtn.style.display = 'flex';
                     // Uncheck all checkboxes when canceling
                     document.querySelectorAll('#enroll-form input[type="checkbox"]').forEach(checkbox => {
                         checkbox.checked = false;
@@ -2046,15 +2360,37 @@ if (isset($_SESSION['enroll_message'])) {
             }
             window.location.href = `t_Students.php?download_template=1&subject=${selectedSubject}`;
         });
+
+        // Improve touch targets for mobile
+        const touchElements = document.querySelectorAll('a, button, .dropdown-content button, input[type="checkbox"]');
+        touchElements.forEach(element => {
+            if (element.tagName === 'BUTTON' || element.tagName === 'A') {
+                element.style.minHeight = '44px';
+                element.style.minWidth = '44px';
+                element.style.display = 'flex';
+                element.style.alignItems = 'center';
+                element.style.justifyContent = 'center';
+            }
+        });
     });
 
     function profileDropdown() {
-        document.getElementById("dropdown").classList.toggle("show");
+        // Close all dropdowns first
+        const allDropdowns = document.querySelectorAll('.dropdown-content.show');
+        allDropdowns.forEach(drop => {
+            drop.classList.remove('show');
+        });
+        
+        // Toggle the clicked dropdown
+        const dropdowns = document.querySelectorAll('.dropdown-content');
+        dropdowns.forEach(dropdown => {
+            dropdown.classList.toggle('show');
+        });
     }
 
     // Close the dropdown if clicked outside
     window.onclick = function(event) {
-        if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+        if (!event.target.matches('.profile') && !event.target.matches('.profile-pic') && !event.target.closest('.profile')) {
             var dropdowns = document.getElementsByClassName("dropdown-content");
             for (var i = 0; i < dropdowns.length; i++) {
                 var openDropdown = dropdowns[i];
@@ -2070,6 +2406,18 @@ if (isset($_SESSION['enroll_message'])) {
         const selectedSubject = document.getElementById('subject-filter').value;
         window.location.href = `t_Students.php?subject=${selectedSubject}`;
     }
+
+    // Handle window resize for responsive behavior
+    window.addEventListener('resize', function() {
+        // Auto-hide sidebar on mobile when resizing to larger screen
+        if (window.innerWidth >= 769) {
+            // If we're on desktop and sidebar was hidden (mobile state), reset it
+            const sidebar = document.querySelector('.sidebar');
+            if (sidebar && sidebar.style.display === 'none') {
+                sidebar.style.display = 'flex';
+            }
+        }
+    });
     </script>
 </body>
 </html>

@@ -315,8 +315,8 @@ $conn->close();
         }
         
         .profile-container {
-            width: 100%;
-            max-width: 600px;
+            width: 50%;
+            max-width: 900px;
             background: var(--card-bg);
             border-radius: 16px;
             box-shadow: var(--shadow-lg);
@@ -331,12 +331,12 @@ $conn->close();
         }
 
         .profile-header {
-            height: 100px;
+            height: 80px;
             background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 30px;
+            padding: 0 40px;
             position: relative;
             overflow: hidden;
         }
@@ -599,31 +599,186 @@ $conn->close();
             font-size: 12px;
         }
 
-        /* Responsive styles */
+        /* NEW: Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: clamp(50px, 8vw, 60px);
+            height: clamp(50px, 8vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: background-color 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+            transform: scale(1.05);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
+        }
+
+        /* Enhanced Mobile Responsive Styles - Added from s_Profile.php */
+        @media (max-width: 1200px) {
+            .profile-container {
+                width: 70%;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .profile-container {
+                width: 80%;
+            }
+        }
+
+        /* 768px Responsive Styles */
         @media (max-width: 768px) {
             header {
                 padding: 15px 20px;
+                flex-wrap: wrap;
             }
             
             nav {
                 gap: 12px;
+                flex-wrap: wrap;
+                justify-content: center;
+            }
+            
+            .profile-container {
+                width: 90%;
             }
             
             .profile-content {
-                padding: 20px;
+                padding: 25px;
             }
             
             .profile-header {
-                padding: 0 20px;
+                padding: 0 25px;
+                height: auto;
+                min-height: 80px;
+                flex-direction: column;
+                justify-content: center;
+                text-align: center;
+            }
+            
+            .profile-title {
+                font-size: 24px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .full-name {
+                font-size: 24px;
             }
             
             .btn {
                 padding: 12px 20px;
                 font-size: 14px;
             }
+            
+            /* Add icons to navigation */
+            nav a {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                font-size: 14px;
+                padding: 8px 0;
+                min-height: 44px;
+                justify-content: center;
+            }
+            
+            nav a i {
+                font-size: 16px;
+            }
         }
         
-        @media (max-width: 480px) {
+        /* 576px Responsive Styles */
+        @media (max-width: 576px) {
+            header {
+                padding: 12px 15px;
+                flex-direction: column;
+                gap: 15px;
+            }
+            
+            nav {
+                gap: 8px;
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            nav a {
+                font-size: 14px;
+                padding: 8px 0;
+                flex: 1;
+                text-align: center;
+                min-height: 44px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .logout-btn {
+                padding: 6px 12px;
+                font-size: 14px;
+            }
+            
+            .logo img {
+                height: 35px;
+            }
+            
+            main {
+                padding: 20px 15px;
+            }
+            
+            .profile-container {
+                width: 100%;
+            }
+            
+            .profile-header {
+                padding: 20px;
+                height: auto;
+                gap: 10px;
+            }
+            
+            .profile-title {
+                font-size: 22px;
+            }
+            
+            .profile-content {
+                padding: 20px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 120px;
+                height: 120px;
+            }
+            
+            .full-name {
+                font-size: 22px;
+            }
+            
+            .account-number {
+                font-size: 16px;
+            }
+            
             .form-actions {
                 flex-direction: column;
                 gap: 10px;
@@ -633,6 +788,170 @@ $conn->close();
                 width: 100%;
                 justify-content: center;
             }
+            
+            .dark-mode-toggle {
+                bottom: 15px;
+                right: 15px;
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        /* 480px Responsive Styles */
+        @media (max-width: 480px) {
+            header {
+                padding: 10px;
+            }
+            
+            nav {
+                gap: 6px;
+            }
+            
+            nav a {
+                font-size: 13px;
+                padding: 8px;
+                min-height: 44px;
+                min-width: 44px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .logout-btn {
+                padding: 5px 10px;
+                font-size: 13px;
+            }
+            
+            .logo img {
+                height: 30px;
+            }
+            
+            main {
+                padding: 15px 10px;
+            }
+            
+            .profile-header {
+                padding: 15px;
+            }
+            
+            .profile-title {
+                font-size: 20px;
+            }
+            
+            .profile-content {
+                padding: 15px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 100px;
+                height: 100px;
+            }
+            
+            .full-name {
+                font-size: 20px;
+            }
+            
+            .account-number {
+                font-size: 14px;
+                padding: 4px 12px;
+            }
+            
+            .student-details {
+                gap: 12px;
+            }
+            
+            .detail-group {
+                padding: 12px;
+            }
+            
+            .detail-label {
+                font-size: 12px;
+            }
+            
+            .detail-value {
+                font-size: 15px;
+            }
+            
+            .form-group {
+                gap: 8px;
+            }
+            
+            .form-label {
+                font-size: 14px;
+            }
+            
+            .form-input {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            .dark-mode-toggle {
+                bottom: 10px;
+                right: 10px;
+                width: 45px;
+                height: 45px;
+                font-size: 1.1rem;
+            }
+        }
+
+        /* 375px Responsive Styles */
+        @media (max-width: 375px) {
+            nav a {
+                font-size: 12px;
+                padding: 6px;
+            }
+            
+            .logout-btn {
+                padding: 4px 8px;
+                font-size: 12px;
+            }
+            
+            .profile-title {
+                font-size: 18px;
+            }
+            
+            .full-name {
+                font-size: 18px;
+            }
+            
+            .account-number {
+                font-size: 13px;
+            }
+            
+            .profile-pic-container, .profile-pic-preview {
+                width: 90px;
+                height: 90px;
+            }
+        }
+
+        /* Utility classes for better responsive behavior */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Improve focus accessibility */
+        button:focus-visible,
+        a:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Prevent horizontal scroll */
+        body {
+            overflow-x: hidden;
         }
     </style>
 </head>
@@ -640,17 +959,36 @@ $conn->close();
     <header>                   
         <div class="logo"> <img src="img/logo4.png" width="110px" height="80px" class="logo-img"></div>
         <nav>
-            <a href="t_Home.php">Home</a>
-            <a href="t_Students.php">Students</a>
-            <a href="t_SubjectsList.php">Subjects</a>
-            <a class="active" href="t_Profile.php">Profile</a>
+            <a href="t_Home.php">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="t_Students.php">
+                <i class="fas fa-users"></i>
+                <span>Students</span>
+            </a>
+            <a href="t_SubjectsList.php">
+                <i class="fas fa-book"></i>
+                <span>Subjects</span>
+            </a>
+            <a class="active" href="t_Profile.php">
+                <i class="fas fa-user"></i>
+                <span>Profile</span>
+            </a>
             <form action="logout.php" method="POST">
                 <button type="submit" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> Logout
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
                 </button>
             </form>
         </nav>
     </header>
+
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </button>
+
     <main>
         <div class="profile-container">
             <div class="profile-header">
@@ -738,13 +1076,17 @@ $conn->close();
             const profilePicPreview = document.getElementById('profilePicPreview');
             const successMessage = document.getElementById('successMessage');
             
-            // Dark Mode Functionality - Auto apply based on localStorage
+            // Dark Mode Toggle Functionality
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            const body = document.body;
+
             // Check for saved dark mode preference
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
 
             // Apply dark mode on page load if enabled
             if (isDarkMode) {
                 document.body.classList.add('dark-mode');
+                darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
             }
             
             // Toggle between preview and edit modes
@@ -817,6 +1159,20 @@ $conn->close();
                     const previewImg = document.querySelector('#previewMode .profile-pic');
                     previewImg.src = 'uploads/profiles/' + '<?php echo $profile_pic; ?>?' + new Date().getTime();
                 }, 100);
+            });
+
+            // Dark mode toggle functionality
+            darkModeToggle.addEventListener('click', () => {
+                body.classList.toggle('dark-mode');
+                
+                // Update button icon and save preference
+                if (body.classList.contains('dark-mode')) {
+                    darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+                    localStorage.setItem('darkMode', 'true');
+                } else {
+                    darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+                    localStorage.setItem('darkMode', 'false');
+                }
             });
         });
     </script>

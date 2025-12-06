@@ -996,7 +996,7 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
             
             const formData = new FormData(this);
             const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
-                const inputs = questionDiv.querySelectorAll('input[type="text"]');
+                const inputs = questionDiv.querySelectorAll('input[type="questions[]"]');
                 return Array.from(inputs).every(input => input.value.trim() !== '');
             });
 

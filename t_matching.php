@@ -973,11 +973,8 @@ $subject_id = $_GET['subject_id'];
             
             const formData = new FormData(this);
             const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
-                const questionInput = questionDiv.querySelector('input[name="questions[]"]');
                 const leftItems = questionDiv.querySelectorAll('input[name^="left_items["]');
                 const rightItems = questionDiv.querySelectorAll('input[name^="right_items["]');
-                
-                if (!questionInput.value.trim()) return false;
                 
                 let hasPairs = true;
                 leftItems.forEach(input => {

@@ -1021,13 +1021,30 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
             const formData = new FormData(this);
             const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
-                // Check if question text is filled
-                const questionInput = questionDiv.querySelector('input[type="text"]');
-                if (!questionInput.value.trim()) return false;
+                // Check if question text is filled (skip instructions field)
+                const questionInput = questionDiv.querySelector('input[name="questions[]"]');
+                
+                // Debug: log what we found
+                console.log('Question input found:', questionInput);
+                
+                if (!questionInput) {
+                    console.error('Question input not found in:', questionDiv);
+                    return false;
+                }
+                
+                if (!questionInput.value.trim()) {
+                    console.log('Question is empty');
+                    return false;
+                }
                 
                 // Check if an answer is selected
                 const correctInput = questionDiv.querySelector('input[name="correct[]"]');
-                if (!correctInput.value) return false;
+                console.log('Correct input found:', correctInput, 'Value:', correctInput ? correctInput.value : 'null');
+                
+                if (!correctInput || !correctInput.value) {
+                    console.log('No answer selected');
+                    return false;
+                }
                 
                 return true;
             });

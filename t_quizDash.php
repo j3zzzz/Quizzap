@@ -89,11 +89,132 @@ $conn->close();
 
         .container {
             display: flex;
+            flex-direction: column;
             min-height: 100vh;
             position: relative;
+            width: 100%;
         }
 
-        /* Sidebar styling */
+        /* Top Navigation for ALL screen sizes */
+        .top-nav {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: #f8b500;
+            padding: 1rem;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            align-items: center;
+            justify-content: space-between;
+            height: 70px;
+        }
+        
+        body.dark-mode .top-nav {
+            background-color: #333;
+        }
+        
+        .top-nav .logo {
+            display: flex;
+            align-items: center;
+        }
+        
+        .top-nav .logo img {
+            height: 40px;
+            width: auto;
+        }
+        
+        .top-nav .menu {
+            display: flex !important;
+            position: static;
+            flex-direction: row;
+            background: none;
+            box-shadow: none;
+            width: auto;
+            padding: 0;
+            margin: 0;
+            gap: 1.5rem;
+        }
+        
+        .top-nav .menu a {
+            color: #ffffff;
+            text-decoration: none;
+            padding: 0.75rem;
+            display: flex;
+            align-items: center;
+            font-size: 1rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .top-nav .menu a i {
+            font-size: 1.4rem;
+            margin-right: 0;
+        }
+        
+        .top-nav .menu a span {
+            display: none;
+        }
+        
+        .top-nav .menu a:hover,
+        .top-nav .menu a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        .top-nav .menu a::after {
+            content: attr(title);
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+        
+        .top-nav .menu a:hover::after {
+            opacity: 1;
+        }
+        
+        /* Profile in top nav */
+        .top-nav-profile {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+        
+        .top-nav-profile .profile {
+            width: 45px;
+            height: 45px;
+            background-color: #ffffff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #f5a623;
+            font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
+            border: 2px solid white;
+        }
+        
+        body.dark-mode .top-nav-profile .profile {
+            background-color: #333;
+        }
+
+        /* Sidebar styling - Hidden on mobile */
         .sidebar {
             position: fixed;
             width: 250px;
@@ -107,7 +228,6 @@ $conn->close();
             transition: all 0.3s ease;
             z-index: 999;
             box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-            transform: translateX(0);
         }
 
         body.dark-mode .sidebar {
@@ -118,10 +238,6 @@ $conn->close();
         .sidebar.collapsed {
             width: 90px;
             padding: 2rem 0.5rem;
-        }
-
-        .sidebar.mobile-hidden {
-            transform: translateX(-100%);
         }
 
         .sidebar .logo {
@@ -149,6 +265,8 @@ $conn->close();
             padding: 5px;
             border-radius: 4px;
             transition: background 0.2s;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         body.dark-mode .toggle-btn {
@@ -171,6 +289,8 @@ $conn->close();
             border-radius: 5px;
             z-index: 1000;
             font-size: 1.2rem;
+            min-height: 44px;
+            min-width: 44px;
         }
 
         .sidebar .menu {
@@ -178,6 +298,7 @@ $conn->close();
             display: flex;
             flex-direction: column;
             flex-grow: 1;
+            gap: 0.5rem;
         }
 
         .sidebar.collapsed .menu{
@@ -196,8 +317,8 @@ $conn->close();
             transition: background 0.3s;
             font-family: 'Fredoka';
             letter-spacing: 1px;
-            margin-bottom: .5rem;
             width: 100%;
+            min-height: 50px;
         }
 
         .sidebar.collapsed .menu a {
@@ -211,7 +332,7 @@ $conn->close();
             transition: opacity 0.2s;
             font-family: 'Fredoka';
             font-weight: bold;
-            font-size: 20px;
+            font-size: clamp(16px, 1.5vw, 20px);
         }
 
         .sidebar.collapsed .menu a span {
@@ -239,6 +360,7 @@ $conn->close();
             min-width: 20px;
             text-align: center;
             font-size: clamp(1rem, 1.2vw, 1.5rem);
+            flex-shrink: 0;
         }
 
         .sidebar.collapsed .menu a i {
@@ -265,6 +387,8 @@ $conn->close();
             padding: 2rem;
             margin-left: 250px;
             transition: margin-left 0.3s ease, background-color 0.3s;
+            width: calc(100% - 250px);
+            min-height: 100vh;
         }
 
         body.dark-mode .content {
@@ -274,6 +398,7 @@ $conn->close();
 
         .content.expanded {
             margin-left: 90px;
+            width: calc(100% - 90px);
         }
 
         .content span {
@@ -284,17 +409,21 @@ $conn->close();
         .content-header {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+            width: 100%;
         }
 
         .content-header h1 {
-            width: 95%;
-            font-size: 2rem;
+            width: 100%;
+            font-size: clamp(1.5rem, 3vw, 2rem);
             color: #333333;
             font-family: Fredoka;
             padding: 10px;
             border-bottom: 1.5px solid #F8B500;
+            line-height: 1.3;
         }
 
         body.dark-mode .content-header h1 {
@@ -303,7 +432,7 @@ $conn->close();
 
         .content-header p {
             color: #999;
-            font-size: 1rem;
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
             margin-top: 0.5rem;
             font-family: Fredoka;
             font-weight: 500;
@@ -313,9 +442,12 @@ $conn->close();
             color: #b0b0b0;
         }
 
+        /* Profile in content header for larger screens */
         .content-header .actions {
             display: flex;
             align-items: center;
+            gap: 1rem;
+            flex-shrink: 0;
         }
 
         .content-header .actions button {
@@ -326,8 +458,9 @@ $conn->close();
             border-radius: 5px;
             font-size: 1rem;
             cursor: pointer;
-            margin-right: 1rem;
             font-family: Fredoka;
+            min-height: 44px;
+            white-space: nowrap;
         }
 
         .content-header .actions button:hover {
@@ -335,8 +468,8 @@ $conn->close();
         }
 
         .content-header .actions .profile {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             background-color: #ffffff;
             border-radius: 50%;
             display: flex;
@@ -344,6 +477,9 @@ $conn->close();
             justify-content: center;
             color: #f5a623;
             font-size: 1.5rem;
+            cursor: pointer;
+            flex-shrink: 0;
+            position: relative;
         }
 
         body.dark-mode .content-header .actions .profile {
@@ -354,6 +490,7 @@ $conn->close();
             display: flex;
             justify-content: flex-end;
             margin-bottom: 2rem;
+            width: 100%;
         }
 
         .create-q-button a {
@@ -364,12 +501,18 @@ $conn->close();
             border: 2px solid #F8B500;
             font-family: Fredoka;
             font-weight: 500;
-            font-size: 16px;
+            font-size: clamp(14px, 1.5vw, 16px);
             box-shadow: 0 6px 0 0 #BC8900;
             cursor: pointer;
             text-decoration: none;
             transition: all 0.3s ease;
             display: inline-block;
+            text-align: center;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
         }
 
         .create-q-button a:hover {
@@ -431,11 +574,14 @@ $conn->close();
         #select {
             font-family: Fredoka;
             color: black;
-            font-size: clamp(18px, 3vw, 25px);
+            font-size: clamp(16px, 2.5vw, 25px);
             font-weight: 500;
             line-height: 1.5;
             animation-name: checkbox_fade;
             animation-duration: 1s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         body.dark-mode #select {
@@ -447,11 +593,16 @@ $conn->close();
             border-radius: 8px;
             padding: 0.75rem;
             color: black;
-            font-size: clamp(16px, 2.5vw, 20px);
+            font-size: clamp(14px, 2vw, 20px);
             font-weight: bold;
             cursor: pointer;
             border: none;
             transition: transform 0.2s;
+            min-height: 44px;
+            min-width: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #selectQuiz:hover {
@@ -465,12 +616,18 @@ $conn->close();
             border: none;
             padding: 0.5rem 1rem;
             color: white;
-            font-size: clamp(13px, 2vw, 15px);
+            font-size: clamp(13px, 1.5vw, 15px);
             cursor: pointer;
             animation-name: checkbox_fade;
             animation-duration: 1s;
             box-shadow: 0 6px 0 0 #BC8900;
             transition: all 0.3s ease;
+            min-height: 44px;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
         }
 
         #deleteBtn:hover {
@@ -479,7 +636,7 @@ $conn->close();
 
         .quiz-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
             gap: 1rem;
             padding: 1rem 0;
         }
@@ -501,7 +658,7 @@ $conn->close();
             text-decoration: none;
             text-align: center;
             font-family: Fredoka;
-            font-size: clamp(16px, 2.5vw, 22px);
+            font-size: clamp(14px, 2vw, 22px);
             color: black;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -511,6 +668,8 @@ $conn->close();
             display: flex;
             align-items: center;
             justify-content: center;
+            word-break: break-word;
+            line-height: 1.3;
         }
 
         body.dark-mode .quiz-btn {
@@ -543,11 +702,14 @@ $conn->close();
             animation-name: checkbox_fade;
             animation-duration: 1s;
             margin-top: 0.5rem;
+            min-height: 20px;
+            min-width: 20px;
         }
 
         .no-quiz-container {
             text-align: center;
             padding: 3rem 1rem;
+            grid-column: 1 / -1;
         }
 
         .img-no-quiz {
@@ -558,7 +720,7 @@ $conn->close();
         }
 
         .no-quiz-btn {
-            font-size: 22px;
+            font-size: clamp(18px, 2.5vw, 22px);
             line-height: 1.2;
             color: #666;
         }
@@ -578,6 +740,7 @@ $conn->close();
             margin: 0 auto 2rem;
             padding: 1rem;
             color: white;
+            word-wrap: break-word;
         }
 
         #close-btn {
@@ -590,6 +753,11 @@ $conn->close();
             cursor: pointer;
             background: none;
             border: none;
+            min-height: 30px;
+            min-width: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         #close-btn:hover {
@@ -598,7 +766,7 @@ $conn->close();
         }
 
         .dropdown-content {
-            width: 250px;
+            width: min(250px, 80vw);
             right: 0;
             display: none;
             position: absolute;
@@ -607,7 +775,8 @@ $conn->close();
             box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
             z-index: 1001;
             padding: 10px 0;
-            top: 60px;
+            top: 100%;
+            margin-top: 10px;
         }
 
         .dropdown-content:before {
@@ -625,7 +794,7 @@ $conn->close();
         .dropdown-content button {
             background-color: transparent;
             font-family: 'Fredoka';
-            font-size: 16px;
+            font-size: clamp(14px, 1.5vw, 16px);
             border: 2px solid white;
             color: white;
             width: 90%;
@@ -638,6 +807,7 @@ $conn->close();
             border-radius: 10px;
             cursor: pointer;
             letter-spacing: 1px;
+            min-height: 44px;
         }
 
         .dropdown-content button:hover {
@@ -647,6 +817,48 @@ $conn->close();
 
         .show {
             display: block;
+        }
+
+        /* Dark Mode Toggle Button */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: #f8b500;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: clamp(50px, 8vw, 60px);
+            height: clamp(50px, 8vw, 60px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            transition: background-color 0.3s;
+            min-height: 44px;
+            min-width: 44px;
+        }
+
+        .dark-mode-toggle:hover {
+            background-color: #e5941f;
+            transform: scale(1.05);
+        }
+
+        body.dark-mode .dark-mode-toggle {
+            background-color: #444;
+        }
+
+        .profile {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            border: 2px solid #f8b500;
+            object-fit: cover;
         }
 
         /* Scrollbar styles */
@@ -675,129 +887,345 @@ $conn->close();
         }
 
         /* Mobile Responsive Design */
-        @media screen and (max-width: 768px) {
+        @media (max-width: 768px) {
             .sidebar {
-                width: 280px;
-                transform: translateX(-100%);
+                display: none;
             }
-
-            .sidebar.mobile-open {
-                transform: translateX(0);
+            
+            .top-nav {
+                display: flex;
+                height: 70px;
+                padding: 0.75rem;
             }
-
-            .sidebar.collapsed {
-                width: 280px;
+            
+            .top-nav .logo {
+                flex: 1;
             }
-
-            .mobile-toggle {
-                display: block;
+            
+            .top-nav .logo img {
+                height: 35px;
             }
-
+            
+            .top-nav .menu {
+                gap: 1rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.6rem;
+                min-height: 44px;
+                min-width: 44px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.3rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 40px;
+                height: 40px;
+            }
+            
             .content {
+                padding: 1rem;
                 margin-left: 0;
                 width: 100%;
-                padding: 1rem 0.5rem;
-                padding-top: 4rem;
+                margin-top: 70px;
             }
-
+            
             .content.expanded {
                 margin-left: 0;
                 width: 100%;
             }
-
-            .content-header {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
-            }
-
-            .content-header .actions {
-                align-self: flex-end;
-            }
-
+            
             .create-q-button {
                 justify-content: center;
-                margin-bottom: 1rem;
             }
-
+            
             .create-q-button a {
                 width: 100%;
                 max-width: 200px;
-                text-align: center;
             }
-
-            .quiz-grid {
-                grid-template-columns: 1fr;
-                gap: 1rem;
+            
+            .quiz-container {
+                max-height: 60vh;
+                padding: 0.75rem;
             }
-
+            
             .edit-quiz {
                 flex-direction: column;
                 align-items: stretch;
-                gap: 1rem;
+                padding: 0.75rem;
+                gap: 0.75rem;
             }
-
+            
             .edit-quiz > div {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
                 width: 100%;
             }
-
-            #status {
-                width: 95%;
-                margin: 0 auto 1rem;
+            
+            #select {
+                font-size: clamp(16px, 4vw, 20px);
             }
-
-            .dropdown-content {
-                width: 200px;
-                right: 0.5rem;
-            }
-        }
-
-        @media screen and (max-width: 480px) {
-            .content {
-                padding: 0.5rem 0.25rem;
-                padding-top: 4rem;
-            }
-
+            
             .quiz-grid {
                 grid-template-columns: 1fr;
                 gap: 0.75rem;
-                padding: 0.5rem 0;
             }
-
+            
             .quiz-btn {
                 padding: 0.75rem;
                 min-height: 50px;
-                font-size: 16px;
+                font-size: clamp(14px, 3vw, 18px);
+            }
+            
+            #status {
+                width: 95%;
+                margin: 0 auto 1rem;
+                padding: 0.75rem;
+                font-size: clamp(14px, 3vw, 16px);
+            }
+            
+            .dropdown-content {
+                width: min(220px, 75vw);
+                right: 0.5rem;
+            }
+            
+            .dropdown-content:before {
+                right: 15px;
+            }
+        }
+
+        /* For screens larger than 768px - Show sidebar and content header profile */
+        @media (min-width: 769px) {
+            .top-nav {
+                display: none;
+            }
+            
+            .content-header .actions {
+                display: flex;
             }
 
+            .dropdown-content {
+                width: min(260px, 80vw);
+                right: 5px;
+                margin-top: 5px;
+            }
+            
+            .dropdown-content:before {
+                right: 15px;
+                width: 14px;
+                height: 14px;
+                top: -7px;
+            }
+            
+            .dropdown-content button {
+                font-size: 15px;
+                padding: 9px 14px;
+                min-height: 40px;
+            }
+            
+            .mobile-toggle {
+                display: none;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .top-nav {
+                height: 60px;
+                padding: 0.5rem;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.75rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.5rem;
+                min-height: 40px;
+                min-width: 40px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.2rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 35px;
+                height: 35px;
+            }
+            
+            .content {
+                padding: 0.75rem;
+                margin-top: 60px;
+            }
+            
             .content-header h1 {
-                font-size: 1.5rem;
+                font-size: 1.3rem;
+                padding: 0.5rem;
             }
-
+            
+            .create-q-button {
+                margin-bottom: 1.5rem;
+            }
+            
             .create-q-button a {
-                padding: 0.5rem 1rem;
+                padding: 0.6rem 1.2rem;
                 font-size: 14px;
             }
-
+            
             .edit-quiz {
-                padding: 0.75rem;
+                padding: 0.5rem;
+                gap: 0.5rem;
             }
-
+            
+            #selectQuiz, #deleteBtn {
+                padding: 0.5rem;
+                font-size: 13px;
+            }
+            
             #select {
                 font-size: 16px;
             }
-
-            #selectQuiz, #deleteBtn {
+            
+            .quiz-grid {
+                gap: 0.5rem;
+                padding: 0.5rem 0;
+            }
+            
+            .quiz-btn {
+                padding: 0.6rem;
+                min-height: 45px;
                 font-size: 14px;
+            }
+            
+            .dark-mode-toggle {
+                bottom: 10px;
+                right: 10px;
+                width: 50px;
+                height: 50px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .top-nav {
+                padding: 0.4rem;
+                height: 55px;
+            }
+            
+            .top-nav .logo img {
+                height: 25px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.5rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.4rem;
+                min-height: 38px;
+                min-width: 38px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1.1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 32px;
+                height: 32px;
+            }
+            
+            .content {
                 padding: 0.5rem;
+                margin-top: 55px;
+            }
+
+            .content-header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .quiz-container {
+                padding: 0.5rem;
+                max-height: 55vh;
+            }
+            
+            .edit-quiz {
+                padding: 0.4rem;
+            }
+            
+            #select {
+                font-size: 14px;
+            }
+            
+            .dropdown-content {
+                width: min(200px, 70vw);
+            }
+            
+            .dropdown-content button {
+                font-size: 13px;
+                padding: 8px 10px;
+                min-height: 36px;
+            }
+        }
+
+        @media (max-width: 375px) {
+            .top-nav {
+                padding: 0.3rem;
+                height: 50px;
+            }
+            
+            .top-nav .logo img {
+                height: 30px;
+            }
+            
+            .top-nav .menu {
+                gap: 0.4rem;
+            }
+            
+            .top-nav .menu a {
+                padding: 0.3rem;
+                min-height: 36px;
+                min-width: 36px;
+            }
+            
+            .top-nav .menu a i {
+                font-size: 1rem;
+            }
+            
+            .top-nav-profile .profile {
+                width: 30px;
+                height: 30px;
+            }
+            
+            .content {
+                padding: 0.5rem;
+                margin-top: 50px;
+            }
+            
+            .create-q-button a {
+                padding: 0.5rem 1rem;
+                font-size: 13px;
+            }
+            
+            .dropdown-content {
+                width: min(180px, 65vw);
+            }
+            
+            .dropdown-content button {
+                font-size: 12px;
+                padding: 7px 8px;
+                min-height: 34px;
             }
         }
 
         /* Tablet responsive */
-        @media screen and (min-width: 769px) and (max-width: 1024px) {
+        @media (min-width: 769px) and (max-width: 1024px) {
             .quiz-grid {
                 grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
             }
@@ -808,31 +1236,84 @@ $conn->close();
         }
 
         /* Large screen adjustments */
-        @media screen and (min-width: 1400px) {
+        @media (min-width: 1400px) {
             .quiz-grid {
                 grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             }
         }
 
-        .profile {
-            position: relative;
-            cursor: pointer;
+        /* Utility classes */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
 
-        .profile-pic {
-            border: 2px solid #f8b500;
+        /* Improve focus accessibility */
+        button:focus-visible,
+        a:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        /* Smooth scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Prevent horizontal scroll */
+        body {
+            overflow-x: hidden;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <!-- Mobile Toggle Button -->
-    <button class="mobile-toggle" onclick="toggleMobileSidebar()">
-        <i class="fas fa-bars"></i>
+    <!-- Top Navigation for Mobile -->
+    <nav class="top-nav" id="topNav">
+        <div class="logo">
+            <img src="img/logo 6.png" alt="QuizZap Logo">
+        </div>
+        <div class="menu" id="topNavMenu">
+            <a href="t_Home.php" title="Dashboard">
+                <i class="fa-solid fa-house"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="t_SubjectsList.php" title="Subjects">
+                <i class="fa-solid fa-list"></i>
+                <span>Subjects</span>
+            </a>
+            <a href="t_quizDash.php?subject_id=<?php echo $subject_id; ?>" class="active" title="Quizzes">
+                <i class="fa-regular fa-circle-question"></i>
+                <span>Quizzes</span>
+            </a>
+        </div>
+        <div class="top-nav-profile">
+            <div class="profile" onclick="profileDropdown()">
+                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                <div id="dropdown" class="dropdown-content">
+                    <button onclick="window.location.href='s_Profile.php'"><i class="fa-solid fa-user"></i> Profile</button> 
+                    <form action="logout.php" method="POST">
+                        <button><i class="fa-solid fa-right-from-bracket"></i> Logout</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Dark Mode Toggle Button -->
+    <button class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
     </button>
 
-    <!-- Sidebar -->
+    <!-- Sidebar - Hidden on mobile -->
     <div class="sidebar" id="sidebar">
         <header>
             <button id="toggleSidebar" class="toggle-btn">
@@ -849,7 +1330,7 @@ $conn->close();
                 <i class="fa-solid fa-list"></i>
                 <span>Subjects</span>
             </a>
-            <a href="t_quizDash.php" class="active" title="Quiz Dash">
+            <a href="t_quizDash.php?subject_id=<?php echo $subject_id; ?>" class="active" title="Quiz Dash">
                 <i class="fa-regular fa-circle-question"></i>
                 <span>Quizzes</span>
             </a>
@@ -867,7 +1348,10 @@ $conn->close();
     <!-- Content Area -->
     <div class="content" id="content">
         <div class="content-header">
-            <h1><?php echo htmlspecialchars($subject['subject_name']); ?> - Grade <?php echo htmlspecialchars($subject['grade_level']); ?> - <?php echo htmlspecialchars($subject['section']); ?></h1><br>
+            <div>
+                <h1><?php echo htmlspecialchars($subject['subject_name']); ?> - Grade <?php echo htmlspecialchars($subject['grade_level']); ?> - <?php echo htmlspecialchars($subject['section']); ?></h1>
+            </div>
+            <!-- Profile in content header for larger screens -->
             <div class="actions">
                 <div class="profile" onclick="profileDropdown()">
                     <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
@@ -878,7 +1362,6 @@ $conn->close();
                         </form>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -901,9 +1384,9 @@ $conn->close();
         <div class="quiz-container">
             <form action="delete_quiz.php?subject_id=<?php echo $subject_id; ?>" method="POST">
                 <div class="edit-quiz">
-                    <div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
                         <p id="select" style="display: none;">Select Quizzes to Delete</p>
-                        <div>
+                        <div style="display: flex; gap: 0.5rem;">
                             <button type="button" onclick="quizCheckbox()" id="selectQuiz">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </button>
@@ -935,109 +1418,112 @@ $conn->close();
             </form>
         </div>
     </div>
-</div><br>
+</div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const sidebar = document.getElementById('sidebar');
-        const content = document.getElementById('content');
-        const toggleBtn = document.getElementById('toggleSidebar');
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebar = document.getElementById('sidebar');
+    const content = document.getElementById('content');
+    const toggleBtn = document.getElementById('toggleSidebar');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
 
-        // Dark Mode Functionality - Auto apply based on localStorage
-        // Check for saved dark mode preference
-        const isDarkMode = localStorage.getItem('darkMode') === 'true';
+    // Check for saved dark mode preference
+    const isDarkMode = localStorage.getItem('darkMode') === 'true';
 
-        // Apply dark mode on page load if enabled
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
-        }
+    // Apply dark mode on page load if enabled
+    if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+        darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+    }
 
-        function updateLayout() {
-            if (window.innerWidth <= 768) {
-                // Mobile layout
-                content.classList.add('mobile-full');
-                sidebar.classList.remove('collapsed');
-            } else {
-                // Desktop layout
-                content.classList.remove('mobile-full');
-                const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-                
-                if (isSidebarCollapsed) {
-                    sidebar.classList.add('collapsed');
-                    content.classList.add('expanded');
-                } else {
-                    sidebar.classList.remove('collapsed');
-                    content.classList.remove('expanded');
-                }
-            }
-        }
-
-        // Initialize layout
-        updateLayout();
-
-        // Update layout on resize
-        window.addEventListener('resize', updateLayout);
-
-        // Desktop sidebar toggle
-        if (toggleBtn) {
-            toggleBtn.addEventListener('click', function() {
-                if (window.innerWidth > 768) {
-                    sidebar.classList.toggle('collapsed');
-                    content.classList.toggle('expanded');
-                    localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
-                }
-            });
+    // Dark mode toggle functionality
+    darkModeToggle.addEventListener('click', () => {
+        body.classList.toggle('dark-mode');
+        
+        // Update button icon and save preference
+        if (body.classList.contains('dark-mode')) {
+            darkModeToggle.innerHTML = '<i class="fas fa-sun"></i>';
+            localStorage.setItem('darkMode', 'true');
+        } else {
+            darkModeToggle.innerHTML = '<i class="fas fa-moon"></i>';
+            localStorage.setItem('darkMode', 'false');
         }
     });
 
-    function toggleMobileSidebar() {
-        const sidebar = document.getElementById('sidebar');
+    // Check if sidebar state is saved in localStorage
+    const isSidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+    
+    function updateLayout() {
         if (window.innerWidth <= 768) {
-            sidebar.classList.toggle('mobile-open');
+            // Mobile layout
+            sidebar.style.display = 'none';
+            content.classList.add('mobile-full');
+            content.style.marginLeft = '0';
+            content.style.width = '100%';
+        } else {
+            // Desktop layout
+            sidebar.style.display = 'flex';
+            content.classList.remove('mobile-full');
+            
+            if (isSidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                content.classList.add('expanded');
+                content.style.marginLeft = '90px';
+                content.style.width = 'calc(100% - 90px)';
+            } else {
+                sidebar.classList.remove('collapsed');
+                content.classList.remove('expanded');
+                content.style.marginLeft = '250px';
+                content.style.width = 'calc(100% - 250px)';
+            }
         }
     }
 
-    // Close mobile sidebar when clicking outside
-    document.addEventListener('click', function(event) {
-        const sidebar = document.getElementById('sidebar');
-        const mobileToggle = document.querySelector('.mobile-toggle');
-        
-        if (window.innerWidth <= 768) {
-            if (!sidebar.contains(event.target) && !mobileToggle.contains(event.target)) {
-                sidebar.classList.remove('mobile-open');
-            }
-        }
-    });
+    // Initialize layout
+    updateLayout();
 
-    function quizCheckbox() {
-        var checkboxes = document.querySelectorAll('.quiz-checkbox');
-        var deleteBtn = document.getElementById("deleteBtn");
-        var select = document.getElementById("select");
-        
-        checkboxes.forEach(function(checkbox) {
-            if (checkbox.style.display === "none") {
-                checkbox.style.display = "block";
-            } else {
-                checkbox.style.display = "none";
+    // Update layout on resize
+    window.addEventListener('resize', updateLayout);
+
+    // Desktop sidebar toggle
+    if (toggleBtn) {
+        toggleBtn.addEventListener('click', function() {
+            if (window.innerWidth > 768) {
+                sidebar.classList.toggle('collapsed');
+                content.classList.toggle('expanded');
+                
+                if (sidebar.classList.contains('collapsed')) {
+                    content.style.marginLeft = '90px';
+                    content.style.width = 'calc(100% - 90px)';
+                } else {
+                    content.style.marginLeft = '250px';
+                    content.style.width = 'calc(100% - 250px)';
+                }
+                
+                localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
             }
         });
-
-        if (deleteBtn.style.display === "none" && select.style.display === "none") {
-            deleteBtn.style.display = "inline-block";
-            select.style.display = "block";
-        } else {
-            deleteBtn.style.display = "none";
-            select.style.display = "none";
-        }
     }
 
+    // Profile dropdown functionality
     function profileDropdown() {
-        document.getElementById("dropdown").classList.toggle("show");
+        // Close all dropdowns first
+        const allDropdowns = document.querySelectorAll('.dropdown-content.show');
+        allDropdowns.forEach(drop => {
+            drop.classList.remove('show');
+        });
+        
+        // Toggle the clicked dropdown
+        const dropdowns = document.querySelectorAll('.dropdown-content');
+        dropdowns.forEach(dropdown => {
+            dropdown.classList.toggle('show');
+        });
     }
 
     // Close the dropdown if clicked outside
     window.onclick = function(event) {
-        if (!event.target.matches('.profile') && !event.target.matches('.profile-pic')) {
+        if (!event.target.matches('.profile') && !event.target.matches('.profile-pic') && !event.target.closest('.profile')) {
             var dropdowns = document.getElementsByClassName("dropdown-content");
             for (var i = 0; i < dropdowns.length; i++) {
                 var openDropdown = dropdowns[i];
@@ -1047,6 +1533,88 @@ $conn->close();
             }
         }
     }
+
+    // Improve touch targets for mobile
+    const touchElements = document.querySelectorAll('a, button, .dropdown-content button, .quiz-btn');
+    touchElements.forEach(element => {
+        element.style.minHeight = '44px';
+        element.style.minWidth = '44px';
+        element.style.display = 'flex';
+        element.style.alignItems = 'center';
+        element.style.justifyContent = 'center';
+    });
+
+    // Handle text truncation for responsive design
+    function handleTextTruncation() {
+        const quizButtons = document.querySelectorAll('.quiz-btn');
+        const selectText = document.getElementById('select');
+        
+        quizButtons.forEach(button => {
+            if (window.innerWidth <= 480) {
+                button.style.whiteSpace = 'normal';
+                button.style.overflow = 'hidden';
+                button.style.textOverflow = 'ellipsis';
+                button.style.display = '-webkit-box';
+                button.style.webkitLineClamp = '2';
+                button.style.webkitBoxOrient = 'vertical';
+            } else {
+                button.style.whiteSpace = 'normal';
+                button.style.overflow = 'visible';
+                button.style.textOverflow = 'clip';
+                button.style.display = 'flex';
+                button.style.webkitLineClamp = 'none';
+            }
+        });
+        
+        if (selectText && window.innerWidth <= 480) {
+            selectText.style.whiteSpace = 'nowrap';
+            selectText.style.overflow = 'hidden';
+            selectText.style.textOverflow = 'ellipsis';
+            selectText.style.maxWidth = '150px';
+        }
+    }
+
+    // Call on load and resize
+    handleTextTruncation();
+    window.addEventListener('resize', handleTextTruncation);
+});
+
+// Make functions global
+function quizCheckbox() {
+    var checkboxes = document.querySelectorAll('.quiz-checkbox');
+    var deleteBtn = document.getElementById("deleteBtn");
+    var select = document.getElementById("select");
+    
+    checkboxes.forEach(function(checkbox) {
+        if (checkbox.style.display === "none") {
+            checkbox.style.display = "block";
+        } else {
+            checkbox.style.display = "none";
+        }
+    });
+
+    if (deleteBtn.style.display === "none" && select.style.display === "none") {
+        deleteBtn.style.display = "inline-flex";
+        select.style.display = "block";
+    } else {
+        deleteBtn.style.display = "none";
+        select.style.display = "none";
+    }
+}
+
+function profileDropdown() {
+    // Close all dropdowns first
+    const allDropdowns = document.querySelectorAll('.dropdown-content.show');
+    allDropdowns.forEach(drop => {
+        drop.classList.remove('show');
+    });
+    
+    // Toggle the clicked dropdown
+    const dropdowns = document.querySelectorAll('.dropdown-content');
+    dropdowns.forEach(dropdown => {
+        dropdown.classList.toggle('show');
+    });
+}
 </script>
 </body>
 </html>

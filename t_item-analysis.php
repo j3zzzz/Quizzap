@@ -1360,30 +1360,6 @@ $conn->close();
       <div id="columnchart_material"></div>
     </div>
 
-    <!-- Chart Information Badges -->
-    <div class="chart-info">
-      <div class="info-badge avg">
-        <i class="fas fa-chart-line"></i>
-        <span>Average Score (Green)</span>
-      </div>
-      <div class="info-badge high">
-        <i class="fas fa-trophy"></i>
-        <span>Highest Score (Blue)</span>
-      </div>
-      <div class="info-badge low">
-        <i class="fas fa-chart-bar"></i>
-        <span>Lowest Score (Red)</span>
-      </div>
-      <div class="info-badge attempts">
-        <i class="fas fa-users"></i>
-        <span>Total Attempts (Purple)</span>
-      </div>
-      <div class="info-badge avg-score">
-        <i class="fas fa-chart-pie"></i>
-        <span>Average Score (Orange)</span>
-      </div>
-    </div>
-
   </div>    
 
   <!-- Sidebar Navigation -->

@@ -751,6 +751,9 @@ $subject_id = $_GET['subject_id'];
             questionDiv.innerHTML = `
                 <div class="form-group">
                     <div class="question-number">Question ${questionNumber}</div>
+                    <label>Question Text:</label>
+                    <input type="text" name="questions[]" required placeholder="Enter the question (e.g., Match the following items)">
+                    <br><br>
                     <label>Instructions (optional):</label>
                     <input type="text" name="instructions[]" placeholder="Additional instructions for this question"> <br> <br>
                 </div>

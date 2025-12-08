@@ -44,19 +44,24 @@ $subject_id = $_GET['subject_id'];
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="other resources\fontawesome-free-6.5.2-web\css\all.min.css">
     <title>Drag & Drop Quiz Creator</title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Fredoka', sans-serif;
         }
-        
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background-color: #ffffff;
+
+        body, html {
+            font-family: 'Fredoka', sans-serif;
+            height: 100%;
             transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+            background-color: #ffffff;
         }
 
         body.dark-mode {
@@ -64,12 +69,19 @@ $subject_id = $_GET['subject_id'];
             color: #e0e0e0;
         }
 
+        /* Header - Responsive */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 1rem;
             background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         body.dark-mode header {
@@ -77,28 +89,51 @@ $subject_id = $_GET['subject_id'];
         }
 
         header .logo {
-            font-size: 24px;
-            font-weight: bold;
-            margin-left: 30px;
-            margin-top: 3px;
+            display: flex;
+            align-items: center;
         }
 
-        h1{
+        header .logo img {
+            height: clamp(40px, 8vw, 60px);
+            width: auto;
+        }
+
+        .profile {
             position: relative;
-            font-family: Fredoka;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            width: clamp(40px, 8vw, 50px);
+            height: clamp(40px, 8vw, 50px);
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #f8b500;
+        }
+
+        /* Main Content */
+        .main-container {
+            padding: clamp(1rem, 3vw, 2rem);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
             color: #f8b500;
             text-align: center;
-            font-size: 50px;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            margin-bottom: clamp(1rem, 3vw, 2rem);
+            font-weight: 600;
         }
 
+        /* Quiz Container - Responsive */
         .create-q-cont {
-            width: 70%;
-            margin: auto;
-            margin-top: 3%;
-            margin-bottom: 3%;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto clamp(2rem, 5vw, 3rem) auto;
             border: 2px solid #f8b500;
-            border-radius: 15px;
-            padding: 40px;
+            border-radius: clamp(10px, 2vw, 15px);
+            padding: clamp(1rem, 3vw, 2rem);
             background-color: white;
             box-shadow: 5px 6px 0 0 #BC8900;
         }
@@ -108,165 +143,186 @@ $subject_id = $_GET['subject_id'];
             color: #e0e0e0;
         }
 
-        label{
-            color: #555;
-            font-family: Fredoka;
-            font-size: 14px;
+        /* Form Elements */
+        label {
+            display: block;
+            color: #333;
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
             font-weight: 500;
+            margin-bottom: 0.5rem;
         }
 
         body.dark-mode label {
             color: #e0e0e0;
         }
 
-        label[for=timer]{
-            font-size: 22px;
-            margin-left: 15%;
-            font-weight: 500;
-            color: black;
-            margin-right: 8px;
-        }
-
-        input [type=timer] {
-            width: 50%;
-        }
-
-        label[for=title]{
-            font-size: 22px;
-            margin-left: 2%;
-            font-weight: 500;
-            color: black;
-        }
-
-        #title{
-            width: 35%;
-        }
-
-        input[type=text]{
+        input[type="text"],
+        input[type="number"] {
             width: 100%;
-            border-radius: 10px;
-            padding: 10px;
-            border: 3px solid #B9B6B6;
-            font-family: Fredoka;
-            font-size: 17px;
+            border-radius: 8px;
+            padding: clamp(0.5rem, 1.5vw, 0.75rem);
+            border: 2px solid #B9B6B6;
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
             background-color: white;
-            color: black;
+            color: #333;
+            transition: border-color 0.3s;
         }
 
-        body.dark-mode input[type=text] {
+        body.dark-mode input[type="text"],
+        body.dark-mode input[type="number"] {
             background-color: #3d3d3d;
             color: #e0e0e0;
             border-color: #555;
         }
 
-        input[type=number]{
-            width: 30%;
-            border-radius: 10px;
-            padding: 10px;
-            border: 3px solid #B9B6B6;
-            margin-right: 2%;
-            font-family: Fredoka;
-            background-color: white;
-            color: black;
-        }
-
-        body.dark-mode input[type=number] {
-            background-color: #3d3d3d;
-            color: #e0e0e0;
-            border-color: #555;
-        }
-
-        .answer_input {
-            width: 180px !important;
-            margin-bottom: 10px;
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            border-color: #f8b500;
+            outline: none;
         }
 
         input[type="radio"] {
-            accent-color: #f8b500;
+            margin-right: 0.5rem;
+            transform: scale(1.2);
         }
 
+        /* Quiz Header - Responsive */
+        .quiz-header {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: clamp(1rem, 2vw, 1.5rem);
+            margin-bottom: clamp(1.5rem, 3vw, 2rem);
+        }
+
+        @media (min-width: 768px) {
+            .quiz-header {
+                grid-template-columns: 1fr 1fr;
+                align-items: end;
+            }
+        }
+
+        .quiz-title-group,
+        .quiz-timer-group {
+            width: 100%;
+        }
+
+        /* Questions Container */
+        .questions-container {
+            margin-bottom: clamp(1.5rem, 3vw, 2rem);
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        /* Scrollbar styling */
+        .questions-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .questions-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .questions-container::-webkit-scrollbar-thumb {
+            background: #f8b500;
+            border-radius: 4px;
+        }
+
+        body.dark-mode .questions-container::-webkit-scrollbar-track {
+            background: #3d3d3d;
+        }
+
+        /* Question Container - Responsive */
         .question-container {
             background-color: #fff5e1;
-            padding: 30px;
-            margin-bottom: 15px;
+            padding: clamp(1rem, 2vw, 1.5rem);
+            margin-bottom: clamp(1rem, 2vw, 1.5rem);
             border-radius: 10px;
             border: 2px solid #f8b500;
+            position: relative;
         }
 
         body.dark-mode .question-container {
             background-color: #3d3d3d;
         }
 
-        .quiz-form {
-            background-color: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-
-        body.dark-mode .quiz-form {
-            background-color: #2d2d2d;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .modal-form-group label {
-            display: block;
-            margin-bottom: 8px;
+        .question-number {
+            font-size: clamp(1.1rem, 2vw, 1.3rem);
             font-weight: 600;
-            color: #555;
-            font-size: 14px;
+            margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+            color: #333;
         }
 
-        .form-input {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 14px;
-            transition: border 0.3s;
-            background-color: white;
-            color: black;
+        body.dark-mode .question-number {
+            color: #e0e0e0;
         }
 
-        .answer-container {
+        /* Answers Section - Responsive */
+        .answers-section {
+            margin-top: clamp(1rem, 2vw, 1.5rem);
+        }
+
+        .answer-list {
+            margin-bottom: 1rem;
+        }
+
+        .answer-wrapper {
             display: flex;
-            gap: 10px;
-            margin-top: 10px;
+            align-items: center;
+            margin-bottom: clamp(0.5rem, 1.5vw, 0.75rem);
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
+        .answer-wrapper label {
+            margin-bottom: 0;
+            white-space: nowrap;
+            font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+        }
+
+        .answer-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .correct-answer-label {
+            font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+            color: #4CAF50;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        body.dark-mode .correct-answer-label {
+            color: #81C784;
+        }
+
+        /* Buttons - Responsive */
         .btn {
-            padding: 10px 20px;
+            padding: clamp(0.6rem, 1.5vw, 0.8rem) clamp(1rem, 2vw, 1.5rem);
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 44px;
+            min-width: 44px;
+            text-decoration: none;
         }
 
-        .btn-saveQuiz {
-            background-color: #f8b500;
-            color: white;
-            font-family: Fredoka;
-            font-weight: 500;
-            box-shadow: 0 5px 0 0 #BC8900;
-        }
-
-        .btn-removeQuestion {
-            margin-top: 2%;
-            background-color: #f44336;
-            color: white;
-            font-family: Fredoka;
-            font-weight: 500;
+        .btn i {
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
         }
 
         .btn-back {
             background-color: white;
             color: #B9B6B6;
             border: 2px solid #B9B6B6;
-            font-family: Fredoka;
-            font-weight: 500;
         }
 
         body.dark-mode .btn-back {
@@ -275,70 +331,92 @@ $subject_id = $_GET['subject_id'];
             border-color: #555;
         }
 
-        body.dark-mode .form-group label {
-            color: #e0e0e0;
+        .btn-back:hover {
+            background-color: #f0f0f0;
         }
 
-        body.dark-mode .form-input {
-            background-color: #3d3d3d;
-            color: #e0e0e0;
-            border-color: #555;
+        body.dark-mode .btn-back:hover {
+            background-color: #444;
         }
 
-        .form-input:focus {
-            border-color: #f8b500;
-            outline: none;
-        }
-
-        .input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .input-group .form-input {
-            flex: 1;
-        }
-
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            justify-content: space-between;
-        }
-
-        .question-number {
-            font-family: Fredoka;
-            font-size: 25px;
-            margin-bottom: 10px;
-            font-weight: 500;
-        }
-
-        .remove-answer {
-            font-size: 13px;
-            background-color: #ff4444;
+        .btn-saveQuiz {
+            background-color: #f8b500;
             color: white;
-            border: none;
-            border-radius: 4px;
-            padding: 10px;
-            cursor: pointer;
-            width: 3%;
-            height: 20%; 
-            margin-top: 2%;
-            align-items: center;
-            width: 5%;
+            box-shadow: 0 5px 0 0 #BC8900;
         }
 
-        .add-answer {
-            font-family: Fredoka;
-            font-weight: 500;
+        .btn-saveQuiz:hover {
+            background-color: #e5941f;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 0 #BC8900;
+        }
+
+        .btn-saveQuiz:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 0 0 #BC8900;
+        }
+
+        .btn-settings {
+            background-color: #f8b500;
+            color: white;
+            box-shadow: 0 5px 0 0 #BC8900;
+        }
+
+        .btn-settings:hover {
+            background-color: #e5941f;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 0 #BC8900;
+        }
+
+        .btn-removeQuestion {
+            background-color: #f44336;
+            color: white;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .btn-removeQuestion:hover {
+            background-color: #d32f2f;
+        }
+
+        .single-question .btn-removeQuestion {
+            display: none;
+        }
+
+        /* Add Question Button */
+        .add-question-btn {
+            width: 100%;
+            max-width: 200px;
             background-color: white;
             color: #f8b500;
             border: 2px solid #f8b500;
-            border-radius: 5px;
-            padding: 8px;
+            margin: 0 auto clamp(1.5rem, 3vw, 2rem) auto;
+            display: block;
+        }
+
+        body.dark-mode .add-question-btn {
+            background-color: #3d3d3d;
+            color: #f8b500;
+        }
+
+        .add-question-btn:hover {
+            background-color: #f8b500;
+            color: white;
+        }
+
+        .add-answer {
+            background-color: white;
+            color: #f8b500;
+            border: 2px solid #f8b500;
+            border-radius: 6px;
+            padding: clamp(0.5rem, 1.2vw, 0.7rem) clamp(0.75rem, 1.5vw, 1rem);
             cursor: pointer;
-            margin-top: 10px;
+            font-size: clamp(0.8rem, 1.2vw, 0.9rem);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
         }
 
         body.dark-mode .add-answer {
@@ -346,97 +424,58 @@ $subject_id = $_GET['subject_id'];
             color: #f8b500;
         }
 
-        .add-answer:hover{
+        .add-answer:hover {
             background-color: #f8b500;
             color: white;
-            cursor: pointer;
         }
 
-        .number-buttons {
-            display: flex;
-            margin-top: 20px;
-            align-items: center;
-        }
-        
-        .add-question-btn {
-            width: 120px;
-            height: 40px;
-            padding: 10px;
-            border: 2px solid #f8b500;
-            border-radius: 5px;
-            background-color: white;
-            color: #f8b500;
+        .remove-answer {
+            background-color: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: clamp(0.4rem, 1vw, 0.6rem);
             cursor: pointer;
+            font-size: clamp(0.8rem, 1.2vw, 0.9rem);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-family: Fredoka;
-            font-weight: 500;
+            min-width: 36px;
+            min-height: 36px;
         }
 
-        body.dark-mode .add-question-btn {
-            background-color: #3d3d3d;
-            color: #f8b500;
-        }
-        
-        .add-question-btn:hover {
-            background-color: #f8b500;
-            color: white;
-        }
-        
-        /* Hide remove buttons when there's only one */
-        .single-question .btn-removeQuestion {
-            display: none;
+        .remove-answer:hover {
+            background-color: #d32f2f;
         }
 
-        .answer-wrapper {
+        /* Actions Bar - Responsive */
+        .actions-bar {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: clamp(0.75rem, 2vw, 1rem);
+            margin-top: clamp(1.5rem, 3vw, 2rem);
+            padding-top: clamp(1rem, 2vw, 1.5rem);
+            border-top: 1px solid #e0e0e0;
         }
 
-        .correct-answer-label {
-            font-family: Fredoka;
-            font-size: 16px;
-            margin-left: 5px;
+        body.dark-mode .actions-bar {
+            border-top-color: #555;
         }
 
-        /* width */
-        ::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
+        .left-actions,
+        .right-actions {
+            display: flex;
+            gap: clamp(0.5rem, 1.5vw, 0.75rem);
+            flex-wrap: wrap;
         }
 
-        /* Track */
-        ::-webkit-scrollbar-track {
-          box-shadow: inset 0 0 5px grey; 
-          border-radius: 10px;
-        }
-         
-        /* Handle */
-        ::-webkit-scrollbar-thumb {
-          background: #f8b500; 
-          border-radius: 10px;
+        .right-actions {
+            justify-content: flex-end;
         }
 
-        /* Handle on hover */
-        ::-webkit-scrollbar-thumb:hover {
-          background: #f8b500; 
-        }
-
-        .profile {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .profile-pic {
-            border: 2px solid #f8b500;
-            border-radius: 50%;
-            object-fit: cover;
-        }
-
-        /* Quiz Settings Modal Styles */
+        /* Modal Styles - Responsive */
         .modal {
             display: none;
             position: fixed;
@@ -446,16 +485,17 @@ $subject_id = $_GET['subject_id'];
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
         }
 
         .modal-content {
-            width: 700px;
-            max-width: 90%;
-            padding: 30px;
+            width: 90%;
+            max-width: 700px;
+            padding: clamp(1rem, 3vw, 2rem);
             border-radius: 12px;
             background-color: #f9f9f9;
-            margin: 5% auto auto auto;
-            font-family: Fredoka;
+            margin: 5% auto;
+            position: relative;
         }
 
         body.dark-mode .modal-content {
@@ -464,26 +504,45 @@ $subject_id = $_GET['subject_id'];
         }
 
         .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
             cursor: pointer;
             font-weight: bold;
-            float: right;
-            font-size: 24px;
+            font-size: clamp(1.2rem, 2vw, 1.5rem);
+            color: #666;
+            background: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        body.dark-mode .close-modal {
+            color: #e0e0e0;
+        }
+
+        .modal-title {
+            color: #f8b500;
+            text-align: center;
+            margin-bottom: clamp(1.5rem, 3vw, 2rem);
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+        }
+
+        /* Settings Container */
         .settings-container {
-            width: 100%;
-            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: clamp(1rem, 2vw, 1.5rem);
         }
-            
+
         .setting-group {
             background: #f3f3f3;
             border-radius: 10px;
-            padding: 20px;
+            padding: clamp(1rem, 2vw, 1.5rem);
             border-left: 4px solid #f8b500;
-            width: 100%;
         }
 
         body.dark-mode .setting-group {
@@ -492,13 +551,19 @@ $subject_id = $_GET['subject_id'];
 
         .setting-header {
             display: flex;
-            margin-bottom: 5px;
-            font-family: Fredoka;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .setting-header i {
+            color: #f8b500;
+            font-size: clamp(1rem, 1.5vw, 1.2rem);
         }
 
         .setting-header h3 {
             color: #333;
-            font-size: 18px;
+            font-size: clamp(1rem, 1.5vw, 1.2rem);
             margin: 0;
         }
 
@@ -506,27 +571,57 @@ $subject_id = $_GET['subject_id'];
             color: #e0e0e0;
         }
 
+        .form-group {
+            margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .input-group .form-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: clamp(0.5rem, 1.5vw, 0.75rem);
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
+            background-color: white;
+            color: #333;
+        }
+
+        body.dark-mode .form-input {
+            background-color: #3d3d3d;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+
         .hint {
             display: block;
             color: #888;
-            font-size: 11px;
-            margin-top: 5px;
+            font-size: clamp(0.75rem, 1.2vw, 0.85rem);
+            margin-top: 0.5rem;
             font-style: italic;
-            font-family: Fredoka;
         }
 
         body.dark-mode .hint {
-            color: #aaa;
+            color: #b0b0b0;
         }
 
         .modal-footer {
-            width: 100%;
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 20px;
+            gap: 0.75rem;
+            margin-top: clamp(1.5rem, 3vw, 2rem);
+            padding-top: clamp(1rem, 2vw, 1.5rem);
             border-top: 1px solid #eee;
+            flex-wrap: wrap;
         }
 
         body.dark-mode .modal-footer {
@@ -536,14 +631,6 @@ $subject_id = $_GET['subject_id'];
         .save-btn {
             background-color: #4CAF50;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            font-family: Fredoka;
-            font-size: 16px;
         }
 
         .save-btn:hover {
@@ -553,14 +640,6 @@ $subject_id = $_GET['subject_id'];
         .cancel-btn {
             background-color: #f44336;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            font-family: Fredoka;
-            font-size: 16px;
         }
 
         .cancel-btn:hover {
@@ -570,158 +649,271 @@ $subject_id = $_GET['subject_id'];
         .secondary-btn {
             background-color: #f8b500;
             color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
-            transition: background-color 0.3s;
+            padding: 0.5rem 1rem;
+            font-size: clamp(0.8rem, 1.2vw, 0.9rem);
         }
 
         .secondary-btn:hover {
-            background-color: #e6a700;
+            background-color: #e5941f;
         }
 
-        .btn-settings {
-            background-color: #f8b500;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-family: Fredoka;
-            margin-right: 10px;
-            box-shadow: 0 5px 0 0 #BC8900;
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .quiz-header {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .left-actions,
+            .right-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .right-actions {
+                order: -1;
+                margin-bottom: 1rem;
+            }
+            
+            .answer-wrapper {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+            
+            .answer-input {
+                width: 100%;
+                min-width: unset;
+            }
+            
+            .answer-wrapper .remove-answer {
+                align-self: flex-end;
+            }
         }
 
-        .quiz-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
+        @media (max-width: 576px) {
+            .create-q-cont {
+                padding: 1rem;
+            }
+            
+            .question-container {
+                padding: 0.75rem;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+                margin: 2% auto;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group .form-input {
+                min-width: unset;
+            }
+            
+            .modal-footer {
+                justify-content: center;
+            }
+            
+            .answer-wrapper {
+                align-items: stretch;
+            }
+            
+            .answer-wrapper input[type="radio"],
+            .answer-wrapper .correct-answer-label,
+            .answer-wrapper .remove-answer {
+                align-self: center;
+            }
         }
 
-        .quiz-header input {
-            flex: 1;
-            margin-right: 20px;
-            font-size: 18px;
+        @media (max-width: 480px) {
+            header {
+                padding: 0.75rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .add-answer,
+            .remove-answer {
+                font-size: 0.9rem;
+                padding: 0.6rem 0.8rem;
+            }
         }
 
-        .quiz-timer {
-            float: right;
+        @media (max-width: 375px) {
+            .main-container {
+                padding: 0.75rem;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .btn {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.85rem;
+            }
+            
+            .modal-content {
+                width: 98%;
+                padding: 0.75rem;
+            }
+            
+            .answer-wrapper {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
         }
-    </style>    
+
+        /* Utility Classes */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* Focus Styles for Accessibility */
+        button:focus-visible,
+        input:focus-visible,
+        a:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        /* Smooth Transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+        }
+    </style>
 </head>
 <body>
-
     <header>
-        <div class="logo"><img src="img/logo1.png" width="200px" height="80px"></div>
-        <div class="actions">
-            <div class="profile">
-                <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px;">
-            </div>
+        <div class="logo">
+            <img src="img/logo1.png" alt="QuizZap Logo">
+        </div>
+        <div class="profile" onclick="profileDropdown()">
+            <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'">
         </div>
     </header>
 
-    <h1>Drag & Drop Quiz</h1> 
+    <div class="main-container">
+        <h1>Create Drag & Drop Quiz</h1>
+        
+        <div class="create-q-cont">
+            <form id="quiz-form" method="POST" action="t_save_quiz.php">
+                <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
+                <input type="hidden" name="quiz_type" value="Drag & Drop">
+                <input type="hidden" name="end_date" value="">
+                <input type="hidden" name="start_date" value="">
 
-    <div class="create-q-cont">
-        <form id="quiz-form" method="POST" action="t_save_quiz.php">
-            <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
-            <input type="hidden" name="quiz_type" value="Drag & Drop">
-            <input type="hidden" name="end_date" value="">
-            <input type="hidden" name="start_date" value="">
+                <div class="quiz-header">
+                    <div class="quiz-title-group">
+                        <label for="title">Quiz Title:</label>
+                        <input type="text" id="title" name="title" required placeholder="Enter quiz title">
+                    </div>
 
-            <div class="quiz_header">
-                <label for="title">Quiz Title:</label>
-                <input type="text" id="title" name="title" required>
-
-                <div class="quiz-timer">
-                    <label for="timer">Timer (minutes):</label>
-                    <input type="number" id="timer" name="timer" min="1" required>
+                    <div class="quiz-timer-group">
+                        <label for="timer">Timer (minutes):</label>
+                        <input type="number" id="timer" name="timer" min="1" required placeholder="Enter time in minutes">
+                    </div>
                 </div>
-            </div>
 
-            <br>
+                <div class="questions-container" id="questionsContainer"></div>
 
-            <div id="questionsContainer"></div>
-
-            <div class="number-buttons" id="numberButtons">
-                <button type="button" class="add-question-btn" id="addQuestionBtn">
+                <button type="button" class="btn add-question-btn" id="addQuestionBtn">
                     <i class="fas fa-plus"></i> Add Question
                 </button>
-            </div>
 
-            <div class="actions">
-                <button type="button" class="btn btn-back" onclick="goBack()">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
-                <div>
-                    <button type="button" class="btn-settings" onclick="openQuizSettings()">
-                        <i class="fas fa-cog"></i> Quiz Settings
-                    </button>
-                    <button type="submit" class="btn btn-saveQuiz">
-                        <i class="fas fa-save"></i> Save Quiz
-                    </button>
+                <div class="actions-bar">
+                    <div class="left-actions">
+                        <button type="button" class="btn btn-back" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                    </div>
+                    <div class="right-actions">
+                        <button type="button" class="btn btn-settings" onclick="openQuizSettings()">
+                            <i class="fas fa-cog"></i> Quiz Settings
+                        </button>
+                        <button type="submit" class="btn btn-saveQuiz">
+                            <i class="fas fa-save"></i> Save Quiz
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
     <!-- Quiz Settings Modal -->
     <div id="quiz-settings-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 style="color: #f8b500; text-align: center; margin-bottom: 25px;">Quiz Availability Settings</h2>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title">Quiz Availability Settings</h2>
             
             <div class="settings-container">
-                <!-- Single centered Time Settings group -->
                 <div class="setting-group">
                     <div class="setting-header">
-                        <i class="fas fa-calendar-alt" style="color: #f8b500; margin-right: 10px;"></i>
+                        <i class="fas fa-calendar-alt"></i>
                         <h3>Time Settings</h3>
                     </div>
                     
-                    <div class="modal-form-group">
+                    <div class="form-group">
                         <label for="start-date">
-                            <i class="fas fa-play-circle" style="color: #4CAF50;"></i> Start Date:
+                            <i class="fas fa-play-circle" style="color: #4CAF50; margin-right: 5px;"></i>
+                            Start Date:
                         </label>
                         <div class="input-group">
                             <input type="datetime-local" id="start-date" name="start_date" class="form-input" min="">
-                            <button type="button" onclick="setStartDateToday()" class="secondary-btn">
+                            <button type="button" onclick="setStartDateToday()" class="btn secondary-btn">
                                 <i class="fas fa-clock"></i> Now
                             </button>
                         </div>
                         <small class="hint">Leave empty to make available immediately</small>
                     </div>
-                    <br>
-                    <div class="modal-form-group">
+                    
+                    <div class="form-group">
                         <label for="end-date">
-                            <i class="fas fa-stop-circle" style="color: #f44336;"></i> End Date:
+                            <i class="fas fa-stop-circle" style="color: #f44336; margin-right: 5px;"></i>
+                            End Date:
                         </label>
                         <input type="datetime-local" id="end-date" name="end_date" class="form-input" min="" required>
                         <small class="hint">Students won't be able to take the quiz after this date</small>
                     </div>
                 </div>
                 
-                <!-- Footer buttons -->
                 <div class="modal-footer">
-                    <button type="button" onclick="closeModal()" class="cancel-btn">
+                    <button type="button" onclick="closeModal()" class="btn cancel-btn">
                         <i class="fas fa-times"></i> Cancel
                     </button>
-                    <button type="button" onclick="saveQuizSettings()" class="save-btn">
+                    <button type="button" onclick="saveQuizSettings()" class="btn save-btn">
                         <i class="fas fa-save"></i> Save Settings
                     </button>
                 </div>
             </div>
         </div>
     </div>
-
+    
     <script>
         // Dark Mode Functionality - Auto apply based on localStorage
-        // Check for saved dark mode preference
         const isDarkMode = localStorage.getItem('darkMode') === 'true';
 
         // Apply dark mode on page load if enabled
@@ -747,10 +939,12 @@ $subject_id = $_GET['subject_id'];
             const questionNumber = currentQuestions + 1;
 
             questionDiv.innerHTML = `
+                <div class="question-number">Question ${questionNumber}</div>
                 <div class="form-group">
-                    <div class="question-number">Question ${questionNumber}</div>
                     <label>Instructions (optional):</label>
-                    <input type="text" name="instructions[]" placeholder="Additional instructions for this question"> <br> <br>
+                    <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                </div>
+                <div class="form-group">
                     <label>Question:</label>
                     <input type="text" name="questions[]" required placeholder="Enter question text">
                 </div>
@@ -759,7 +953,7 @@ $subject_id = $_GET['subject_id'];
                     <div class="answer-list">
                         <div class="answer-wrapper">
                             <input type="radio" name="correct_answer[${currentQuestions}]" value="0" checked>
-                            <input type="text" name="answers[${currentQuestions}][]" class="answer_input" required placeholder="Enter choice">
+                            <input type="text" name="answers[${currentQuestions}][]" class="answer-input" required placeholder="Enter choice">
                             <span class="correct-answer-label">Correct</span>
                             <button type="button" class="remove-answer" onclick="removeAnswer(this, ${currentQuestions})">
                                 <i class="fas fa-trash"></i>
@@ -780,10 +974,13 @@ $subject_id = $_GET['subject_id'];
             
             // Update single-question class for all questions
             updateQuestionRemoveButtons();
+            
+            // Scroll to the new question
+            questionDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function addAnswer(questionIndex) {
-            const answerList = event.target.previousElementSibling;
+            const answerList = document.querySelectorAll('.question-container')[questionIndex].querySelector('.answer-list');
             const answerCount = answerList.querySelectorAll('.answer-wrapper').length;
             
             const answerWrapper = document.createElement('div');
@@ -823,8 +1020,30 @@ $subject_id = $_GET['subject_id'];
                 const question = button.closest('.question-container');
                 question.remove();
                 currentQuestions--;
+                updateQuestionNumbers();
                 updateQuestionRemoveButtons();
             }
+        }
+
+        function updateQuestionNumbers() {
+            const questions = document.querySelectorAll('.question-container');
+            questions.forEach((question, index) => {
+                const numberDiv = question.querySelector('.question-number');
+                numberDiv.textContent = `Question ${index + 1}`;
+                
+                // Update radio button names to match new index
+                const radios = question.querySelectorAll('input[type="radio"]');
+                radios.forEach(radio => {
+                    radio.name = `correct_answer[${index}]`;
+                });
+                
+                // Update answer input names
+                const answerInputs = question.querySelectorAll('input[name^="answers["]');
+                answerInputs.forEach((input, inputIndex) => {
+                    input.name = `answers[${index}][]`;
+                });
+            });
+            currentQuestions = questions.length;
         }
 
         function updateQuestionRemoveButtons() {
@@ -842,12 +1061,15 @@ $subject_id = $_GET['subject_id'];
             window.history.back();
         }
 
+        function profileDropdown() {
+            // Add your profile dropdown functionality here
+        }
+
         // Quiz Settings Modal Functions
         function openQuizSettings() {
             const modal = document.getElementById('quiz-settings-modal');
             modal.style.display = 'block';
             
-            // Set minimum dates to current date/time
             const now = new Date();
             const year = now.getFullYear();
             const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -860,7 +1082,6 @@ $subject_id = $_GET['subject_id'];
             document.getElementById('start-date').min = minDateTime;
             document.getElementById('end-date').min = minDateTime;
             
-            // Also ensure end date is after start date if start date is set
             const startDateInput = document.getElementById('start-date');
             const endDateInput = document.getElementById('end-date');
             
@@ -883,10 +1104,8 @@ $subject_id = $_GET['subject_id'];
             
             document.getElementById('start-date').value = `${year}-${month}-${day}T${hours}:${minutes}`;
             
-            // Also update end date min if needed
             const endDateInput = document.getElementById('end-date');
             if (!endDateInput.value || new Date(endDateInput.value) <= now) {
-                // Add 1 hour as default end time
                 now.setHours(now.getHours() + 1);
                 const endYear = now.getFullYear();
                 const endMonth = String(now.getMonth() + 1).padStart(2, '0');
@@ -903,23 +1122,18 @@ $subject_id = $_GET['subject_id'];
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
 
-            
-            // Validate end date is after start date if start date is set
             if (startDate && new Date(endDate) <= new Date(startDate)) {
                 alert('End date must be after start date');
                 return;
             }
             
-            // Create hidden inputs in the main form
             const form = document.getElementById('quiz-form');
             
-            // Remove any existing hidden inputs
             ['start_date', 'end_date'].forEach(name => {
                 const existing = form.querySelector(`input[name="${name}"]`);
                 if (existing) existing.remove();
             });
             
-            // Add new hidden inputs
             if (startDate) {
                 const startInput = document.createElement('input');
                 startInput.type = 'hidden';
@@ -934,7 +1148,6 @@ $subject_id = $_GET['subject_id'];
             endInput.value = endDate;
             form.appendChild(endInput);
             
-            // Update the hidden inputs that already exist
             document.querySelector('input[name="start_date"]').value = startDate;
             document.querySelector('input[name="end_date"]').value = endDate;
             
@@ -958,15 +1171,14 @@ $subject_id = $_GET['subject_id'];
         });
 
         document.getElementById('quiz-form').addEventListener('submit', function(e) {
-            e.preventDefault();       
-            
-            // Check if settings have been saved
+            e.preventDefault();
+
             if (!document.querySelector('input[name="end_date"]').value) {
                 alert('Please set quiz availability settings before submitting');
                 openQuizSettings();
                 return;
             }
-
+            
             const formData = new FormData(this);
             const allQuestionsFilled = Array.from(document.querySelectorAll('.question-container')).every(questionDiv => {
                 const questionInput = questionDiv.querySelector('input[name="questions[]"]');

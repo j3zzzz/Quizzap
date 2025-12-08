@@ -287,7 +287,7 @@ foreach ($answers as $question_id => $answer) {
             $stmt->close();
 
         } elseif ($question_type === 'enumeration') {
-            // For Enumeration type
+            // For Enumeration type - each answer is worth 1 point
             $sql = "SELECT answer_text FROM answers WHERE question_id = ?";
             $stmt = $conn->prepare($sql);
             if (!$stmt) {
@@ -301,21 +301,53 @@ foreach ($answers as $question_id => $answer) {
             if ($result && $result->num_rows > 0) {
                 $row = $result->fetch_assoc();
                 $correct_answers = explode(',', $row['answer_text']);
-                $submitted_answers = explode(',', $answer);
-
-                // Trim and make both arrays lowercase for case-insensitive comparison
-                $correct_answers = array_map('strtolower', array_map('trim', $correct_answers));
-                $submitted_answers = array_map('strtolower', array_map('trim', $submitted_answers));
-
-                // Compare submitted answers with correct answers (case-insensitive)
-                $correct_count = count(array_uintersect($correct_answers, $submitted_answers, 'strcasecmp'));
                 
-                // For enumeration, give partial credit
+                // Trim and lowercase correct answers for comparison
+                $correct_answers = array_map('strtolower', array_map('trim', $correct_answers));
+                
+                // Process submitted answers
+                $submitted_answers = [];
+                if (is_string($answer)) {
+                    $submitted_answers = explode(',', $answer);
+                } elseif (is_array($answer)) {
+                    $submitted_answers = $answer;
+                }
+                
+                // Trim and lowercase submitted answers
+                $submitted_answers = array_map('strtolower', array_map('trim', $submitted_answers));
+                
+                // Count correct matches
+                $correct_count = 0;
+                $matched_answers = [];
+                
+                foreach ($submitted_answers as $submitted) {
+                    foreach ($correct_answers as $correct) {
+                        if (strcasecmp(trim($submitted), trim($correct)) === 0) {
+                            $correct_count++;
+                            $matched_answers[] = $submitted;
+                            break;
+                        }
+                    }
+                }
+                
+                // Each correct answer gives 1 point
                 $score += $correct_count;
-                if ($correct_count != count($correct_answers)) {
-                    // Store wrong answer in consistent format
+                $is_correct = ($correct_count == count($correct_answers)) ? 1 : 0;
+                
+                // If not all answers are correct, store in wrong_answers
+                if ($correct_count < count($correct_answers)) {
+                    // Find which answers were wrong
+                    $wrong_submitted = array_diff($submitted_answers, $matched_answers);
+                    $missing_correct = array_diff($correct_answers, array_map('strtolower', array_map('trim', $matched_answers)));
+                    
                     $wrong_answers[$question_id] = [
-                        'answer_text' => $answer
+                        'type' => 'enumeration',
+                        'submitted_answers' => $submitted_answers,
+                        'correct_answers' => $correct_answers,
+                        'correct_count' => $correct_count,
+                        'total_correct' => count($correct_answers),
+                        'wrong_submitted' => $wrong_submitted,
+                        'missing_correct' => $missing_correct
                     ];
                 }
             } else {
@@ -323,7 +355,6 @@ foreach ($answers as $question_id => $answer) {
                 exit;
             }
             $stmt->close();
-
         }   elseif ($question_type === 'matching_type') {
                 error_log("Matching type answer data: " . print_r($answer, true));
                 // Ensure the answer is an array
@@ -448,6 +479,8 @@ echo json_encode([
     "success" => true,
     "score" => $score,
     "total" => $total,
+    "quiz_id" => $quiz_id,
+    "subject_id" => $subject_id,
     "wrong_answers" => $wrong_answers
 ]);
 

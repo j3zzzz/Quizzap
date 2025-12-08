@@ -88,7 +88,30 @@ if ($result->num_rows > 0) {
 $stmt->close();
 
 $score = 0;
-$total = count($answers);
+// Calculate total based on quiz type
+$total = 0;
+if ($quiz_type === 'Enumeration') {
+    // For enumeration, we need to count total possible points from all questions
+    $sql = "SELECT answer_text FROM answers a 
+            JOIN questions q ON a.question_id = q.question_id 
+            WHERE q.quiz_id = ? AND a.is_correct = 1";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $quiz_id);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    while ($row = $result->fetch_assoc()) {
+        if (!empty($row['answer_text'])) {
+            $answers_array = explode(',', $row['answer_text']);
+            $total += count($answers_array);
+        }
+    }
+    $stmt->close();
+} else {
+    // For other quiz types, count questions
+    $total = count($answers);
+}
+
 $wrong_answers = [];
 
 // First, clear any existing answers for this student and quiz
@@ -192,6 +215,7 @@ foreach ($answers as $question_id => $answer) {
             $stmt->close();
         }
 
+
     } elseif ($quiz_type === 'Enumeration' || $quiz_type === 'Fill in the Blanks' || $quiz_type === 'Identification') {
         // For text-based answers
         $sql = "SELECT answer_text, is_correct FROM answers WHERE question_id = ?";
@@ -205,43 +229,49 @@ foreach ($answers as $question_id => $answer) {
         $result = $stmt->get_result();
         
         if ($result && $result->num_rows > 0) {
-            $correct_answer_found = false;
+            $question_score = 0;
+            $max_possible_score = 0;
+            $correct_answers_found = [];
             
+            // First, get all correct answers for this question
+            $correct_answers_list = [];
             while ($row = $result->fetch_assoc()) {
-                $correct_answer = trim($row['answer_text']);
-                $submitted_answer = trim($answer);
-                
-                // Case-insensitive comparison
-                if (strcasecmp($correct_answer, $submitted_answer) === 0) {
-                    $is_correct = 1;
-                    $score++;
-                    $correct_answer_found = true;
-                    break;
-                }
-                
-                // For enumeration with multiple answers
-                if ($quiz_type === 'Enumeration') {
-                    $correct_answers = array_map('trim', explode(',', $correct_answer));
-                    $submitted_answers = array_map('trim', explode(',', $submitted_answer));
-                    
-                    $correct_answers_lower = array_map('strtolower', $correct_answers);
-                    $submitted_answers_lower = array_map('strtolower', $submitted_answers);
-                    
-                    sort($correct_answers_lower);
-                    sort($submitted_answers_lower);
-                    
-                    if ($correct_answers_lower === $submitted_answers_lower) {
-                        $is_correct = 1;
-                        $score++;
-                        $correct_answer_found = true;
-                        break;
+                if (!empty($row['answer_text'])) {
+                    $individual_answers = array_map('trim', explode(',', $row['answer_text']));
+                    foreach ($individual_answers as $individual_answer) {
+                        $correct_answers_list[] = strtolower(trim($individual_answer));
+                        $max_possible_score++;
                     }
                 }
             }
             
-            if (!$correct_answer_found) {
+            // Reset pointer to beginning
+            $result->data_seek(0);
+            
+            // Process submitted answer
+            $submitted_answer = trim($answer);
+            $submitted_answers = array_map('trim', explode(',', $submitted_answer));
+            $submitted_answers_lower = array_map('strtolower', $submitted_answers);
+            
+            // Count correct answers
+            foreach ($submitted_answers_lower as $submitted_ans) {
+                if (in_array($submitted_ans, $correct_answers_list)) {
+                    $question_score++;
+                    $correct_answers_found[] = $submitted_ans;
+                }
+            }
+            
+            // Update total score
+            $score += $question_score;
+            
+            // If not all answers were correct, add to wrong_answers
+            if ($question_score < $max_possible_score) {
                 $wrong_answers[$question_id] = [
-                    'answer_text' => $answer
+                    'answer_text' => $answer,
+                    'correct_answers' => $correct_answers_list,
+                    'submitted_answers' => $submitted_answers_lower,
+                    'score' => $question_score,
+                    'max_score' => $max_possible_score
                 ];
             }
             
@@ -254,7 +284,6 @@ foreach ($answers as $question_id => $answer) {
             ];
         }
         $stmt->close();
-
     } elseif ($quiz_type === 'Matching Type') {
         // Handle matching type questions
         try {
@@ -271,7 +300,30 @@ foreach ($answers as $question_id => $answer) {
                 $submitted_matches = [];
             }
             
-            // Get correct matches
+            error_log("Submitted matches for Q$question_id: " . print_r($submitted_matches, true));
+            
+            // Get the question data to access left_items and right_items
+            $sql = "SELECT left_items, right_items FROM questions WHERE question_id = ?";
+            $stmt = $conn->prepare($sql);
+            $stmt->bind_param("i", $question_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result->num_rows === 0) {
+                error_log("Question not found: $question_id");
+                $stmt->close();
+                continue;
+            }
+            
+            $question_row = $result->fetch_assoc();
+            $left_items = json_decode($question_row['left_items'], true);
+            $right_items = json_decode($question_row['right_items'], true);
+            $stmt->close();
+            
+            error_log("Left items: " . print_r($left_items, true));
+            error_log("Right items: " . print_r($right_items, true));
+            
+            // Get correct answers from the answers table
             $sql = "SELECT answer_text FROM answers WHERE question_id = ? AND is_correct = 1";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("i", $question_id);
@@ -280,64 +332,131 @@ foreach ($answers as $question_id => $answer) {
             
             $correct_matches = [];
             while ($row = $result->fetch_assoc()) {
-                $match_data = json_decode($row['answer_text'], true);
-                if (is_array($match_data)) {
-                    $correct_matches[] = $match_data;
+                // Parse the pipe-separated format: "left_text|right_text"
+                $parts = explode('|', $row['answer_text']);
+                if (count($parts) === 2) {
+                    $correct_matches[] = [
+                        'left' => trim($parts[0]),
+                        'right' => trim($parts[1])
+                    ];
                 }
             }
+            $stmt->close();
+            
+            error_log("Correct matches: " . print_r($correct_matches, true));
             
             $correct_count = 0;
             $total_expected = count($correct_matches);
             
+            // Convert submitted match IDs to actual text values
+            $submitted_matches_with_text = [];
+            foreach ($submitted_matches as $match) {
+                if (isset($match['left']) && isset($match['right'])) {
+                    // Extract index from ID (e.g., "left_0" -> 0)
+                    $left_index = (int) str_replace('left_', '', $match['left']);
+                    $right_index = (int) str_replace('right_', '', $match['right']);
+                    
+                    $left_text = isset($left_items[$left_index]) ? $left_items[$left_index] : '';
+                    $right_text = isset($right_items[$right_index]) ? $right_items[$right_index] : '';
+                    
+                    $submitted_matches_with_text[] = [
+                        'left' => $left_text,
+                        'right' => $right_text,
+                        'leftId' => $match['left'],
+                        'rightId' => $match['right']
+                    ];
+                }
+            }
+            
+            error_log("Submitted matches with text: " . print_r($submitted_matches_with_text, true));
+            
             // Compare matches
-            foreach ($submitted_matches as $submitted_match) {
+            foreach ($submitted_matches_with_text as $submitted_match) {
                 foreach ($correct_matches as $correct_match) {
-                    if (isset($submitted_match['left'], $submitted_match['right']) &&
-                        isset($correct_match['left'], $correct_match['right'])) {
-                        
-                        $submitted_left = trim($submitted_match['left']);
-                        $submitted_right = trim($submitted_match['right']);
-                        $correct_left = trim($correct_match['left']);
-                        $correct_right = trim($correct_match['right']);
-                        
-                        // Remove numbering for comparison
-                        $submitted_left = preg_replace('/^\d+\.\s*/', '', $submitted_left);
-                        $submitted_right = preg_replace('/^[A-Z]\.\s*/', '', $submitted_right);
-                        $correct_left = preg_replace('/^\d+\.\s*/', '', $correct_left);
-                        $correct_right = preg_replace('/^[A-Z]\.\s*/', '', $correct_right);
-                        
-                        if (strcasecmp($submitted_left, $correct_left) === 0 && 
-                            strcasecmp($submitted_right, $correct_right) === 0) {
-                            $correct_count++;
-                            break;
-                        }
+                    $submitted_left = trim($submitted_match['left']);
+                    $submitted_right = trim($submitted_match['right']);
+                    $correct_left = trim($correct_match['left']);
+                    $correct_right = trim($correct_match['right']);
+                    
+                    // Case-insensitive comparison
+                    if (strcasecmp($submitted_left, $correct_left) === 0 && 
+                        strcasecmp($submitted_right, $correct_right) === 0) {
+                        $correct_count++;
+                        error_log("Match found: $submitted_left -> $submitted_right");
+                        break;
                     }
                 }
             }
+            
+            error_log("Correct count: $correct_count out of $total_expected");
             
             // All matches must be correct for full credit
             if ($correct_count === $total_expected && $total_expected > 0) {
                 $is_correct = 1;
                 $score++;
+                error_log("Question $question_id marked as CORRECT");
             } else {
+                error_log("Question $question_id marked as WRONG");
                 $wrong_answers[$question_id] = [
-                    'submitted_matches' => $submitted_matches,
+                    'submitted_matches' => $submitted_matches_with_text,
                     'correct_matches' => $correct_matches,
                     'correct_count' => $correct_count,
                     'total_expected' => $total_expected
                 ];
             }
             
-            $answer_text_to_store = json_encode($submitted_matches);
-            $stmt->close();
+            // Store the answer with actual text values for display in results
+            $answer_text_to_store = json_encode($submitted_matches_with_text);
             
         } catch (Exception $e) {
             error_log("Error processing matching type: " . $e->getMessage());
             $wrong_answers[$question_id] = [
                 'answer_text' => $answer,
-                'error' => 'Error processing matching type'
+                'error' => 'Error processing matching type: ' . $e->getMessage()
             ];
         }
+    } elseif ($quiz_type === 'Drag & Drop') {
+        // For drag & drop with single correct answer
+        if (is_array($answer)) {
+            // If it comes as array, extract the first element
+            $answer = $answer[0];
+        }
+        
+        // Now handle it like multiple choice/true or false
+        if (is_numeric($answer)) {
+            $sql = "SELECT answer_text, is_correct FROM answers WHERE answer_id = ?";
+            $stmt = $conn->prepare($sql);
+            if (!$stmt) {
+                echo json_encode(["success" => false, "error" => "Failed to prepare statement: " . $conn->error]);
+                exit;
+            }
+            $stmt->bind_param("i", $answer);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            
+            if ($result && $result->num_rows > 0) {
+                $row = $result->fetch_assoc();
+                $is_correct = ($row['is_correct'] === 1) ? 1 : 0;
+                $answer_text_to_store = $row['answer_text'];
+
+                if ($is_correct) {
+                    $score++;
+                } else {
+                    $wrong_answers[$question_id] = [
+                        'answer_id' => $answer,
+                        'answer_text' => $row['answer_text']
+                    ];
+                }
+            } else {
+                error_log("Answer not found for question_id: $question_id, answer: $answer");
+                $wrong_answers[$question_id] = [
+                    'answer_text' => $answer,
+                    'error' => 'Answer not found in database'
+                ];
+            }
+            $stmt->close();
+        }
+        // Handle non-numeric answers if needed
     }
 
     // Insert the student's answer

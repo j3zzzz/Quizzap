@@ -862,7 +862,7 @@
     <header>
         <div class="logo"><img src="img/logo1.png" onclick="window.location.href='s_Home.php';" style="cursor: pointer;" width="200px" height="80px"></div>
         <div class="actions">
-            <div class="profile"><img src="img/default.png" width="50px" height="50px"></div>
+            <div class="profile"><img src="uploads/profiles/default-profile.jpg" width="50px" height="50px"></div>
         </div>
     </header>
 
@@ -1791,43 +1791,21 @@
         function submitQuiz(isForced = false) {
             console.log("User answers before submission:", userAnswers);
 
-            // Convert answers to consistent format
-            const submissionAnswers = {};
-            Object.entries(userAnswers).forEach(([questionId, answer]) => {
-                const questionDiv = document.querySelector(`[data-question-id="${questionId}"]`);
-                if (!questionDiv) return;
-                
-                const questionType = questionDiv.dataset.questionType;
-                
-                // Standardize answer format for submission
-                if (questionType === 'matching_type' && Array.isArray(answer)) {
-                    // Prepare matching type answers for submission
-                    submissionAnswers[questionId] = answer.map(m => ({
-                        left: m.leftText.replace(/^\d+\.\s*/, '').trim(),
-                        right: m.rightText.replace(/^[A-Z]\.\s*/, '').trim()
-                    }));
-                } else {
-                    submissionAnswers[questionId] = answer;
-                }
-            });
-
-            console.log("Processed answers for submission:", submissionAnswers);
-
-            isSubmitting = true;
-            clearInterval(autoSaveInterval);
-            clearSavedProgress();
-
-            // Disable the beforeunload handler during submission
-            window.onbeforeunload = null;
-            
-            // Ensure we always send at least an empty answers object
+            // Create submission data
             const submissionData = {
                 answers: Object.keys(userAnswers).length > 0 ? userAnswers : {},
                 quiz_id: <?php echo $quiz_id; ?>,
                 subject_id: <?php echo $subject_id; ?>
             };
 
-            console.log("Submitting quiz with data:", submissionData); // Debug log
+            console.log("Submitting quiz with data:", submissionData);
+            
+            isSubmitting = true;
+            clearInterval(autoSaveInterval);
+            clearSavedProgress();
+
+            // Disable the beforeunload handler during submission
+            window.onbeforeunload = null;
             
             fetch('allZapped_submitQuiz.php', {
                 method: 'POST',
@@ -1839,20 +1817,42 @@
             .then(response => response.json())    
             .then(data => {
                 if (data.success) {
-                    // Store the result data in sessionStorage temporarily
+                    // Store ALL result data in session
                     sessionStorage.setItem('quizResult', JSON.stringify({
                         score: data.score,
                         total: data.total,
-                        quiz_id: <?php echo $quiz_id; ?>,
-                        wrong_answers: data.wrong_answers,
-                        subject_id: <?php echo $subject_id; ?>
+                        quiz_id: data.quiz_id, // Use from response
+                        subject_id: data.subject_id, // Use from response
+                        wrong_answers: data.wrong_answers
                     }));
                     
-                    if (isForced) {
-                        window.location.href = 'quiz_result.php';
-                    } else {
-                        window.location.href = 'process_quiz_result.php';
-                    }
+                    // Create a hidden form to POST data to results page
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = 'allZapped_result.php';
+                    form.style.display = 'none';
+                    
+                    // Add quiz result data
+                    const resultInput = document.createElement('input');
+                    resultInput.type = 'hidden';
+                    resultInput.name = 'quiz_result';
+                    resultInput.value = JSON.stringify({
+                        score: data.score,
+                        total: data.total,
+                        quiz_id: data.quiz_id,
+                        subject_id: data.subject_id,
+                        wrong_answers: data.wrong_answers
+                    });
+                    
+                    form.appendChild(resultInput);
+                    document.body.appendChild(form);
+                    
+                    // Also store in sessionStorage as backup
+                    sessionStorage.setItem('quizResult', resultInput.value);
+                    
+                    // Submit the form
+                    form.submit();
+                    
                 } else {
                     alert('Error submitting quiz: ' + (data.error || 'Unknown error'));
                     window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';

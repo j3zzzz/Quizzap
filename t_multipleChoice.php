@@ -104,7 +104,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="other resources\fontawesome-free-6.5.2-web\css\all.min.css">
     <title>Multiple Choice Quiz Creator</title>
 
     <style>
@@ -112,12 +113,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            font-family: 'Fredoka', sans-serif;
         }
-        
-        body {
-            font-family: Arial, Helvetica, sans-serif;
-            background-color: #ffffff;
+
+        body, html {
+            font-family: 'Fredoka', sans-serif;
+            height: 100%;
             transition: background-color 0.3s, color 0.3s;
+            overflow-x: hidden;
+            background-color: #ffffff;
         }
 
         body.dark-mode {
@@ -125,12 +129,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             color: #e0e0e0;
         }
 
+        /* Header - Responsive */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 20px;
+            padding: 1rem;
             background-color: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
         body.dark-mode header {
@@ -138,28 +149,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         header .logo {
-            font-size: 24px;
-            font-weight: bold;
-            margin-left: 30px;
-            margin-top: 3px;
+            display: flex;
+            align-items: center;
         }
 
-        h1{
+        header .logo img {
+            height: clamp(40px, 8vw, 60px);
+            width: auto;
+        }
+
+        .profile {
             position: relative;
-            font-family: Fredoka;
+            cursor: pointer;
+        }
+
+        .profile-pic {
+            width: clamp(40px, 8vw, 50px);
+            height: clamp(40px, 8vw, 50px);
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid #f8b500;
+        }
+
+        /* Main Content */
+        .main-container {
+            padding: clamp(1rem, 3vw, 2rem);
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
             color: #f8b500;
             text-align: center;
-            font-size: 50px;
+            font-size: clamp(1.8rem, 5vw, 2.5rem);
+            margin-bottom: clamp(1rem, 3vw, 2rem);
+            font-weight: 600;
         }
 
+        /* Quiz Container - Responsive */
         .create-q-cont {
-            width: 70%;
-            margin: auto;
-            margin-top: 3%;
-            margin-bottom: 3%;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto clamp(2rem, 5vw, 3rem) auto;
             border: 2px solid #f8b500;
-            border-radius: 15px;
-            padding: 40px;
+            border-radius: clamp(10px, 2vw, 15px);
+            padding: clamp(1rem, 3vw, 2rem);
             background-color: white;
             box-shadow: 5px 6px 0 0 #BC8900;
         }
@@ -169,91 +203,104 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             color: #e0e0e0;
         }
 
-        label{
-            color: black;
-            font-family: Fredoka;
-            font-size: 20px;
+        /* Form Elements */
+        label {
+            display: block;
+            color: #333;
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
             font-weight: 500;
+            margin-bottom: 0.5rem;
         }
 
         body.dark-mode label {
             color: #e0e0e0;
         }
 
-        label[for=title]{
-            font-size: 22px;
-            margin-left: 3%;
-        }
-
-        #title{
-            width: 35%;
-        }
-
-        input[type=text]{
+        input[type="text"],
+        input[type="number"] {
             width: 100%;
-            border-radius: 10px;
-            padding: 10px;
-            border: 3px solid #B9B6B6;
-            text-transform: capitalize;
-            font-family: Fredoka;
+            border-radius: 8px;
+            padding: clamp(0.5rem, 1.5vw, 0.75rem);
+            border: 2px solid #B9B6B6;
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
             background-color: white;
-            color: black;
+            color: #333;
+            transition: border-color 0.3s;
         }
 
-        body.dark-mode input[type=text] {
+        body.dark-mode input[type="text"],
+        body.dark-mode input[type="number"] {
             background-color: #3d3d3d;
             color: #e0e0e0;
             border-color: #555;
         }
 
-        input[type=number]{
-            width: 30%;
-            border-radius: 10px;
-            padding: 10px;
-            border: 3px solid #B9B6B6;
-            margin-right: 3%;
-            font-family: Fredoka;
-            background-color: white;
-            color: black;
+        input[type="text"]:focus,
+        input[type="number"]:focus {
+            border-color: #f8b500;
+            outline: none;
         }
 
-        body.dark-mode input[type=number] {
-            background-color: #3d3d3d;
-            color: #e0e0e0;
-            border-color: #555;
+        input[type="radio"] {
+            margin-right: 0.5rem;
+            transform: scale(1.2);
         }
 
-        input[type=radio]{
-            height: 5%;
-            margin-right: 2%;
-            margin-left: .5%;
+        /* Quiz Header - Responsive */
+        .quiz-header {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: clamp(1rem, 2vw, 1.5rem);
+            margin-bottom: clamp(1.5rem, 3vw, 2rem);
         }
 
-        #timer {
-            float: right;
+        @media (min-width: 768px) {
+            .quiz-header {
+                grid-template-columns: 1fr 1fr;
+                align-items: end;
+            }
         }
 
-        .question {
-            margin-bottom: 20px;
-            padding: 40px;
-            background-color: #fff5e1;
-            border: 2px solid #f8b500;
-            border-radius: 10px;
-            display: none;
-            margin-left: 3%;
-            margin-right: 3%;
+        .quiz-title-group,
+        .quiz-timer-group {
+            width: 100%;
         }
 
-        body.dark-mode .question {
-            background-color: #3d3d3d;
+        /* Questions Container */
+        .questions-container {
+            margin-bottom: clamp(1.5rem, 3vw, 2rem);
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 5px;
         }
 
+        /* Scrollbar styling */
+        .questions-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .questions-container::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .questions-container::-webkit-scrollbar-thumb {
+            background: #f8b500;
+            border-radius: 4px;
+        }
+
+        body.dark-mode .questions-container::-webkit-scrollbar-track {
+            background: #3d3d3d;
+        }
+
+        /* Question Container - Responsive */
         .question-container {
             background-color: #fff5e1;
-            padding: 30px;
-            margin-bottom: 15px;
+            padding: clamp(1rem, 2vw, 1.5rem);
+            margin-bottom: clamp(1rem, 2vw, 1.5rem);
             border-radius: 10px;
             border: 2px solid #f8b500;
+            position: relative;
         }
 
         body.dark-mode .question-container {
@@ -261,35 +308,66 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .question-number {
-            font-family: Fredoka;
-            font-size: 25px;
-            margin-bottom: 10px;
-            font-weight: 500;
+            font-size: clamp(1.1rem, 2vw, 1.3rem);
+            font-weight: 600;
+            margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
+            color: #333;
         }
 
-        .btn-removeQuestion {
-            margin-top: 2%;
-            background-color: #f44336;
-            color: white;
-            font-family: Fredoka;
-            font-weight: 500;
-            padding: 10px 20px;
+        body.dark-mode .question-number {
+            color: #e0e0e0;
+        }
+
+        /* Answers Section - Responsive */
+        .answers-section {
+            margin-top: clamp(1rem, 2vw, 1.5rem);
+        }
+
+        .answer-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: clamp(0.5rem, 1.5vw, 0.75rem);
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .answer-row label {
+            margin-bottom: 0;
+            white-space: nowrap;
+            font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+        }
+
+        .answer-input {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        /* Buttons - Responsive */
+        .btn {
+            padding: clamp(0.6rem, 1.5vw, 0.8rem) clamp(1rem, 2vw, 1.5rem);
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: clamp(0.85rem, 1.5vw, 0.95rem);
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            min-height: 44px;
+            min-width: 44px;
+            text-decoration: none;
+        }
+
+        .btn i {
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
         }
 
         .btn-back {
             background-color: white;
             color: #B9B6B6;
             border: 2px solid #B9B6B6;
-            font-family: Fredoka;
-            font-weight: 500;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
         }
 
         body.dark-mode .btn-back {
@@ -298,53 +376,67 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-color: #555;
         }
 
+        .btn-back:hover {
+            background-color: #f0f0f0;
+        }
+
+        body.dark-mode .btn-back:hover {
+            background-color: #444;
+        }
+
         .btn-saveQuiz {
             background-color: #f8b500;
             color: white;
-            font-family: Fredoka;
-            font-weight: 500;
             box-shadow: 0 5px 0 0 #BC8900;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
+        }
+
+        .btn-saveQuiz:hover {
+            background-color: #e5941f;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 0 #BC8900;
+        }
+
+        .btn-saveQuiz:active {
+            transform: translateY(0);
+            box-shadow: 0 3px 0 0 #BC8900;
         }
 
         .btn-settings {
             background-color: #f8b500;
             color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-family: Fredoka;
-            margin-right: 10px;
             box-shadow: 0 5px 0 0 #BC8900;
         }
 
-        .actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            justify-content: space-between;
+        .btn-settings:hover {
+            background-color: #e5941f;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 0 0 #BC8900;
         }
 
+        .btn-removeQuestion {
+            background-color: #f44336;
+            color: white;
+            margin-top: 1rem;
+            width: 100%;
+        }
+
+        .btn-removeQuestion:hover {
+            background-color: #d32f2f;
+        }
+
+        .single-question .btn-removeQuestion {
+            display: none;
+        }
+
+        /* Add Question Button */
         .add-question-btn {
-            width: 120px;
-            height: 40px;
-            padding: 10px;
-            border: 2px solid #f8b500;
-            border-radius: 5px;
+            width: 100%;
+            max-width: 200px;
             background-color: white;
             color: #f8b500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Fredoka;
-            font-weight: 500;
+            border: 2px solid #f8b500;
+            margin: 0 auto clamp(1.5rem, 3vw, 2rem) auto;
+            display: block;
         }
 
         body.dark-mode .add-question-btn {
@@ -357,123 +449,34 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             color: white;
         }
 
-        .number-buttons {
-            display: flex;
-            margin-top: 20px;
-            align-items: center;
-        }
-
-        /* Hide remove buttons when there's only one */
-        .single-question .btn-removeQuestion {
-            display: none;
-        }
-
-        .quiz-header {
+        /* Actions Bar - Responsive */
+        .actions-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: clamp(0.75rem, 2vw, 1rem);
+            margin-top: clamp(1.5rem, 3vw, 2rem);
+            padding-top: clamp(1rem, 2vw, 1.5rem);
+            border-top: 1px solid #e0e0e0;
         }
 
-        .quiz-timer {
-            float: right;
+        body.dark-mode .actions-bar {
+            border-top-color: #555;
         }
 
-        .quiz-timer label {
-            margin: 0;
-        }
-
-        label[for=timer]{
-            font-size: 22px;
-            margin-left: 15%;
-            font-weight: 500;
-            color: black;
-            margin-right: 8px;
-        }
-
-        input [type=timer] {
-            width: 50%;
-        }
-
-        label[for=title]{
-            font-size: 22px;
-            font-weight: 500;
-            color: black;
-        }
-
-        .question-number-buttons {
+        .left-actions,
+        .right-actions {
             display: flex;
-            gap: 5px;
-            margin-top: 5px;
-            margin-left: 20px;
+            gap: clamp(0.5rem, 1.5vw, 0.75rem);
             flex-wrap: wrap;
         }
 
-        .question-number-button {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #f8b500;
-            border-radius: 50%;
-            background-color: white;
-            color: #f8b500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Fredoka;
-            font-weight: bold;
+        .right-actions {
+            justify-content: flex-end;
         }
 
-        body.dark-mode .question-number-button {
-            background-color: #3d3d3d;
-            color: #f8b500;
-        }
-
-        .question-number-button.active {
-            background-color: #f8b500;
-            color: white;
-        }
-
-        .question-number-button.completed {
-            background-color: #FFEFE4;
-            color: #A34404;
-        }
-
-        body.dark-mode .question-number-button.completed {
-            background-color: #4d3d2d;
-            color: #ffa050;
-        }
-
-        .add-icon {
-            width: 40px;
-            height: 40px;
-            border: 2px solid #f8b500;
-            border-radius: 50%;
-            background-color: white;
-            color: #f8b500;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: Fredoka;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-
-        body.dark-mode .add-icon {
-            background-color: #3d3d3d;
-            color: #f8b500;
-        }
-
-        .add-icon:hover {
-            background-color: #f8b500;
-            color: white;
-        }
-
-        .question.active {
-            display: block;
-        }
-
+        /* Modal Styles - Responsive */
         .modal {
             display: none;
             position: fixed;
@@ -483,16 +486,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             width: 100%;
             height: 100%;
             background-color: rgba(0,0,0,0.5);
+            overflow-y: auto;
         }
 
         .modal-content {
-            width: 700px;
-            max-width: 90%;
-            padding: 30px;
+            width: 90%;
+            max-width: 700px;
+            padding: clamp(1rem, 3vw, 2rem);
             border-radius: 12px;
             background-color: #f9f9f9;
-            margin: 5% auto auto auto;
-            font-family: Fredoka;
+            margin: 5% auto;
+            position: relative;
         }
 
         body.dark-mode .modal-content {
@@ -501,26 +505,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .close-modal {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
             cursor: pointer;
             font-weight: bold;
-            float: right;
-            font-size: 24px;
+            font-size: clamp(1.2rem, 2vw, 1.5rem);
+            color: #666;
+            background: none;
+            border: none;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        body.dark-mode .close-modal {
+            color: #e0e0e0;
+        }
+
+        .modal-title {
+            color: #f8b500;
+            text-align: center;
+            margin-bottom: clamp(1.5rem, 3vw, 2rem);
+            font-size: clamp(1.3rem, 3vw, 1.8rem);
+        }
+
+        /* Settings Container */
         .settings-container {
-            width: 100%;
-            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: clamp(1rem, 2vw, 1.5rem);
         }
 
         .setting-group {
             background: #f3f3f3;
             border-radius: 10px;
-            padding: 20px;
+            padding: clamp(1rem, 2vw, 1.5rem);
             border-left: 4px solid #f8b500;
-            width: 100%;
         }
 
         body.dark-mode .setting-group {
@@ -529,13 +552,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         .setting-header {
             display: flex;
-            margin-bottom: 5px;
-            font-family: Fredoka;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .setting-header i {
+            color: #f8b500;
+            font-size: clamp(1rem, 1.5vw, 1.2rem);
         }
 
         .setting-header h3 {
             color: #333;
-            font-size: 18px;
+            font-size: clamp(1rem, 1.5vw, 1.2rem);
             margin: 0;
         }
 
@@ -544,30 +573,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: clamp(0.75rem, 1.5vw, 1rem);
         }
 
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-            font-size: 14px;
+        .input-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
         }
 
-        body.dark-mode .form-group label {
-            color: #e0e0e0;
+        .input-group .form-input {
+            flex: 1;
+            min-width: 200px;
         }
 
         .form-input {
             width: 100%;
-            padding: 8px 12px;
+            padding: clamp(0.5rem, 1.5vw, 0.75rem);
             border: 1px solid #ddd;
             border-radius: 6px;
-            font-size: 14px;
-            transition: border 0.3s;
+            font-size: clamp(0.9rem, 1.5vw, 1rem);
             background-color: white;
-            color: black;
+            color: #333;
         }
 
         body.dark-mode .form-input {
@@ -576,28 +603,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             border-color: #555;
         }
 
-        .form-input:focus {
-            border-color: #f8b500;
-            outline: none;
-        }
-
-        .input-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .input-group .form-input {
-            flex: 1;
-        }
-
         .hint {
             display: block;
             color: #888;
-            font-size: 11px;
-            margin-top: 5px;
+            font-size: clamp(0.75rem, 1.2vw, 0.85rem);
+            margin-top: 0.5rem;
             font-style: italic;
-            font-family: Fredoka;
         }
 
         body.dark-mode .hint {
@@ -605,13 +616,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         .modal-footer {
-            width: 100%;
             display: flex;
             justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-            padding-top: 20px;
+            gap: 0.75rem;
+            margin-top: clamp(1.5rem, 3vw, 2rem);
+            padding-top: clamp(1rem, 2vw, 1.5rem);
             border-top: 1px solid #eee;
+            flex-wrap: wrap;
         }
 
         body.dark-mode .modal-footer {
@@ -621,14 +632,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .save-btn {
             background-color: #4CAF50;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            font-family: Fredoka;
-            font-size: 16px;
         }
 
         .save-btn:hover {
@@ -638,14 +641,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .cancel-btn {
             background-color: #f44336;
             color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
-            font-family: Fredoka;
-            font-size: 16px;
         }
 
         .cancel-btn:hover {
@@ -655,167 +650,219 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         .secondary-btn {
             background-color: #f8b500;
             color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 12px;
-            transition: background-color 0.3s;
+            padding: 0.5rem 1rem;
+            font-size: clamp(0.8rem, 1.2vw, 0.9rem);
         }
 
         .secondary-btn:hover {
-            background-color: #e6a700;
+            background-color: #e5941f;
         }
 
-        .submit-btn{
-            background-color: #f8b500;
-            color: white;
-            width: 15%;
-            border-radius: 10px;
-            border: 2px solid #F8b500;
-            padding: 10px;
-            font-size: 15px;
-            font-family: Fredoka;
-            font-weight: 500;
-            margin-bottom: 1.5%;
-            margin-left: 80%;
-            box-shadow: 0 6px 0 0 #BC8900;
-            cursor: pointer;
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .quiz-header {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions-bar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .left-actions,
+            .right-actions {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .right-actions {
+                order: -1;
+                margin-bottom: 1rem;
+            }
+            
+            .answer-row {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .answer-input {
+                width: 100%;
+                min-width: unset;
+            }
         }
 
-        .submit-btn:hover{
-            background-color: white;
-            color: #f8b500;
+        @media (max-width: 576px) {
+            .create-q-cont {
+                padding: 1rem;
+            }
+            
+            .question-container {
+                padding: 0.75rem;
+            }
+            
+            .modal-content {
+                width: 95%;
+                padding: 1rem;
+                margin: 2% auto;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group .form-input {
+                min-width: unset;
+            }
+            
+            .modal-footer {
+                justify-content: center;
+            }
         }
 
-        body.dark-mode .submit-btn:hover {
-            background-color: #3d3d3d;
+        @media (max-width: 480px) {
+            header {
+                padding: 0.75rem;
+            }
+            
+            h1 {
+                font-size: 1.5rem;
+            }
+            
+            .btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .answer-row label {
+                font-size: 0.9rem;
+            }
         }
 
-        .submit-btn:active{
-            background-color: #f8b500;
-            color: white;
+        @media (max-width: 375px) {
+            .main-container {
+                padding: 0.75rem;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+            }
+            
+            .btn {
+                padding: 0.6rem 0.8rem;
+                font-size: 0.85rem;
+            }
+            
+            .modal-content {
+                width: 98%;
+                padding: 0.75rem;
+            }
         }
 
-        /* width */
-        ::-webkit-scrollbar {
-          width: 10px;
-          height: 10px;
+        /* Utility Classes */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
         }
 
-        /* Track */
-        ::-webkit-scrollbar-track {
-          box-shadow: inset 0 0 5px grey; 
-          border-radius: 10px;
-        }
-         
-        /* Handle */
-        ::-webkit-scrollbar-thumb {
-          background: #f8b500; 
-          border-radius: 10px;
+        /* Focus Styles for Accessibility */
+        button:focus-visible,
+        input:focus-visible,
+        a:focus-visible {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
         }
 
-        /* Handle on hover */
-        ::-webkit-scrollbar-thumb:hover {
-          background: #f8b500; 
-        }
-
-        .profile {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .profile-pic {
-            border: 2px solid #f8b500;
+        /* Smooth Transitions */
+        * {
+            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
     </style>
 </head>
 <body>
-
     <header>
-        <div class="logo"><img src="img/logo1.png" width="200px" height="80px"></div>
-        <div class="actions">
-                    <div class="profile" onclick="profileDropdown()">
-                        <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
-                    </div>
+        <div class="logo">
+            <img src="img/logo1.png" alt="QuizZap Logo">
+        </div>
+        <div class="profile" onclick="profileDropdown()">
+            <img src="uploads/profiles/<?php echo htmlspecialchars($profile_pic); ?>" alt="Profile Picture" class="profile-pic" onerror="this.src='uploads/profiles/default-profile.jpg'">
+        </div>
     </header>
 
-    <h1>Create Multiple Choice Quiz</h1>
-    
-    <div class="create-q-cont">
+    <div class="main-container">
+        <h1>Create Multiple Choice Quiz</h1>
         
-        <!--
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <div id="save-status" style="font-family: Fredoka; color: #4CAF50; font-size: 14px;"></div>
-            <button type="button" onclick="clearLocalStorage()" style="background-color: #ff4444; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-family: Fredoka; font-size: 12px;">
-                Clear Saved Progress
-            </button>
-        </div>
-        -->
-    
-        <form id="quiz-form" method="post" action="">
-            <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
-            <input type="hidden" name="quiz_type" value="Multiple Choice">
-            <input type="hidden" name="end_date" value="">
-            <input type="hidden" name="start_date" value="">
+        <div class="create-q-cont">
+            <form id="quiz-form" method="post" action="">
+                <input type="hidden" name="subject_id" value="<?php echo htmlspecialchars($subject_id); ?>">
+                <input type="hidden" name="quiz_type" value="Multiple Choice">
+                <input type="hidden" name="end_date" value="">
+                <input type="hidden" name="start_date" value="">
 
-            <div class="quiz_header">
-                <label for="title">Quiz Title:</label>
-                <input type="text" id="title" name="title" required>
+                <div class="quiz-header">
+                    <div class="quiz-title-group">
+                        <label for="title">Quiz Title:</label>
+                        <input type="text" id="title" name="title" required placeholder="Enter quiz title">
+                    </div>
 
-                <div class="quiz-timer">
-                    <label for="timer">Timer (minutes):</label>
-                    <input type="number" id="timer" name="timer" min="1" required>
+                    <div class="quiz-timer-group">
+                        <label for="timer">Timer (minutes):</label>
+                        <input type="number" id="timer" name="timer" min="1" required placeholder="Enter time in minutes">
+                    </div>
                 </div>
-            </div>
 
-            <br>
+                <div class="questions-container" id="questionsContainer"></div>
 
-            <div id="questionsContainer"></div>
-
-            <div class="number-buttons" id="numberButtons">
-                <button type="button" class="add-question-btn" id="addQuestionBtn">
+                <button type="button" class="btn add-question-btn" id="addQuestionBtn">
                     <i class="fas fa-plus"></i> Add Question
                 </button>
-            </div>
 
-            <div class="actions">
-                <button type="button" class="btn btn-back" onclick="goBack()">
-                    <i class="fas fa-arrow-left"></i> Back
-                </button>
-                <div>
-                    <button type="button" class="btn-settings" onclick="openQuizSettings()">
-                        <i class="fas fa-cog"></i> Quiz Settings
-                    </button>
-                    <button type="submit" class="btn btn-saveQuiz">
-                        <i class="fas fa-save"></i> Save Quiz
-                    </button>
+                <div class="actions-bar">
+                    <div class="left-actions">
+                        <button type="button" class="btn btn-back" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </button>
+                    </div>
+                    <div class="right-actions">
+                        <button type="button" class="btn btn-settings" onclick="openQuizSettings()">
+                            <i class="fas fa-cog"></i> Quiz Settings
+                        </button>
+                        <button type="submit" class="btn btn-saveQuiz">
+                            <i class="fas fa-save"></i> Save Quiz
+                        </button>
+                    </div>
                 </div>
-            </div>
-        </form>
+            </form>
+        </div>
     </div>
 
     <!-- Quiz Settings Modal -->
     <div id="quiz-settings-modal" class="modal" style="display:none;">
         <div class="modal-content">
-            <span class="close-modal" onclick="closeModal()">&times;</span>
-            <h2 style="color: #f8b500; text-align: center; margin-bottom: 25px;">Quiz Availability Settings</h2>
+            <button class="close-modal" onclick="closeModal()">&times;</button>
+            <h2 class="modal-title">Quiz Availability Settings</h2>
             
             <div class="settings-container">
                 <div class="setting-group">
                     <div class="setting-header">
-                        <i class="fas fa-calendar-alt" style="color: #f8b500; margin-right: 10px;"></i>
+                        <i class="fas fa-calendar-alt"></i>
                         <h3>Time Settings</h3>
                     </div>
                     
                     <div class="form-group">
                         <label for="start-date">
-                            <i class="fas fa-play-circle" style="color: #4CAF50;"></i> Start Date:
+                            <i class="fas fa-play-circle" style="color: #4CAF50; margin-right: 5px;"></i>
+                            Start Date:
                         </label>
                         <div class="input-group">
                             <input type="datetime-local" id="start-date" name="start_date" class="form-input" min="">
-                            <button type="button" onclick="setStartDateToday()" class="secondary-btn">
+                            <button type="button" onclick="setStartDateToday()" class="btn secondary-btn">
                                 <i class="fas fa-clock"></i> Now
                             </button>
                         </div>
@@ -824,7 +871,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     
                     <div class="form-group">
                         <label for="end-date">
-                            <i class="fas fa-stop-circle" style="color: #f44336;"></i> End Date:
+                            <i class="fas fa-stop-circle" style="color: #f44336; margin-right: 5px;"></i>
+                            End Date:
                         </label>
                         <input type="datetime-local" id="end-date" name="end_date" class="form-input" min="" required>
                         <small class="hint">Students won't be able to take the quiz after this date</small>
@@ -832,10 +880,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 </div>
                 
                 <div class="modal-footer">
-                    <button type="button" onclick="closeModal()" class="cancel-btn">
+                    <button type="button" onclick="closeModal()" class="btn cancel-btn">
                         <i class="fas fa-times"></i> Cancel
                     </button>
-                    <button type="button" onclick="saveQuizSettings()" class="save-btn">
+                    <button type="button" onclick="saveQuizSettings()" class="btn save-btn">
                         <i class="fas fa-save"></i> Save Settings
                     </button>
                 </div>
@@ -870,31 +918,36 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             const questionNumber = currentQuestions + 1;
 
             questionDiv.innerHTML = `
+                <div class="question-number">Question ${questionNumber}</div>
                 <div class="form-group">
-                    <div class="question-number">Question ${questionNumber}</div>
                     <label>Instructions (optional):</label>
-                    <input type="text" name="instructions[]" placeholder="Additional instructions for this question"> <br> <br>
+                    <input type="text" name="instructions[]" placeholder="Additional instructions for this question">
+                </div>
+                <div class="form-group">
                     <label>Question:</label>
                     <input type="text" name="questions[]" required placeholder="Enter question text">
                 </div>
                 <div class="answers-section">
-                    <label>Answers (select the correct one):</label> <br> <br>
-                    <div class="answer-list">
+                    <label>Answers (select the correct one):</label>
+                    <div class="answer-row">
                         <input type="radio" name="correct[${currentQuestions}]" value="0" required>
-                        <label>Answer 1:</label><br> <br>
-                        <input type="text" name="answers[${currentQuestions}][]" required placeholder="Enter answer"><br><br>
-                        
+                        <label>Answer 1:</label>
+                        <input type="text" class="answer-input" name="answers[${currentQuestions}][]" required placeholder="Enter answer">
+                    </div>
+                    <div class="answer-row">
                         <input type="radio" name="correct[${currentQuestions}]" value="1">
-                        <label>Answer 2:</label><br> <br>
-                        <input type="text" name="answers[${currentQuestions}][]" required placeholder="Enter answer"><br><br>
-                        
+                        <label>Answer 2:</label>
+                        <input type="text" class="answer-input" name="answers[${currentQuestions}][]" required placeholder="Enter answer">
+                    </div>
+                    <div class="answer-row">
                         <input type="radio" name="correct[${currentQuestions}]" value="2">
-                        <label>Answer 3:</label><br> <br>
-                        <input type="text" name="answers[${currentQuestions}][]" required placeholder="Enter answer"><br><br>
-                        
+                        <label>Answer 3:</label>
+                        <input type="text" class="answer-input" name="answers[${currentQuestions}][]" required placeholder="Enter answer">
+                    </div>
+                    <div class="answer-row">
                         <input type="radio" name="correct[${currentQuestions}]" value="3">
-                        <label>Answer 4:</label><br> <br>
-                        <input type="text" name="answers[${currentQuestions}][]" required placeholder="Enter answer"><br><br>
+                        <label>Answer 4:</label>
+                        <input type="text" class="answer-input" name="answers[${currentQuestions}][]" required placeholder="Enter answer">
                     </div>
                 </div>
                 <button type="button" class="btn btn-removeQuestion" onclick="removeQuestion(this)">
@@ -907,6 +960,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             
             // Update single-question class for all questions
             updateQuestionRemoveButtons();
+            
+            // Scroll to the new question
+            questionDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
         function removeQuestion(button) {
@@ -1107,6 +1163,5 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             });
         });
     </script>
-
 </body>
 </html>

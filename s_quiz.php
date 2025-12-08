@@ -140,15 +140,44 @@ else if ($quiz['end_date'] && $currentDate > $quiz['end_date']) {
     $modalRedirect = "select_quiz.php?subject_id=" . $subject_id;
 }
 
-$sql = "SELECT * FROM questions WHERE quiz_id = $quiz_id";
-$result = $conn->query($sql);
+$stmt = $conn->prepare("SELECT * FROM questions WHERE quiz_id = ?");
+$stmt->bind_param("i", $quiz_id);
+$stmt->execute();
+$result = $stmt->get_result();
 
 $questions = [];
-while ($row = $result->fetch_assoc()) {
-    $questions[] = $row;
+
+if ($result->num_rows === 0) {
+    echo "<!-- DEBUG ERROR: No questions found for quiz_id: $quiz_id -->" . PHP_EOL;
+    echo "<!-- DEBUG: Checking quiz_type: $quiz_type -->" . PHP_EOL;
+} else {
+    echo "<!-- DEBUG: Processing questions... -->" . PHP_EOL;
+    
+    while ($row = $result->fetch_assoc()) {
+        // Add question to array FIRST
+        $questions[] = $row;
+        
+        // For Matching Type, check left_items and right_items
+        if ($row['question_type'] === 'Matching Type') {
+            $leftItems = $row['left_items'] ?? '';
+            $rightItems = $row['right_items'] ?? '';
+            
+            if (!empty($leftItems)) {
+                echo "<!-- DEBUG Left Items: " . htmlspecialchars(substr($leftItems, 0, 100)) . "... -->" . PHP_EOL;
+            } else {
+                echo "<!-- DEBUG WARNING: Left Items is EMPTY! -->" . PHP_EOL;
+            }
+            
+            if (!empty($rightItems)) {
+                echo "<!-- DEBUG Right Items: " . htmlspecialchars(substr($rightItems, 0, 100)) . "... -->" . PHP_EOL;
+            } else {
+                echo "<!-- DEBUG WARNING: Right Items is EMPTY! -->" . PHP_EOL;
+            }
+        }
+    }
 }
 
-$conn->close();
+$stmt->close();
 ?>
 
 <!DOCTYPE html>
@@ -1676,19 +1705,21 @@ $conn->close();
         let isSubmitting = false;
 
         function confirmReload() {
+            console.log("confirmReload called");
             isReloadConfirmed = true;
             isModalShowing = false;
             document.getElementById("reloadConfirmModal").style.display = "none";
             
+            // Disable the beforeunload handler
             window.onbeforeunload = null;
             
-            if (Object.keys(userAnswers).length > 0) {
-                submitQuiz(true);
-            } else {
-                setTimeout(() => {
-                    window.location.reload();
-                }, 100);
+            // Stop the timer
+            if (window.timerInterval) {
+                clearInterval(window.timerInterval);
             }
+            
+            // Submit the quiz with whatever answers we have
+            submitQuiz(true);
         }
 
         function cancelReload() {
@@ -1847,7 +1878,7 @@ $conn->close();
     const userAnswers = {};
     let remainingTimeSeconds = <?php echo $remaining_time; ?>;
     
-    const AUTO_SAVE_INTERVAL = 10000;
+    const AUTO_SAVE_INTERVAL = 1000;
     let autoSaveInterval;
     let timerInterval = null;
     let currentQuestionIndex = 0;
@@ -1857,6 +1888,11 @@ $conn->close();
     let voices = [];
     let defaultVoice = "Microsoft David - English (United States)";
     let isSpeaking = false;
+
+    // Test if functions exist after DOM loads
+    window.addEventListener('DOMContentLoaded', function() {
+        console.log('DOM Content Loaded');
+    });
 
     function populateVoices() {
         voices = synth.getVoices();
@@ -2061,6 +2097,8 @@ $conn->close();
 
         const serverAnswers = <?php echo json_encode($prefilledAnswers); ?>;
         
+        console.log('Server answers:', serverAnswers);
+        
         Object.entries(serverAnswers).forEach(([questionId, answer]) => {
             try {
                 userAnswers[questionId] = typeof answer === 'string' ? 
@@ -2069,6 +2107,8 @@ $conn->close();
                 userAnswers[questionId] = answer;
             }
         });
+        
+        console.log('User answers loaded into memory:', userAnswers);
 
         spinner.style.display = 'none';
         loadingText.textContent = 'Answers loaded successfully!';
@@ -2084,8 +2124,15 @@ $conn->close();
     }
 
     function renderQuestions() {
+        console.log('\n====== renderQuestions CALLED ======');
+        console.log('Number of questions:', questions.length);
+
         const quizQuestionsDiv = document.getElementById('quiz-questions');
         const questionNavDiv = document.getElementById('question-navigation');
+        
+        // Track how many questions have finished rendering
+        let questionsRendered = 0;
+        const totalQuestions = questions.length;
         
         questions.forEach((question, index) => {
             // Create question navigation button
@@ -2145,15 +2192,105 @@ $conn->close();
                 .then(response => response.json())
                 .then(data => {
                     renderAnswers(data, question, answersDiv, quizType);
+                    
+                    // Increment counter and check if all questions are done
+                    questionsRendered++;
+                    if (questionsRendered === totalQuestions) {
+                        // All questions rendered, now restore answers
+                        console.log('All questions rendered, restoring answers...');
+                        applyRestoredAnswersToUI();
+                    }
                 })
                 .catch(error => {
                     console.error('Error fetching answers:', error);
                     answersDiv.innerHTML = `<p>Error loading answers: ${error.message}</p>`;
+                    questionsRendered++;
+                    if (questionsRendered === totalQuestions) {
+                        applyRestoredAnswersToUI();
+                    }
                 });
             
             questionDiv.appendChild(answersDiv);
             quizQuestionsDiv.appendChild(questionDiv);
         });
+    }
+
+    function applyRestoredAnswersToUI() {
+        console.log('Applying restored answers to UI:', userAnswers);
+        
+        questions.forEach((question, index) => {
+            const questionId = question.question_id;
+            const savedAnswer = userAnswers[questionId];
+            
+            if (!savedAnswer) return;
+            
+            const answersDiv = document.getElementById(`answers-${questionId}`);
+            if (!answersDiv) return;
+            
+            // Handle different question types
+            switch(quizType) {
+                case 'True or False':
+                case 'Multiple Choice':
+                    // Find and select the correct button
+                    const buttons = answersDiv.querySelectorAll('.answer-button');
+                    buttons.forEach(btn => {
+                        if (btn.dataset.answerId == savedAnswer) {
+                            btn.classList.add('selected');
+                        }
+                    });
+                    break;
+                    
+                case 'Identification':
+                case 'Enumeration':
+                case 'Fill in the Blanks':
+                    // Fill the text input
+                    const input = answersDiv.querySelector('input[type="text"]');
+                    if (input) {
+                        input.value = savedAnswer;
+                    }
+                    break;
+                    
+                case 'Drag & Drop':
+                    // Move item to target zone
+                    const dragItem = answersDiv.querySelector(`.drag-item[data-answer-id="${savedAnswer}"]`);
+                    const targetZone = answersDiv.querySelector('.target-zone');
+                    if (dragItem && targetZone) {
+                        targetZone.appendChild(dragItem);
+                    }
+                    break;
+                    
+                case 'Matching Type':
+                    // Restore matches
+                    if (Array.isArray(savedAnswer)) {
+                        if (!window.matchingData) {
+                            window.matchingData = {};
+                        }
+                        if (!window.matchingData[questionId]) {
+                            window.matchingData[questionId] = {
+                                selectedLeft: null,
+                                selectedRight: null,
+                                matches: []
+                            };
+                        }
+                        window.matchingData[questionId].matches = savedAnswer;
+                        updateMatchesDisplay(questionId);
+                        
+                        // Mark matched items
+                        savedAnswer.forEach(match => {
+                            const leftItem = answersDiv.querySelector(`.match-item[data-answer-id="${match.left}"]`);
+                            const rightItem = answersDiv.querySelector(`.match-item[data-answer-id="${match.right}"]`);
+                            if (leftItem) leftItem.classList.add('matched');
+                            if (rightItem) rightItem.classList.add('matched');
+                        });
+                    }
+                    break;
+            }
+        });
+        
+        // Update navigation to show answered questions
+        updateQuestionNavigation();
+        
+        console.log('Answers restored to UI');
     }
 
     function renderAnswers(data, question, answersDiv, questionType) {
@@ -2172,6 +2309,12 @@ $conn->close();
                         answerButton.classList.add('selected');
                         updateQuestionNavigation();
                     };
+                    
+                    // Restore saved answer
+                    if (userAnswers[question.question_id] === (data[i]?.answer_id || answerText)) {
+                        answerButton.classList.add('selected');
+                    }
+                    
                     answersDiv.appendChild(answerButton);
                 });
                 break;
@@ -2183,6 +2326,12 @@ $conn->close();
                 answerInput.type = 'text';
                 answerInput.placeholder = `Enter your ${questionType.toLowerCase()} answer`;
                 answerInput.className = 'form-control';
+                
+                // Restore saved answer - THIS WAS MISSING!
+                if (userAnswers[question.question_id]) {
+                    answerInput.value = userAnswers[question.question_id];
+                }
+                
                 answerInput.oninput = function() {
                     saveAnswer(question.question_id, answerInput.value.trim());
                     updateQuestionNavigation();
@@ -2205,6 +2354,12 @@ $conn->close();
                         answerButton.classList.add('selected');
                         updateQuestionNavigation();
                     };
+                    
+                    // Restore saved answer
+                    if (userAnswers[question.question_id] == answer.answer_id) {
+                        answerButton.classList.add('selected');
+                    }
+                    
                     answersDiv.appendChild(answerButton);
                 });
                 break;
@@ -2236,7 +2391,12 @@ $conn->close();
                         e.target.classList.remove('dragging');
                     });
                     
-                    sourceContainer.appendChild(dragItem);
+                    // Check if this item was previously dropped
+                    if (userAnswers[question.question_id] == item.answer_id) {
+                        targetContainer.appendChild(dragItem);
+                    } else {
+                        sourceContainer.appendChild(dragItem);
+                    }
                 });
                 
                 targetContainer.addEventListener('dragover', (e) => {
@@ -2260,7 +2420,7 @@ $conn->close();
                         }
                         
                         targetContainer.appendChild(droppedItem);
-                        saveAnswer(question.question_id, [answerId]);
+                        saveAnswer(question.question_id, answerId);
                         updateQuestionNavigation();
                     }
                     
@@ -2275,17 +2435,72 @@ $conn->close();
                 break;
 
             case 'Matching Type':
-                try {
-                    const leftItems = JSON.parse(question.left_items || '[]');
-                    const rightItems = JSON.parse(question.right_items || '[]');
+                console.log('=== MATCHING TYPE DEBUG ===');
+                console.log('Raw data received:', data);
+                console.log('Data type:', typeof data);
+                console.log('Data keys:', Object.keys(data));
+                
+                // Parse the data if it's a string
+                let matchingData = data;
+                if (typeof data === 'string') {
+                    try {
+                        matchingData = JSON.parse(data);
+                        console.log('Parsed string data:', matchingData);
+                    } catch (e) {
+                        console.error('Failed to parse data string:', e);
+                    }
+                }
+                
+                console.log('Question type:', matchingData.question_type);
+                console.log('Left items:', matchingData.left_items);
+                console.log('Right items:', matchingData.right_items);
+                
+                // Check if we have the matching type structure
+                if (matchingData && matchingData.left_items && matchingData.right_items) {
+                    let leftItems = matchingData.left_items;
+                    let rightItems = matchingData.right_items;
+                    
+                    // Parse items if they're strings
+                    if (typeof leftItems === 'string') {
+                        try {
+                            leftItems = JSON.parse(leftItems);
+                            console.log('Parsed left_items from string:', leftItems);
+                        } catch (e) {
+                            console.error('Failed to parse left_items:', e);
+                        }
+                    }
+                    
+                    if (typeof rightItems === 'string') {
+                        try {
+                            rightItems = JSON.parse(rightItems);
+                            console.log('Parsed right_items from string:', rightItems);
+                        } catch (e) {
+                            console.error('Failed to parse right_items:', e);
+                        }
+                    }
 
+                    console.log('Final left items:', leftItems);
+                    console.log('Final right items:', rightItems);
+                    console.log('Left items length:', leftItems ? leftItems.length : 0);
+                    console.log('Right items length:', rightItems ? rightItems.length : 0);
+
+                    if (!leftItems || leftItems.length === 0 || !rightItems || rightItems.length === 0) {
+                        console.error('ERROR: Items are empty or invalid');
+                        answersDiv.innerHTML = '<p style="color: red;">Error: Matching items not properly configured. Left: ' + 
+                            (leftItems ? leftItems.length : 0) + ', Right: ' + (rightItems ? rightItems.length : 0) + '</p>';
+                        return;
+                    }
+
+                    // Create match container
                     const matchContainer = document.createElement('div');
                     matchContainer.className = 'match-container';
                     
+                    // Left items column
                     const leftColumn = document.createElement('div');
                     leftColumn.className = 'left-items';
                     leftColumn.innerHTML = '<h4>Items to Match</h4>';
                     
+                    // Add left items (numbered)
                     leftItems.forEach((item, index) => {
                         const matchItem = document.createElement('div');
                         matchItem.className = 'match-item';
@@ -2293,16 +2508,19 @@ $conn->close();
                         matchItem.dataset.answerId = `left_${index}`;
                         matchItem.dataset.side = 'left';
                         matchItem.dataset.itemIndex = index;
+                        matchItem.dataset.questionId = question.question_id;
                         matchItem.addEventListener('click', function() {
                             selectMatchItem(this, question.question_id);
                         });
                         leftColumn.appendChild(matchItem);
                     });
 
+                    // Right items column
                     const rightColumn = document.createElement('div');
                     rightColumn.className = 'right-items';
                     rightColumn.innerHTML = '<h4>Match With</h4>';
                     
+                    // Add right items (lettered)
                     const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
                     rightItems.forEach((item, index) => {
                         const matchItem = document.createElement('div');
@@ -2311,21 +2529,25 @@ $conn->close();
                         matchItem.dataset.answerId = `right_${index}`;
                         matchItem.dataset.side = 'right';
                         matchItem.dataset.itemIndex = index;
+                        matchItem.dataset.questionId = question.question_id;
                         matchItem.addEventListener('click', function() {
                             selectMatchItem(this, question.question_id);
                         });
                         rightColumn.appendChild(matchItem);
                     });
 
+                    // Add columns to container
                     matchContainer.appendChild(leftColumn);
                     matchContainer.appendChild(rightColumn);
                     answersDiv.appendChild(matchContainer);
 
+                    // Pairs display area
                     const pairsDisplay = document.createElement('div');
                     pairsDisplay.className = 'pairs-display';
                     pairsDisplay.innerHTML = '<h4>Your Matches:</h4><div id="pairs-list-' + question.question_id + '"></div>';
                     answersDiv.appendChild(pairsDisplay);
 
+                    // Clear button
                     const clearBtn = document.createElement('button');
                     clearBtn.textContent = 'Clear All Matches';
                     clearBtn.className = 'clear-matches-btn';
@@ -2334,6 +2556,7 @@ $conn->close();
                     });
                     answersDiv.appendChild(clearBtn);
 
+                    // Initialize matching data for this question
                     if (!window.matchingData) {
                         window.matchingData = {};
                     }
@@ -2343,25 +2566,44 @@ $conn->close();
                         matches: []
                     };
 
-                } catch (e) {
-                    console.error('Error parsing matching items:', e);
-                    answersDiv.innerHTML = '<p>Error loading matching items</p>';
+                    // Restore saved matches if they exist
+                    const savedAnswer = userAnswers[question.question_id];
+                    if (savedAnswer && Array.isArray(savedAnswer)) {
+                        console.log('Restoring saved matches:', savedAnswer);
+                        window.matchingData[question.question_id].matches = savedAnswer;
+                        updateMatchesDisplay(question.question_id);
+                        
+                        // Mark matched items
+                        savedAnswer.forEach(match => {
+                            const leftItem = answersDiv.querySelector(`.match-item[data-question-id="${question.question_id}"][data-answer-id="${match.left}"]`);
+                            const rightItem = answersDiv.querySelector(`.match-item[data-question-id="${question.question_id}"][data-answer-id="${match.right}"]`);
+                            if (leftItem) leftItem.classList.add('matched');
+                            if (rightItem) rightItem.classList.add('matched');
+                        });
+                    }
+                    
+                    console.log('Matching type rendering complete!');
+                } else {
+                    console.error('ERROR: Invalid data structure');
+                    console.error('matchingData:', matchingData);
+                    answersDiv.innerHTML = '<p style="color: red;">Error loading matching items. Check console for details.</p>';
                 }
                 break;
         }
     }
 
+
     function selectMatchItem(item, questionId) {
         const side = item.dataset.side;
         const matchData = window.matchingData[questionId];
         
-        document.querySelectorAll(`[data-side="${side}"]`).forEach(el => {
-            if (el.closest('.question').querySelector('.question-text').textContent.includes(questionId) || 
-                el.getAttribute('data-question-id') === questionId.toString()) {
-                el.classList.remove('selected');
-            }
+        // Remove previous selection from the same side for THIS question only
+        const answersDiv = document.getElementById(`answers-${questionId}`);
+        answersDiv.querySelectorAll(`[data-side="${side}"][data-question-id="${questionId}"]`).forEach(el => {
+            el.classList.remove('selected');
         });
 
+        // Select current item
         item.classList.add('selected');
 
         if (side === 'left') {
@@ -2370,6 +2612,7 @@ $conn->close();
             matchData.selectedRight = item;
         }
 
+        // If both sides have selections, create a match
         if (matchData.selectedLeft && matchData.selectedRight) {
             createMatch(questionId);
         }
@@ -2563,6 +2806,8 @@ $conn->close();
             subject_id: <?php echo $subject_id; ?>
         };
 
+        console.log("Submitting quiz with data:", submissionData);
+        
         isSubmitting = true;
         clearInterval(autoSaveInterval);
         
@@ -2582,23 +2827,39 @@ $conn->close();
         .then(response => response.json())    
         .then(data => {
             if (data.success) {
-                sessionStorage.setItem('quizResult', JSON.stringify({
-                    score: data.score,
-                    total: data.total,
-                    quiz_id: <?php echo $quiz_id; ?>,
-                    wrong_answers: data.wrong_answers,
-                    subject_id: <?php echo $subject_id; ?>
-                }));
+                console.log("Quiz submitted successfully:", data);
                 
+                // Store result in PHP session via process_quiz_result.php
+                return fetch('process_quiz_result.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        score: data.score,
+                        total: data.total,
+                        quiz_id: <?php echo $quiz_id; ?>,
+                        wrong_answers: data.wrong_answers,
+                        subject_id: data.subject_id || <?php echo $subject_id; ?>
+                    })
+                });
+            } else {
+                throw new Error(data.error || 'Unknown error');
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log("Result stored in session, redirecting to quiz_result.php");
+                // Now redirect to quiz_result.php
                 window.location.href = 'quiz_result.php';
             } else {
-                alert('Error submitting quiz: ' + (data.error || 'Unknown error'));
-                window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
+                throw new Error('Failed to store quiz result');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('There was an error submitting your quiz. Please try again.');
+            alert('There was an error submitting your quiz: ' + error.message);
             window.location.href = 'select_quiz.php?subject_id=<?php echo $subject_id; ?>';
         });   
     }
@@ -2630,21 +2891,16 @@ $conn->close();
         
         window.matchingData = {};
         
-        renderQuestions();
+        // Load saved answers into memory FIRST
         restoreSavedAnswers();
         
+        // Then render questions (which will apply answers after rendering)
+        renderQuestions();
+        
+        // Set up initial view after a short delay
         setTimeout(() => {
             goToQuestion(0);
             updateNavigationButtons();
-            updateQuestionNavigation();
-            
-            // Restore saved answers to UI
-            questions.forEach((question, index) => {
-                if (userAnswers[question.question_id]) {
-                    const navBtn = document.getElementById(`nav-btn-${index}`);
-                    navBtn.classList.add('answered');
-                }
-            });
         }, 500);
         
         console.log('Starting timer with:', remainingTimeSeconds, 'seconds');

@@ -51,6 +51,7 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
     <title>Create Fill in the Blanks Quiz</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="other resources\fontawesome-free-6.5.2-web\css\all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
@@ -1170,14 +1171,36 @@ $response = ["success" => false, "message" => "", "subject_id" => ""];
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
-                    window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`;
+                    // Show success alert
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        confirmButtonColor: '#f8b500',
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirect after confirmation
+                            window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`;
+                        }
+                    });
                 } else {
-                    alert('Error creating quiz: ' + data.message);
+                    // Show error alert
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to create quiz',
+                        confirmButtonColor: '#f44336'
+                    });
                 }
             })
             .catch(error => {
-                alert('Failed to save quiz: ' + error.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to save quiz: ' + error.message,
+                    confirmButtonColor: '#f44336'
+                });
                 console.error('Fetch error:', error);
             });
         });

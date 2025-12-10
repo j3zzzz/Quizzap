@@ -90,9 +90,9 @@ if (isset($_POST['add_class'])) {
             $show_duplicate_modal = true;
         } else {
             // NO DUPLICATE - Proceed with insertion
-            $sql = "INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, strand, section, school_id, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'Active')";
+            $sql = "INSERT INTO subjects (subject_name, teacher_id, subject_code, grade_level, strand, section, school_id) VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $conn->prepare($sql);
-            $stmt->bind_param("sssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $strand, $section, $school_id);
+            $stmt->bind_param("ssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $strand, $section, $school_id);
             
             if ($stmt->execute()) {
                 $success_message = "Class created successfully!";
@@ -135,55 +135,6 @@ if (isset($_GET['delete'])) {
     $stmt->close();
 }
 
-// Handle Deactivate Action (unenroll all students)
-if (isset($_GET['deactivate'])) {
-    $subject_id = $_GET['deactivate'];
-    
-    // Start transaction
-    $conn->begin_transaction();
-    
-    try {
-        // Delete all student enrollments for this subject
-        $deleteEnrollmentsSql = "DELETE FROM enrollments WHERE subject_id = ?";
-        $deleteStmt = $conn->prepare($deleteEnrollmentsSql);
-        $deleteStmt->bind_param("i", $subject_id);
-        $deleteStmt->execute();
-        $deleteStmt->close();
-        
-        // Update the class status to 'Deactivated'
-        $updateSql = "UPDATE subjects SET status = 'Deactivated' WHERE subject_id = ?";
-        $updateStmt = $conn->prepare($updateSql);
-        $updateStmt->bind_param("i", $subject_id);
-        $updateStmt->execute();
-        $updateStmt->close();
-        
-        $conn->commit();
-        $success_message = "Class deactivated successfully! All students have been unenrolled.";
-    } catch (Exception $e) {
-        $conn->rollback();
-        $error_message = "Error deactivating class: " . $e->getMessage();
-    }
-}
-
-// Handle Activate Action
-if (isset($_GET['activate'])) {
-    $subject_id = $_GET['activate'];
-    
-    $sql = "UPDATE subjects SET status = 'Active' WHERE subject_id = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $subject_id);
-    
-    if ($stmt->execute()) {
-        $success_message = "Class activated successfully!";
-        // Redirect to avoid form resubmission
-        header("Location: a_Classes.php");
-        exit();
-    } else {
-        $error_message = "Error activating class: " . $stmt->error;
-    }
-    $stmt->close();
-}
-
 // Handle Edit Form Submission
 if (isset($_POST['update'])) {
     $subject_id = $_POST['subject_id'];
@@ -214,7 +165,7 @@ $whereClause = '';
 if (isset($_GET['search'])) {
     $search = $_GET['search'];
     $whereClause = "WHERE (s.subject_name LIKE '%$search%' OR s.section LIKE '%$search%' 
-                   OR s.subject_code LIKE '%$search%' OR s.status LIKE '%$search%'
+                   OR s.subject_code LIKE '%$search%'
                    OR CONCAT(t.fname, ' ', t.lname) LIKE '%$search%' OR s.grade_level LIKE '%$search%')";
 }
 
@@ -964,24 +915,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
             color: white;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .status-badge.active {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .status-badge.deactivated {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
         .search-container {
             display: flex;
             margin-bottom: 1.5rem;
@@ -1110,10 +1043,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
             color: #dc3545;
         }
 
-        .btn-deactivate {
-            color: #6c757d;
-        }
-
         .btn-view:hover {
             background-color: #17a2b8 !important;
             color: white !important;
@@ -1126,11 +1055,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
 
         .btn-delete:hover {
             background-color: #dc3545 !important;
-            color: white !important;
-        }
-
-        .btn-deactivate:hover {
-            background-color: #6c757d !important;
             color: white !important;
         }
 
@@ -1525,25 +1449,10 @@ while ($row = $teachersQuery->fetch_assoc()) {
                                     
                                     <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
                                         <div>
-                                            <?php if (isset($_GET['edit']) && $classToView['status'] != 'Deactivated'): ?>
-                                                <button type="button" class="btn btn-danger" 
-                                                    onclick="openDeactivateModal(<?php echo htmlspecialchars($classToView['subject_id']); ?>)">
-                                                    <i class="fas fa-times-circle"></i> Deactivate
-                                                </button>
-                                            <?php endif; ?>
-                                        </div>
-                                        <div>
                                             <?php if (isset($_GET['edit'])): ?>
                                                 <a href="a_Classes.php" class="btn btn-secondary">Cancel</a>
                                                 <button type="submit" name="update" class="btn btn-primary">Save Changes</button>
                                             <?php else: ?>
-                                                <?php if ($classToView['status'] == 'Deactivated'): ?>
-                                                    <a href="a_Classes.php?activate=<?php echo htmlspecialchars($classToView['subject_id']); ?>" 
-                                                    class="btn btn-success" 
-                                                    onclick="return confirm('Are you sure you want to activate this class?');">
-                                                    <i class="fas fa-check-circle"></i> Activate
-                                                    </a>
-                                                <?php endif; ?>
                                                 <a href="a_Classes.php" class="btn btn-secondary">Close</a>
                                             <?php endif; ?>
                                         </div>
@@ -1583,7 +1492,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
                             <th>Grade & Section</th>
                             <th>Strand</th>
                             <th>Teacher</th>
-                            <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -1592,13 +1500,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
                             <?php 
                             $counter = 1;
                             while ($class = $classesResult->fetch_assoc()): 
-                                // Check if class has students enrolled
-                                $enrollmentCheck = $conn->prepare("SELECT COUNT(*) as count FROM enrollments WHERE subject_id = ?");
-                                $enrollmentCheck->bind_param("i", $class['subject_id']);
-                                $enrollmentCheck->execute();
-                                $enrollmentResult = $enrollmentCheck->get_result();
-                                $enrollmentCount = $enrollmentResult->fetch_assoc()['count'];
-                                $enrollmentCheck->close();
                             ?>
                                 <tr>
                                     <td data-label="#"><?php echo $counter++; ?></td>
@@ -1616,18 +1517,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
                                             </div>
                                         </div>
                                     </td>
-                                    <td data-label="Status">
-                                        <span class="status-badge <?php 
-                                            $status = $class['status'] ?? 'Active'; 
-                                            switch($status) {
-                                                case 'Active': echo 'active'; break;
-                                                case 'Deactivated': echo 'deactivated'; break;
-                                                default: echo 'active';
-                                            }
-                                        ?>">
-                                            <?php echo htmlspecialchars($class['status']); ?>
-                                        </span>
-                                    </td>
                                     <td data-label="Actions" class="action-btns">
                                         <div class="action-buttons">
                                             <a href="a_Classes.php?view=<?php echo urlencode($class['subject_id']); ?>" title="View" class="btn-view"><i class="fas fa-eye"></i></a>
@@ -1639,7 +1528,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
                             <?php endwhile; ?>
                         <?php else: ?>
                             <tr>
-                                <td colspan="8">
+                                <td colspan="7">
                                     <div class="empty-state">
                                         <i class="fas fa-chalkboard"></i>
                                         <h3>No classes found</h3>
@@ -1656,42 +1545,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
                         <?php endif; ?>
                     </tbody>
                 </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- Deactivate Confirmation Modal -->
-    <div id="deactivateModal" class="modal">
-        <div class="modal-content" style="max-width: 500px;">
-            <span class="close" onclick="closeDeactivateModal()">&times;</span>
-            <div class="modal-header">
-                <h2 style="color: #dc3545;">⚠️ Warning: Deactivate Class</h2>
-            </div>
-            <div class="modal-body">
-                <p style="margin-bottom: 15px; font-size: 1.1rem;">
-                    <strong>Are you sure you want to deactivate this class?</strong>
-                </p>
-                <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; border-left: 4px solid #ffc107; margin-bottom: 15px;">
-                    <p style="margin: 0; color: #856404; font-weight: 500;">
-                        <i class="fas fa-exclamation-triangle"></i> This action will:
-                    </p>
-                    <ul style="margin: 10px 0 0 20px; color: #856404;">
-                        <li>Remove ALL students from this class</li>
-                        <li>Delete ALL enrollment records permanently</li>
-                        <li>Set the class status to "Deactivated"</li>
-                    </ul>
-                </div>
-                <div style="background-color: #f8d7da; padding: 15px; border-radius: 5px; border-left: 4px solid #dc3545;">
-                    <p style="margin: 0; color: #721c24; font-weight: 600;">
-                        <i class="fas fa-times-circle"></i> This action cannot be undone!
-                    </p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" onclick="closeDeactivateModal()">Cancel</button>
-                <a href="#" id="confirmDeactivateBtn" class="btn btn-danger">
-                    <i class="fas fa-times-circle"></i> Yes, Deactivate Class
-                </a>
             </div>
         </div>
     </div>
@@ -1802,16 +1655,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
             }
         }
 
-        // Deactivate modal functions
-        function openDeactivateModal(subjectId) {
-            document.getElementById('deactivateModal').style.display = 'block';
-            document.getElementById('confirmDeactivateBtn').href = 'a_Classes.php?deactivate=' + subjectId;
-        }
-
-        function closeDeactivateModal() {
-            document.getElementById('deactivateModal').style.display = 'none';
-        }
-
         //Duplicate modal functions
         function closeDuplicateModal() {
             document.getElementById('duplicateModal').style.display = 'none';
@@ -1823,12 +1666,6 @@ while ($row = $teachersQuery->fetch_assoc()) {
             var addClassModal = document.getElementById('addClassModal');
             if (event.target == addClassModal) {
                 closeAddClassModal();
-            }
-
-            // Close deactivate modal
-            var deactivateModal = document.getElementById('deactivateModal');
-            if (event.target == deactivateModal) {
-                closeDeactivateModal();
             }
 
             // Close duplicate modal

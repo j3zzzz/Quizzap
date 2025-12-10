@@ -866,25 +866,41 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
                     <div class="ranking-header">
                         <span>Account Number</span>
                         <span>Teacher Name</span>
-                        <span>Actions</span>
+                        <span>Total Subjects</span> <!-- Changed from "Subjects" -->
                     </div>
                 
                     <div class="ranking-rows">
                         <?php 
+                        // Query to get recently added teachers with count of their subjects
+                        $recentTeachersQuery = $conn->prepare("
+                            SELECT t.account_number, t.fname, t.lname, 
+                                COUNT(s.subject_id) as subject_count
+                            FROM teachers t
+                            LEFT JOIN subjects s ON t.account_number = s.teacher_id
+                            GROUP BY t.account_number, t.fname, t.lname
+                            ORDER BY t.teacher_id DESC 
+                            LIMIT 5
+                        ");
+                        $recentTeachersQuery->execute();
+                        $recentTeachersResult = $recentTeachersQuery->get_result();
+                        
                         if ($recentTeachersResult->num_rows > 0) {
                             while ($teacher = $recentTeachersResult->fetch_assoc()) { ?>
-                            <div class="ranking-row">
-                                <div class="stud-name"><?php echo htmlspecialchars($teacher['account_number']); ?></div>
-                                <div class="subject"><?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname']); ?></div>
-                                <div class="score">
-                                    <a href="a_editTeacher.php?account_number=<?php echo $teacher['account_number']; ?>" style="color: #4d4d4d;"><i class="fa-solid fa-pen-to-square"></i></a>
+                                <div class="ranking-row">
+                                    <div class="stud-name"><?php echo htmlspecialchars($teacher['account_number']); ?></div>
+                                    <div class="subject"><?php echo htmlspecialchars($teacher['fname'] . ' ' . $teacher['lname']); ?></div>
+                                    <div class="score">
+                                        <?php echo (int)$teacher['subject_count']; ?>
+                                    </div>
                                 </div>
-                            </div>
-                        <?php }
+                            <?php }
                         } else { ?>
-                            <div class="ranking-row-noquiz" style="text-align: center; grid-column: 1 / -1;">No teachers found
+                            <div class="ranking-row-noquiz" style="text-align: center; grid-column: 1 / -1;">
+                                No teachers found
                             </div>        
-                        <?php } ?>
+                        <?php } 
+                        $recentTeachersQuery->close();
+                        ?>
                     </div>
                 </div>
             </div>

@@ -843,24 +843,6 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             color: white;
         }
 
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: 500;
-        }
-
-        .status-badge.active {
-            background-color: #d4edda;
-            color: #155724;
-        }
-
-        .status-badge.inactive {
-            background-color: #f8d7da;
-            color: #721c24;
-        }
-
         .search-container {
             display: flex;
             margin-bottom: 1.5rem;
@@ -1345,7 +1327,6 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                         <th>Teacher</th>
                         <th>Account Number</th>
                         <th>School ID</th>
-                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -1377,11 +1358,6 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                                     <?php else: ?>
                                         <span class="badge">N/A</span>
                                     <?php endif; ?>
-                                </td>
-                                <td data-label="Status">
-                                    <span class="status-badge active">
-                                        Active
-                                    </span>
                                 </td>
                                 <td data-label="Actions" class="action-btns">
                                     <div class="action-buttons">

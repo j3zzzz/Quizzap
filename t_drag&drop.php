@@ -46,6 +46,7 @@ $subject_id = $_GET['subject_id'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="other resources\fontawesome-free-6.5.2-web\css\all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>Drag & Drop Quiz Creator</title>
 
     <style>
@@ -1203,24 +1204,40 @@ $subject_id = $_GET['subject_id'];
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
-            .then(text => {
-                try {
-                    const data = JSON.parse(text);    
-                    if (data && data.success) {
-                        alert(data.message);
-                        window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`;
-                    } else {
-                        alert('Error creating quiz: ' + (data.message));
-                    }
-                } catch (error) {    
-                    console.log('Failed to parse server response ' + text);
-                    console.error('Invalid JSON Response: ', text);
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success alert
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        confirmButtonColor: '#f8b500',
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirect after confirmation
+                            window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`;
+                        }
+                    });
+                } else {
+                    // Show error alert
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to create quiz',
+                        confirmButtonColor: '#f44336'
+                    });
                 }
             })
             .catch(error => {
-                console.log('Failed to save quiz: ' + (error.message));
-                console.error('Fetch error: ', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to save quiz: ' + error.message,
+                    confirmButtonColor: '#f44336'
+                });
+                console.error('Fetch error:', error);
             });
         });
     </script>

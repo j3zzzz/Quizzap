@@ -69,6 +69,14 @@ if ($student) {
     $existingAttempt = $stmt->get_result()->fetch_assoc();
     $stmt->close();
 
+    // Check if the existing attempt is completed
+    if ($existingAttempt && isset($existingAttempt['completed']) && $existingAttempt['completed'] == 1) {
+        $showModal = true;
+        $modalTitle = "Quiz Attempt";
+        $modalMessage = "You have already taken this quiz. Only one attempt is allowed.";
+        $modalRedirect = "select_quiz.php?subject_id=" . $subject_id;
+    } 
+
     if ($existingAttempt && !$existingAttempt['completed']) {
         $attempt_id = $existingAttempt['attempt_id'];
         

@@ -46,6 +46,7 @@ $subject_id = $_GET['subject_id'];
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Matching Words Quiz Creator</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         * {
             margin: 0;
@@ -751,11 +752,11 @@ $subject_id = $_GET['subject_id'];
             questionDiv.innerHTML = `
                 <div class="form-group">
                     <div class="question-number">Question ${questionNumber}</div>
+                    <label>Instructions (optional):</label>
+                    <input type="text" name="instructions[]" placeholder="Additional instructions for this question"> <br> <br>
                     <label>Question Text:</label>
                     <input type="text" name="questions[]" required placeholder="Enter the question (e.g., Match the following items)">
                     <br><br>
-                    <label>Instructions (optional):</label>
-                    <input type="text" name="instructions[]" placeholder="Additional instructions for this question"> <br> <br>
                 </div>
                 <div class="matching-pairs-section">
                     <label>Matching Pairs:</label>
@@ -999,24 +1000,40 @@ $subject_id = $_GET['subject_id'];
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
-            .then(text => {
-                try {
-                    const data = JSON.parse(text);    
-                    if (data && data.success) {
-                        alert(data.message);
-                        window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`;
-                    } else {
-                        alert('Error creating quiz: ' + (data.message));
-                    }
-                } catch (error) {    
-                    console.log('Failed to parse server response ' + text);
-                    console.error('Invalid JSON Response: ', text);
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Show success alert
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Success!',
+                        text: data.message,
+                        confirmButtonColor: '#f8b500',
+                        confirmButtonText: 'OK'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            // Redirect after confirmation
+                            window.location.href = `t_quizDash.php?subject_id=${data.subject_id}`;
+                        }
+                    });
+                } else {
+                    // Show error alert
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: data.message || 'Failed to create quiz',
+                        confirmButtonColor: '#f44336'
+                    });
                 }
             })
             .catch(error => {
-                console.log('Failed to save quiz: ' + (error.message));
-                console.error('Fetch error: ', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to save quiz: ' + error.message,
+                    confirmButtonColor: '#f44336'
+                });
+                console.error('Fetch error:', error);
             });
         });
     </script>

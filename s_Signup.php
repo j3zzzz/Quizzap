@@ -216,6 +216,86 @@ $conn->close();
             margin-bottom: 10px;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: modalAppear 0.3s ease-out;
+        }
+
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-icon {
+            font-size: 4rem;
+            color: #4CAF50;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            color: #333;
+            font-family: Fredoka;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-message {
+            color: #666;
+            font-family: Fredoka;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
+        }
+
+        .modal-button {
+            background-color: #F8B500;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-family: Fredoka;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 4px 0 #BC8900;
+        }
+
+        .modal-button:hover {
+            background-color: #e6a300;
+            transform: translateY(-2px);
+        }
+
+        .modal-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 #BC8900;
+        }
+
         /* Media queries for responsiveness */
         @media (min-width: 768px) {
             .container {
@@ -265,7 +345,7 @@ $conn->close();
             }
             ?>
                     <form method="POST" action="s_Signup_process.php" onsubmit="return validateForm()">
-                    <input type="text" name="account_number" value="<?php echo $student_account_number; ?>">
+                    <input type="text" name="account_number" value="<?php echo $student_account_number; ?>" readonly>
                     
                     <div class="name-inputs">
                         <input type="text" id="fname" name="fname" placeholder="First name" required>
@@ -317,6 +397,16 @@ $conn->close();
         </div>
     </div>
 
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-icon">✓</div>
+            <h2 class="modal-title">Registration Successful!</h2>
+            <p class="modal-message">Your account has been created successfully. You can now log in to access all quizzes and track your progress.</p>
+            <button class="modal-button" onclick="redirectToLogin()">Go to Login</button>
+        </div>
+    </div>
+
     <script>
         function toggleStrandInput() {
             var gradeLevel = document.getElementById("glevel").value;
@@ -343,6 +433,29 @@ $conn->close();
             }
 
             return true;
+        }
+
+        // Check if registration was successful and show modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === '1') {
+                showSuccessModal();
+            }
+        });
+
+        function showSuccessModal() {
+            const modal = document.getElementById('successModal');
+            modal.style.display = 'flex';
+            
+            // Clear the success parameter from URL
+            if (window.history.replaceState) {
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            }
+        }
+
+        function redirectToLogin() {
+            window.location.href = "login.php";
         }
     </script>
 </body>

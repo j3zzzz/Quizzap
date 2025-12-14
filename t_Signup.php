@@ -209,6 +209,94 @@ $conn->close();
             margin-bottom: 10px;
         }
 
+        /* Modal Styles */
+        .modal {
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            display: none;
+        }
+
+        .modal-content {
+            background-color: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .modal-header {
+            background-color: #F8B500;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-family: Fredoka;
+        }
+
+        .modal-body {
+            padding: 30px;
+            text-align: center;
+            font-family: Fredoka;
+        }
+
+        .modal-body p {
+            margin-bottom: 15px;
+            color: #555;
+            font-size: 16px;
+        }
+
+        .account-info {
+            background-color: #f9f9f9;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #F8B500;
+        }
+
+        .account-info p {
+            margin: 10px 0;
+            text-align: left;
+            padding-left: 10px;
+        }
+
+        .modal-footer {
+            padding: 20px;
+            text-align: center;
+            background-color: #f8f8f8;
+        }
+
+        .modal-btn {
+            background-color: #F8B500;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: Fredoka;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 0 #BC8900;
+        }
+
+        .modal-btn:hover {
+            background-color: #e6a200;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #BC8900;
+        }
+
         /* Media queries for responsiveness */
         @media (min-width: 768px) {
             .container {
@@ -288,5 +376,53 @@ $conn->close();
             <p>Create your own quizzes and share them with your students.</p>
         </div>
     </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Registration Successful!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Your teacher account has been created successfully.</p>
+                <div class="account-info">
+                    <p><strong>Account Number:</strong> <?php echo isset($_SESSION['account_info']['account_number']) ? $_SESSION['account_info']['account_number'] : ''; ?></p>
+                    <p><strong>School ID:</strong> <?php echo isset($_SESSION['account_info']['school_id']) ? $_SESSION['account_info']['school_id'] : ''; ?></p>
+                </div>
+                <p>Please remember these details for future login.</p>
+            </div>
+            <div class="modal-footer">
+                <button id="goToLogin" class="modal-btn">Go to Login</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // Check if registration was successful
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const successParam = urlParams.get('success');
+        
+        if (successParam === '1') {
+            const modal = document.getElementById('successModal');
+            modal.style.display = 'flex';
+            
+            // Clear the URL parameter without reloading
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
+        // Go to login button handler
+        document.getElementById('goToLogin')?.addEventListener('click', function() {
+            window.location.href = 'login.php';
+        });
+        
+        // Close modal when clicking outside
+        document.getElementById('successModal')?.addEventListener('click', function(e) {
+            if (e.target === this) {
+                window.location.href = 'login.php';
+            }
+        });
+    });
+    </script>
 </body>
 </html>

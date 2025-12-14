@@ -80,12 +80,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         if ($stmt->execute()) {
-            ?>
-            <script> 
-            alert("Registration successful.");
-            window.location.href = "login.php";;
-            </script>
-            <?php
+            // Store success message in session to show modal
+            $_SESSION['success_message'] = "Registration successful!";
+            // Store account info to display
+            $_SESSION['account_info'] = [
+                'account_number' => $account_number,
+                'school_id' => $school_id
+            ];
+            header("Location: t_Signup.php?success=1");
+            exit();
         } else {
             $_SESSION['error_message'] = "Error: " . $sql . "<br>" . $conn->error;
             header("Location: t_Signup.php");
@@ -95,4 +98,3 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 }
 $conn->close();
 ?>
- 

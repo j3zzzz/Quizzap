@@ -92,9 +92,14 @@ if (isset($_SESSION['error_message'])) {
 
 // Check if we have a subject code from successful creation
 $new_subject_code = '';
+$new_subject_id = '';
 if (isset($_SESSION['new_subject_code'])) {
     $new_subject_code = $_SESSION['new_subject_code'];
     unset($_SESSION['new_subject_code']);
+}
+if (isset($_SESSION['new_subject_id'])) {
+    $new_subject_id = $_SESSION['new_subject_id'];
+    unset($_SESSION['new_subject_id']);
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['subject_name'])) {
@@ -121,9 +126,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['subject_name'])) {
         $stmt->bind_param("sssssss", $subject_name, $teacher_account_number, $subject_code, $grade_level, $section_display, $school_id, $strand);
         
         if ($stmt->execute()) {
-            // Store success message and subject code in session
+            // Get the newly created subject ID
+            $new_subject_id = $stmt->insert_id;
+            
+            // Store success message and subject info in session
             $_SESSION['success_message'] = "Subject created successfully!";
             $_SESSION['new_subject_code'] = $subject_code;
+            $_SESSION['new_subject_id'] = $new_subject_id;
             // Redirect to avoid form resubmission
             header("Location: t_SubjectsList.php?created=true");
             exit();
@@ -722,6 +731,49 @@ $conn->close();
         .delete-btn:active {
             transform: translateY(1px);
             box-shadow: 0 3px 0 0 #cc0000;
+        }
+
+        /* Enroll button styling */
+        #enrollStudentsBtn {
+            background-color: #17a2b8;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            font-family: Fredoka;
+            box-shadow: 0 4px 0 0 #138496;
+            min-height: 44px;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        #enrollStudentsBtn:hover {
+            background-color: #138496;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 0 #138496;
+        }
+
+        #enrollStudentsBtn:active {
+            transform: translateY(1px);
+            box-shadow: 0 3px 0 0 #138496;
+        }
+
+        #enrollStudentsBtn:disabled {
+            background-color: #6c757d;
+            box-shadow: 0 4px 0 0 #545b62;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        #enrollStudentsBtn:disabled:hover {
+            background-color: #6c757d;
+            transform: none;
+            box-shadow: 0 4px 0 0 #545b62;
         }
 
         /* Action buttons container */
@@ -1931,9 +1983,17 @@ $conn->close();
                     <i class="fas fa-check-circle" style="font-size: 3rem; color: #28a745; margin-bottom: 20px;"></i>
                     <h3 style="margin-bottom: 15px; color: #333;" id="successTitle"></h3>
                     <p style="margin-bottom: 10px;" id="successMessage"></p>
-                    <p id="subjectCodeInfo" style="display: none; margin-top: 15px; font-size: 14px; color: #666;">
-                        <i class="fas fa-info-circle"></i> Share this code with your students: <strong id="subjectCode"></strong>
-                    </p>
+                    
+                    <!-- New: Enroll Students Button -->
+                    <div id="enrollSection" style="display: none; margin-top: 25px;">
+                        <p style="margin-bottom: 15px; font-size: 14px; color: #666;">
+                            <i class="fas fa-info-circle"></i> You can now enroll your students! <strong id="subjectCode"></strong>
+                        </p>
+                        <button type="button" class="submit-btn" id="enrollStudentsBtn" style="background-color: #17a2b8; box-shadow: 0 4px 0 0 #138496; margin: 0 auto; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-user-plus"></i>
+                            <span>Enroll Students Now</span>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-actions" style="justify-content: center; margin-top: 30px;">
                     <button type="button" class="submit-btn" id="successOkBtn" style="background-color: #28a745; box-shadow: 0 4px 0 0 #1e7e34;">OK</button>
@@ -2085,7 +2145,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Check for success/error messages on page load
     <?php if (!empty($success_message)): ?>
-        showSuccessModal("<?php echo addslashes($success_message); ?>", "<?php echo addslashes($new_subject_code); ?>");
+        showSuccessModal("<?php echo addslashes($success_message); ?>", 
+                         "<?php echo addslashes($new_subject_code); ?>", 
+                         "<?php echo addslashes($new_subject_id); ?>");
     <?php endif; ?>
 
     <?php if (!empty($error_message)): ?>
@@ -2213,15 +2275,32 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Function to show success modal
-    function showSuccessModal(message, subjectCode = '') {
+    function showSuccessModal(message, subjectCode = '', subjectId = '') {
         document.getElementById('successTitle').textContent = 'Success!';
         document.getElementById('successMessage').textContent = message;
         
         if (subjectCode) {
             document.getElementById('subjectCode').textContent = subjectCode;
-            document.getElementById('subjectCodeInfo').style.display = 'block';
+            const enrollSection = document.getElementById('enrollSection');
+            enrollSection.style.display = 'block';
+            
+            // Set up the enroll button
+            const enrollBtn = document.getElementById('enrollStudentsBtn');
+            if (subjectId) {
+                enrollBtn.onclick = function() {
+                    // Redirect to enroll students page with the subject ID
+                    window.location.href = 't_Students.php?subject_id=' + subjectId;
+                };
+            } else {
+                // If no subject ID, disable the button
+                enrollBtn.disabled = true;
+                enrollBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> <span>Enrollment Unavailable</span>';
+                enrollBtn.style.backgroundColor = '#6c757d';
+                enrollBtn.style.boxShadow = '0 4px 0 0 #545b62';
+                enrollBtn.style.cursor = 'not-allowed';
+            }
         } else {
-            document.getElementById('subjectCodeInfo').style.display = 'none';
+            document.getElementById('enrollSection').style.display = 'none';
         }
         
         successModal.style.display = "block";

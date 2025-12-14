@@ -79,12 +79,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         // Execute the statement
         if ($stmt->execute()) {
-            ?>
-                <script>
-                alert("You are successfully registered!");
-                window.location.href = "login.php";
-                </script>
-            <?php
+            // Set success message in session
+            $_SESSION['success_message'] = "You are successfully registered!";
+            header("Location: s_Signup.php?success=1");
+            exit();
         } else {
             // Provide more detailed error handling
             if ($stmt->errno == 1062) { // Duplicate entry error

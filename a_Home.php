@@ -794,6 +794,10 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
                     <i class="fa-solid fa-list"></i>
                     <span>Classes</span>
                 </a>
+                <a href="a_item-analysis.php" title="Item Analysis">
+                    <i class="fa-solid fa-chart-bar"></i>
+                    <span>Item Analysis</span>
+                </a>
             </div>
         </div>
 

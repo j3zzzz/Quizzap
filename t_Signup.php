@@ -161,8 +161,37 @@ $conn->close();
             width: 100%;
         }
 
-        .password-inputs input {
+        .password-field-container {
+            position: relative;
             width: 49.5%;
+        }
+
+        .password-field-container input {
+            width: 100%;
+            padding-right: 40px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #888;
+            font-size: 16px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password svg {
+            width: 18px;
+            height: 18px;
+            fill: #666;
         }
 
         .signup-form .btn {
@@ -211,6 +240,7 @@ $conn->close();
 
         /* Modal Styles */
         .modal {
+            display: none;
             position: fixed;
             z-index: 1000;
             left: 0;
@@ -218,83 +248,81 @@ $conn->close();
             width: 100%;
             height: 100%;
             background-color: rgba(0, 0, 0, 0.5);
-            display: flex;
             justify-content: center;
             align-items: center;
-            display: none;
         }
 
         .modal-content {
             background-color: white;
-            border-radius: 10px;
+            padding: 2rem;
+            border-radius: 15px;
+            text-align: center;
+            max-width: 400px;
             width: 90%;
-            max-width: 500px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            animation: modalAppear 0.3s ease-out;
         }
 
-        .modal-header {
-            background-color: #F8B500;
-            color: white;
-            padding: 20px;
-            text-align: center;
+        @keyframes modalAppear {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        .modal-header h2 {
-            margin: 0;
+        .modal-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .error-modal .modal-icon {
+            color: #f44336;
+        }
+
+        .success-modal .modal-icon {
+            color: #4CAF50;
+        }
+
+        .modal-title {
+            color: #333;
             font-family: Fredoka;
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
         }
 
-        .modal-body {
-            padding: 30px;
-            text-align: center;
+        .modal-message {
+            color: #666;
             font-family: Fredoka;
+            font-size: 1.1rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.5;
         }
 
-        .modal-body p {
-            margin-bottom: 15px;
-            color: #555;
-            font-size: 16px;
-        }
-
-        .account-info {
-            background-color: #f9f9f9;
-            padding: 15px;
-            border-radius: 5px;
-            margin: 20px 0;
-            border-left: 4px solid #F8B500;
-        }
-
-        .account-info p {
-            margin: 10px 0;
-            text-align: left;
-            padding-left: 10px;
-        }
-
-        .modal-footer {
-            padding: 20px;
-            text-align: center;
-            background-color: #f8f8f8;
-        }
-
-        .modal-btn {
+        .modal-button {
             background-color: #F8B500;
             color: white;
             border: none;
             padding: 12px 30px;
-            border-radius: 5px;
-            font-size: 16px;
-            cursor: pointer;
+            border-radius: 10px;
             font-family: Fredoka;
-            font-weight: bold;
-            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.3s;
             box-shadow: 0 4px 0 #BC8900;
         }
 
-        .modal-btn:hover {
-            background-color: #e6a200;
+        .modal-button:hover {
+            background-color: #e6a300;
             transform: translateY(-2px);
-            box-shadow: 0 6px 0 #BC8900;
+        }
+
+        .modal-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 0 #BC8900;
         }
 
         /* Media queries for responsiveness */
@@ -346,7 +374,7 @@ $conn->close();
                 unset($_SESSION['error_message']);
             }
             ?>
-                <form method="POST" action="t_Signup_process.php">
+                <form method="POST" action="t_Signup_process.php" onsubmit="return validateForm()">
                     <input type="text" name="account_number" value="<?php echo $teacher_account_number; ?>" readonly>
 
                     <input type="text" name="school_id" value="<?php echo $school_id; ?>" readonly>
@@ -358,8 +386,22 @@ $conn->close();
                     </div>
                     
                     <div class="password-inputs">
-                        <input type="password" id="password" name="password" placeholder="Password" required>
-                        <input type="password" id="password2" name="password2" placeholder="Confirm password" required>
+                        <div class="password-field-container">
+                            <input type="password" id="password" name="password" placeholder="Password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="password-field-container">
+                            <input type="password" id="password2" name="password2" placeholder="Confirm password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('password2')">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     
                     <center>
@@ -378,51 +420,106 @@ $conn->close();
     </div>
 
     <!-- Success Modal -->
-    <div id="successModal" class="modal">
+    <div id="successModal" class="modal success-modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <h2>Registration Successful!</h2>
-            </div>
-            <div class="modal-body">
-                <p>Your teacher account has been created successfully.</p>
-                <div class="account-info">
-                    <p><strong>Account Number:</strong> <?php echo isset($_SESSION['account_info']['account_number']) ? $_SESSION['account_info']['account_number'] : ''; ?></p>
-                    <p><strong>School ID:</strong> <?php echo isset($_SESSION['account_info']['school_id']) ? $_SESSION['account_info']['school_id'] : ''; ?></p>
-                </div>
-                <p>Please remember these details for future login.</p>
-            </div>
-            <div class="modal-footer">
-                <button id="goToLogin" class="modal-btn">Go to Login</button>
-            </div>
+            <div class="modal-icon">✓</div>
+            <h2 class="modal-title">Registration Successful!</h2>
+            <p class="modal-message">Your teacher account has been created successfully. You can now log in to create and manage quizzes.</p>
+            <button class="modal-button" onclick="redirectToLogin()">Go to Login</button>
+        </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal error-modal">
+        <div class="modal-content">
+            <div class="modal-icon">✗</div>
+            <h2 class="modal-title">Validation Error</h2>
+            <p id="errorModalMessage" class="modal-message"></p>
+            <button class="modal-button" onclick="closeErrorModal()">OK</button>
         </div>
     </div>
 
     <script>
-    // Check if registration was successful
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const successParam = urlParams.get('success');
-        
-        if (successParam === '1') {
+        function togglePassword(fieldId) {
+            const passwordInput = document.getElementById(fieldId);
+            const toggleButton = passwordInput.nextElementSibling.querySelector('svg');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                // Change to eye-slash icon
+                toggleButton.innerHTML = '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>';
+            } else {
+                passwordInput.type = 'password';
+                // Change back to eye icon
+                toggleButton.innerHTML = '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>';
+            }
+        }
+
+        function showErrorModal(message) {
+            const modal = document.getElementById('errorModal');
+            const messageElement = document.getElementById('errorModalMessage');
+            messageElement.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            modal.style.display = 'none';
+        }
+
+        function validateForm() {
+            // Password validation
+            var password = document.getElementById("password").value;
+            var password2 = document.getElementById("password2").value;
+
+            if (password !== password2) {
+                showErrorModal("Passwords do not match!");
+                return false;
+            }
+
+            if (password.length < 8) {
+                showErrorModal("Password must be at least 8 characters long!");
+                return false;
+            }
+
+            return true;
+        }
+
+        // Check if registration was successful and show modal
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('success') === '1') {
+                showSuccessModal();
+            }
+        });
+
+        function showSuccessModal() {
             const modal = document.getElementById('successModal');
             modal.style.display = 'flex';
             
-            // Clear the URL parameter without reloading
-            window.history.replaceState({}, document.title, window.location.pathname);
-        }
-        
-        // Go to login button handler
-        document.getElementById('goToLogin')?.addEventListener('click', function() {
-            window.location.href = 'login.php';
-        });
-        
-        // Close modal when clicking outside
-        document.getElementById('successModal')?.addEventListener('click', function(e) {
-            if (e.target === this) {
-                window.location.href = 'login.php';
+            // Clear the success parameter from URL
+            if (window.history.replaceState) {
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
             }
-        });
-    });
+        }
+
+        function redirectToLogin() {
+            window.location.href = "login.php";
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const errorModal = document.getElementById('errorModal');
+            const successModal = document.getElementById('successModal');
+            
+            if (event.target === errorModal) {
+                closeErrorModal();
+            }
+            if (event.target === successModal) {
+                successModal.style.display = 'none';
+            }
+        }
     </script>
 </body>
 </html>

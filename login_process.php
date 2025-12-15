@@ -1,7 +1,6 @@
 <?php
 session_start();
 include 'db_connect.php';
-echo "Database connected successfully!";
 
 $account_number = $_POST['account_number'];
 $password = $_POST['password'];
@@ -9,21 +8,21 @@ $password = $_POST['password'];
 // Determine account type based on the format of the account number
 if (strpos($account_number, 'T') === 0) {
     $account_type = 'teacher';
-    $sql = "SELECT * FROM teachers WHERE account_number = '$account_number'";
+    $sql = "SELECT * FROM teachers WHERE account_number = ?";
 } elseif (strpos($account_number, 'S') === 0) {
     $account_type = 'student';
-    $sql = "SELECT * FROM students WHERE account_number = '$account_number'";
+    $sql = "SELECT * FROM students WHERE account_number = ?";
 } else {
-    ?>
-    <script type="text/javascript">
-    alert("Invalid account number format.");
-    window.location.href="login.php";
-    </script>
-    <?php
+    // Redirect with error message
+    header("Location: login.php?error=" . urlencode("Invalid account number format. Account numbers should start with 'T' for teachers or 'S' for students."));
     exit();
 }
 
-$result = $conn->query($sql);
+// Use prepared statement to prevent SQL injection
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $account_number);
+$stmt->execute();
+$result = $stmt->get_result();
 
 if ($result->num_rows > 0) {
     $user = $result->fetch_assoc();
@@ -35,21 +34,16 @@ if ($result->num_rows > 0) {
         header("Location: dashboard_process.php");
         exit;
     } else {
-        ?>
-        <script type="text/javascript">
-        alert("Invalid Credentials");
-        window.location.href="login.php";
-        </script>
-        <?php
+        // Redirect with error message
+        header("Location: login.php?error=" . urlencode("Invalid password. Please try again."));
+        exit();
     }
 } else {
-        ?>
-        <script type="text/javascript">
-        alert("No user found with that account number.");
-        window.location.href="login.php";
-        </script>
-        <?php
+    // Redirect with error message
+    header("Location: login.php?error=" . urlencode("No user found with that account number."));
+    exit();
 }
 
+$stmt->close();
 $conn->close();
 ?>

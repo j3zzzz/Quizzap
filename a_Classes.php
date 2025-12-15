@@ -159,28 +159,102 @@ if (isset($_POST['update'])) {
     $stmt->close();
 }
 
+// AJAX endpoint for search suggestions
+if (isset($_GET['ajax']) && $_GET['ajax'] == 'search_suggestions' && isset($_GET['term'])) {
+    $term = $_GET['term'];
+    $stmt = $conn->prepare("SELECT s.subject_id, s.subject_name, s.subject_code, s.grade_level, s.strand, s.section, t.fname, t.lname FROM subjects s LEFT JOIN teachers t ON s.teacher_id = t.account_number WHERE s.subject_name LIKE ? OR s.subject_code LIKE ? OR s.grade_level LIKE ? OR s.strand LIKE ? OR s.section LIKE ? OR t.fname LIKE ? OR t.lname LIKE ? LIMIT 10");
+    $searchTerm = "%$term%";
+    $stmt->bind_param("sssssss", $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm, $searchTerm);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $suggestions = [];
+    while ($row = $result->fetch_assoc()) {
+        $teacher_name = $row['fname'] && $row['lname'] ? $row['fname'] . ' ' . $row['lname'] : 'No Teacher';
+        $suggestions[] = [
+            'value' => $row['subject_id'],
+            'label' => $row['subject_name'] . ' (' . $row['subject_code'] . ') - Grade ' . $row['grade_level'] . ' ' . ($row['strand'] ? $row['strand'] . ' ' : '') . $row['section'] . ' - ' . $teacher_name
+        ];
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode($suggestions);
+    $stmt->close();
+    $conn->close();
+    exit();
+}
+
 // Search functionality
 $search = '';
 $whereClause = '';
-if (isset($_GET['search'])) {
+$searchParams = [];
+if (isset($_GET['search']) && !empty($_GET['search'])) {
     $search = $_GET['search'];
-    $whereClause = "WHERE (s.subject_name LIKE '%$search%' OR s.section LIKE '%$search%' 
-                   OR s.subject_code LIKE '%$search%'
-                   OR CONCAT(t.fname, ' ', t.lname) LIKE '%$search%' OR s.grade_level LIKE '%$search%')";
+    $searchTerms = explode(' ', $search);
+    
+    $conditions = [];
+    foreach ($searchTerms as $term) {
+        if (!empty($term)) {
+            $conditions[] = "(s.subject_name LIKE ? OR s.subject_code LIKE ? OR s.grade_level LIKE ? OR s.strand LIKE ? OR s.section LIKE ? OR t.fname LIKE ? OR t.lname LIKE ? OR t.account_number LIKE ?)";
+            $searchParam = "%$term%";
+            // Add 8 times for each field in the condition
+            for ($i = 0; $i < 8; $i++) {
+                $searchParams[] = $searchParam;
+            }
+        }
+    }
+    
+    if (!empty($conditions)) {
+        $whereClause = "WHERE " . implode(' AND ', $conditions);
+    }
 }
 
-// Fetch all classes with teacher information
-$classesQuery = $conn->prepare("
-    SELECT s.*, t.fname as teacher_fname, t.lname as teacher_lname, t.account_number as teacher_account 
-    FROM subjects s 
-    LEFT JOIN teachers t ON s.teacher_id = t.account_number 
-    $whereClause 
-    ORDER BY s.subject_id DESC
-");
-$classesQuery->execute();
-$classesResult = $classesQuery->get_result();
+// Pagination setup
+$records_per_page = 25;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
 
-// Count total classes
+// Calculate total pages
+$countQuery = "SELECT COUNT(*) as total FROM subjects s LEFT JOIN teachers t ON s.teacher_id = t.account_number";
+if (!empty($whereClause)) {
+    $countQuery .= " $whereClause";
+}
+
+$countStmt = $conn->prepare($countQuery);
+if (!empty($searchParams)) {
+    $types = str_repeat('s', count($searchParams));
+    $countStmt->bind_param($types, ...$searchParams);
+}
+$countStmt->execute();
+$countResult = $countStmt->get_result();
+$total_records = $countResult->fetch_assoc()['total'];
+$total_pages = ceil($total_records / $records_per_page);
+
+// Adjust page if out of bounds
+if ($page > $total_pages && $total_pages > 0) {
+    $page = $total_pages;
+}
+
+$offset = ($page - 1) * $records_per_page;
+
+// Fetch classes with pagination
+if (!empty($whereClause)) {
+    $classesQuery = "SELECT s.*, t.fname as teacher_fname, t.lname as teacher_lname, t.account_number as teacher_account FROM subjects s LEFT JOIN teachers t ON s.teacher_id = t.account_number $whereClause ORDER BY s.subject_id DESC LIMIT ? OFFSET ?";
+    $stmt = $conn->prepare($classesQuery);
+    $searchParams[] = $records_per_page;
+    $searchParams[] = $offset;
+    $types = str_repeat('s', count($searchParams) - 2) . 'ii';
+    $stmt->bind_param($types, ...$searchParams);
+} else {
+    $classesQuery = "SELECT s.*, t.fname as teacher_fname, t.lname as teacher_lname, t.account_number as teacher_account FROM subjects s LEFT JOIN teachers t ON s.teacher_id = t.account_number ORDER BY s.subject_id DESC LIMIT ? OFFSET ?";
+    $stmt = $conn->prepare($classesQuery);
+    $stmt->bind_param("ii", $records_per_page, $offset);
+}
+
+$stmt->execute();
+$classesResult = $stmt->get_result();
+
+// Count total classes (for display)
 $classCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM subjects");
 $classCountQuery->execute();
 $classCountResult = $classCountQuery->get_result();
@@ -190,17 +264,12 @@ $classCount = $classCountResult->fetch_assoc()['count'];
 $classToView = null;
 if (isset($_GET['view']) || isset($_GET['edit'])) {
     $subject_id = $_GET['view'] ?? $_GET['edit'];
-    $stmt = $conn->prepare("
-        SELECT s.*, t.fname as teacher_fname, t.lname as teacher_lname 
-        FROM subjects s 
-        LEFT JOIN teachers t ON s.teacher_id = t.account_number 
-        WHERE s.subject_id = ?
-    ");
-    $stmt->bind_param("i", $subject_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt2 = $conn->prepare("SELECT s.*, t.fname as teacher_fname, t.lname as teacher_lname FROM subjects s LEFT JOIN teachers t ON s.teacher_id = t.account_number WHERE s.subject_id = ?");
+    $stmt2->bind_param("i", $subject_id);
+    $stmt2->execute();
+    $result = $stmt2->get_result();
     $classToView = $result->fetch_assoc();
-    $stmt->close();
+    $stmt2->close();
 }
 
 // Fetch all teachers for dropdown
@@ -218,6 +287,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="other resources/fontawesome-free-6.5.2-web/css/all.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <title>Manage Classes</title>
      <style>
         * {
@@ -295,7 +365,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
         }
 
         .sidebar .menu {
-            margin-top: 40%;
+            margin-top: 10%;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -409,6 +479,49 @@ while ($row = $teachersQuery->fetch_assoc()) {
         .sidebar.collapsed hr {
             margin: 0.5rem auto;
             width: 50%;
+        }
+
+        /* Logout button in sidebar */
+        .logout-container {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.8rem 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            letter-spacing: 1px;
+            width: 100%;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .logout-btn i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .sidebar.collapsed .logout-btn span {
+            display: none;
+        }
+
+        .sidebar.collapsed .logout-btn i {
+            margin-right: 0;
+            font-size: 1.5rem;
         }
 
         /* Dashboard content area */
@@ -1246,6 +1359,118 @@ while ($row = $teachersQuery->fetch_assoc()) {
             background-color: #f8d7da;
             color: #721c24;
         }
+
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .pagination-info {
+            font-family: 'Fredoka';
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .pagination {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .pagination a, .pagination span {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+            font-family: 'Fredoka';
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        
+        .pagination a:hover {
+            background-color: #f8b500;
+            color: white;
+            border-color: #f8b500;
+        }
+        
+        .pagination .active {
+            background-color: #f8b500;
+            color: white;
+            border-color: #f8b500;
+            cursor: default;
+        }
+        
+        .pagination .disabled {
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        /* Search suggestions autocomplete */
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .ui-menu-item {
+            padding: 10px;
+            font-family: 'Fredoka';
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .ui-menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .ui-menu-item:hover {
+            background-color: #f8b500;
+            color: white;
+        }
+        
+        .ui-state-active, .ui-widget-content .ui-state-active {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+        }
+        
+        @media (max-width: 992px) {
+            .pagination-container {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .search-container {
+                flex-direction: column;
+            }
+            
+            .search-container button {
+                padding: 0.75rem;
+                width: 100%;
+            }
+            
+            .pagination a, .pagination span {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1282,6 +1507,13 @@ while ($row = $teachersQuery->fetch_assoc()) {
                 <a href="a_item-analysis.php" title="Item Analysis">
                     <i class="fa-solid fa-chart-bar"></i>
                     <span>Item Analysis</span>
+                </a>
+            </div>
+
+            <div class="logout-container">
+                <a href="admin_logout.php" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
                 </a>
             </div>
         </div>
@@ -1360,11 +1592,12 @@ while ($row = $teachersQuery->fetch_assoc()) {
 
             <!-- Search Container -->
             <div class="search-container">
-                <form method="GET" action="a_Classes.php" style="display: flex; width: 100%; gap: 10px;">
-                    <input type="text" name="search" placeholder="Search classes by name, subject code, or school ID..." value="<?php echo htmlspecialchars($search); ?>">
+                <form method="GET" action="a_Classes.php" id="searchForm" style="display: flex; width: 100%; gap: 10px;">
+                    <input type="text" id="searchInput" name="search" placeholder="Search classes by name, subject code, teacher..." 
+                           value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
                     <button type="submit"><i class="fas fa-search"></i> Search</button>
                     <?php if (!empty($search)): ?>
-                        <a href="a_Teachers.php" class="add-new-btn" style="background-color: #dc3545;"><i class="fas fa-times"></i> Clear</a>
+                        <a href="a_Classes.php" class="add-new-btn" style="background-color: #dc3545;"><i class="fas fa-times"></i> Clear</a>
                     <?php endif; ?>
                 </form>
             </div>
@@ -1502,7 +1735,7 @@ while ($row = $teachersQuery->fetch_assoc()) {
                     <tbody>
                         <?php if ($classesResult->num_rows > 0): ?>
                             <?php 
-                            $counter = 1;
+                            $counter = ($page - 1) * $records_per_page + 1;
                             while ($class = $classesResult->fetch_assoc()): 
                             ?>
                                 <tr>
@@ -1550,6 +1783,69 @@ while ($row = $teachersQuery->fetch_assoc()) {
                     </tbody>
                 </table>
             </div>
+
+            <!-- Pagination -->
+            <?php if ($total_records > 0): ?>
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        Showing <?php echo (($page - 1) * $records_per_page + 1); ?> to 
+                        <?php echo min($page * $records_per_page, $total_records); ?> of 
+                        <?php echo $total_records; ?> classes
+                    </div>
+                    
+                    <div class="pagination">
+                        <!-- First page -->
+                        <?php if ($page > 1): ?>
+                            <a href="?page=1<?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" title="First Page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="disabled" title="First Page"><i class="fas fa-angle-double-left"></i></span>
+                        <?php endif; ?>
+                        
+                        <!-- Previous page -->
+                        <?php if ($page > 1): ?>
+                            <a href="?page=<?php echo $page - 1; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" title="Previous Page">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="disabled" title="Previous Page"><i class="fas fa-angle-left"></i></span>
+                        <?php endif; ?>
+                        
+                        <!-- Page numbers -->
+                        <?php 
+                        $start_page = max(1, $page - 2);
+                        $end_page = min($total_pages, $page + 2);
+                        
+                        for ($i = $start_page; $i <= $end_page; $i++):
+                        ?>
+                            <a href="?page=<?php echo $i; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" 
+                               class="<?php echo $i == $page ? 'active' : ''; ?>"
+                               title="Page <?php echo $i; ?>">
+                                <?php echo $i; ?>
+                            </a>
+                        <?php endfor; ?>
+                        
+                        <!-- Next page -->
+                        <?php if ($page < $total_pages): ?>
+                            <a href="?page=<?php echo $page + 1; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" title="Next Page">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="disabled" title="Next Page"><i class="fas fa-angle-right"></i></span>
+                        <?php endif; ?>
+                        
+                        <!-- Last page -->
+                        <?php if ($page < $total_pages): ?>
+                            <a href="?page=<?php echo $total_pages; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="disabled" title="Last Page"><i class="fas fa-angle-double-right"></i></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
@@ -1590,6 +1886,10 @@ while ($row = $teachersQuery->fetch_assoc()) {
         </div>
     </div>
 
+    <!-- Add jQuery and jQuery UI -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.querySelector('.sidebar');
@@ -1610,6 +1910,69 @@ while ($row = $teachersQuery->fetch_assoc()) {
                     localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
                 });
             }
+        });
+
+        // JavaScript for search suggestions
+        $(function() {
+            $("#searchInput").autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: "a_Classes.php?ajax=search_suggestions",
+                        dataType: "json",
+                        data: {
+                            term: request.term
+                        },
+                        success: function(data) {
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    // When a suggestion is selected, update the search input
+                    $("#searchInput").val(ui.item.label);
+                    
+                    // Submit the form
+                    setTimeout(function() {
+                        $("#searchForm").submit();
+                    }, 100);
+                }
+            }).autocomplete("instance")._renderItem = function(ul, item) {
+                return $("<li>")
+                    .append("<div>" + item.label + "</div>")
+                    .appendTo(ul);
+            };
+            
+            // Debounce function to prevent too many requests
+            var delay = (function() {
+                var timer = 0;
+                return function(callback, ms) {
+                    clearTimeout(timer);
+                    timer = setTimeout(callback, ms);
+                };
+            })();
+            
+            // Real-time search suggestions as you type
+            $("#searchInput").on('input', function() {
+                var searchTerm = $(this).val();
+                if (searchTerm.length >= 2) {
+                    delay(function() {
+                        $.getJSON("a_Classes.php?ajax=search_suggestions", { term: searchTerm }, function(data) {
+                            if (data.length > 0) {
+                                // Trigger autocomplete to show suggestions
+                                $("#searchInput").autocomplete("search", searchTerm);
+                            }
+                        });
+                    }, 300);
+                }
+            });
+            
+            // Clear search suggestions when clicking elsewhere
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.ui-autocomplete').length) {
+                    $(".ui-autocomplete").hide();
+                }
+            });
         });
 
         function openAddClassModal() {
@@ -1693,6 +2056,14 @@ while ($row = $teachersQuery->fetch_assoc()) {
 </body>
 </html>
 <?php
+// Close statements
+if (isset($stmt)) {
+    $stmt->close();
+}
+if (isset($countStmt)) {
+    $countStmt->close();
+}
+$classCountQuery->close();
 $teachersQuery->close();
 $conn->close();
 ?>

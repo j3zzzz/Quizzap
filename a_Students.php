@@ -17,6 +17,28 @@ if ($conn->connect_error) {
     die("Connection failed: " . $conn->connect_error);
 }
 
+// Function to generate new account number for student
+function generateStudentAccountNumber($conn) {
+    $sql = "SELECT MAX(CAST(SUBSTRING(account_number, 2) AS UNSIGNED)) AS max_account FROM students";
+    $result = $conn->query($sql);
+    $row = $result->fetch_assoc();
+    $max_account_number = $row['max_account'];
+    
+    if ($max_account_number) {
+        $student_account_number = 'S' . str_pad($max_account_number + 1, 3, '0', STR_PAD_LEFT);
+    } else {
+        $student_account_number = 'S001';
+    }
+    return $student_account_number;
+}
+
+// Function to generate default password
+function generateDefaultPassword() {
+    // Generate a random 8-character password with letters and numbers
+    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    return substr(str_shuffle($chars), 0, 8);
+}
+
 // Handle Delete Action
 if (isset($_GET['delete'])) {
     $account_number = $_GET['delete'];
@@ -57,14 +79,38 @@ if (isset($_POST['update'])) {
 
 // Handle Add Student Form Submission
 if (isset($_POST['add_student'])) {
-    $account_number = $_POST['account_number'];
+    // Generate account number if not provided
+    if (empty($_POST['account_number'])) {
+        $account_number = generateStudentAccountNumber($conn);
+    } else {
+        $account_number = $_POST['account_number'];
+    }
+    
+    // Use provided password or generate default
+    if (empty($_POST['password'])) {
+        $password = generateDefaultPassword();
+    } else {
+        $password = $_POST['password'];
+    }
+    
     $fname = $_POST['fname'];
     $lname = $_POST['lname'];
     $glevel = $_POST['glevel'];
     $strand = $_POST['strand'];
     $section = $_POST['section'];
     $school_id = $_POST['school_id'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash the password
+    
+    // Hash the password
+    $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+    
+    // Store the plain password in session to display in modal
+    $_SESSION['new_student_credentials'] = [
+        'account_number' => $account_number,
+        'password' => $password,
+        'fname' => $fname,
+        'lname' => $lname,
+        'full_name' => $fname . ' ' . $lname
+    ];
     
     // Check if account number already exists
     $check_sql = "SELECT * FROM students WHERE account_number = ?";
@@ -78,12 +124,12 @@ if (isset($_POST['add_student'])) {
     } else {
         $sql = "INSERT INTO students (account_number, fname, lname, glevel, strand, section, password, profile_pic, school_id) VALUES (?, ?, ?, ?, ?, ?, ?, 'default_profile.png', ?)";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ssssssss", $account_number, $fname, $lname, $glevel, $strand, $section, $password, $school_id);
+        $stmt->bind_param("ssssssss", $account_number, $fname, $lname, $glevel, $strand, $section, $hashed_password, $school_id);
         
         if ($stmt->execute()) {
             $success_message = "Student added successfully!";
-            // Redirect to avoid form resubmission
-            header("Location: a_Students.php");
+            // Redirect to show success modal
+            header("Location: a_Students.php?success=1");
             exit();
         } else {
             $error_message = "Error adding student: " . $stmt->error;
@@ -111,20 +157,101 @@ if ($result->num_rows > 0) {
 
 $stmt->close();
 
+// AJAX endpoint for search suggestions
+if (isset($_GET['ajax']) && $_GET['ajax'] == 'search_suggestions' && isset($_GET['term'])) {
+    $term = $_GET['term'];
+    $stmt = $conn->prepare("SELECT account_number, fname, lname, glevel, strand FROM students WHERE fname LIKE ? OR lname LIKE ? OR account_number LIKE ? LIMIT 10");
+    $searchTerm = "%$term%";
+    $stmt->bind_param("sss", $searchTerm, $searchTerm, $searchTerm);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    
+    $suggestions = [];
+    while ($row = $result->fetch_assoc()) {
+        $suggestions[] = [
+            'value' => $row['account_number'],
+            'label' => $row['fname'] . ' ' . $row['lname'] . ' (' . $row['account_number'] . ') - Grade ' . $row['glevel'] . ' ' . $row['strand']
+        ];
+    }
+    
+    header('Content-Type: application/json');
+    echo json_encode($suggestions);
+    $stmt->close();
+    $conn->close();
+    exit();
+}
+
 // Search functionality
 $search = '';
 $whereClause = '';
-if (isset($_GET['search'])) {
+$searchParams = [];
+if (isset($_GET['search']) && !empty($_GET['search'])) {
     $search = $_GET['search'];
-    $whereClause = "WHERE fname LIKE '%$search%' OR lname LIKE '%$search%' OR account_number LIKE '%$search%' OR glevel LIKE '%$search%' OR strand LIKE '%$search%' OR section LIKE '%$search%'";
+    $searchTerms = explode(' ', $search);
+    
+    $conditions = [];
+    foreach ($searchTerms as $term) {
+        if (!empty($term)) {
+            $conditions[] = "(fname LIKE ? OR lname LIKE ? OR account_number LIKE ? OR glevel LIKE ? OR strand LIKE ? OR section LIKE ? OR school_id LIKE ?)";
+            $searchParam = "%$term%";
+            // Add 7 times for each field in the condition
+            for ($i = 0; $i < 7; $i++) {
+                $searchParams[] = $searchParam;
+            }
+        }
+    }
+    
+    if (!empty($conditions)) {
+        $whereClause = "WHERE " . implode(' AND ', $conditions);
+    }
 }
 
-// Fetch all students
-$studentsQuery = $conn->prepare("SELECT * FROM students $whereClause ORDER BY student_id DESC");
-$studentsQuery->execute();
-$studentsResult = $studentsQuery->get_result();
+// Pagination setup
+$records_per_page = 25;
+$page = isset($_GET['page']) ? (int)$_GET['page'] : 1;
+if ($page < 1) $page = 1;
 
-// Count total students
+// Calculate total pages
+$countQuery = "SELECT COUNT(*) as total FROM students";
+if (!empty($whereClause)) {
+    $countQuery .= " $whereClause";
+}
+
+$countStmt = $conn->prepare($countQuery);
+if (!empty($searchParams)) {
+    $types = str_repeat('s', count($searchParams));
+    $countStmt->bind_param($types, ...$searchParams);
+}
+$countStmt->execute();
+$countResult = $countStmt->get_result();
+$total_records = $countResult->fetch_assoc()['total'];
+$total_pages = ceil($total_records / $records_per_page);
+
+// Adjust page if out of bounds
+if ($page > $total_pages && $total_pages > 0) {
+    $page = $total_pages;
+}
+
+$offset = ($page - 1) * $records_per_page;
+
+// Fetch students with pagination
+if (!empty($whereClause)) {
+    $studentsQuery = "SELECT * FROM students $whereClause ORDER BY student_id DESC LIMIT ? OFFSET ?";
+    $stmt = $conn->prepare($studentsQuery);
+    $searchParams[] = $records_per_page;
+    $searchParams[] = $offset;
+    $types = str_repeat('s', count($searchParams) - 2) . 'ii';
+    $stmt->bind_param($types, ...$searchParams);
+} else {
+    $studentsQuery = "SELECT * FROM students ORDER BY student_id DESC LIMIT ? OFFSET ?";
+    $stmt = $conn->prepare($studentsQuery);
+    $stmt->bind_param("ii", $records_per_page, $offset);
+}
+
+$stmt->execute();
+$studentsResult = $stmt->get_result();
+
+// Count total students (for display)
 $studentCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM students");
 $studentCountQuery->execute();
 $studentCountResult = $studentCountQuery->get_result();
@@ -134,13 +261,17 @@ $studentCount = $studentCountResult->fetch_assoc()['count'];
 $studentToView = null;
 if (isset($_GET['view']) || isset($_GET['edit'])) {
     $account_number = $_GET['view'] ?? $_GET['edit'];
-    $stmt = $conn->prepare("SELECT * FROM students WHERE account_number = ?");
-    $stmt->bind_param("s", $account_number);
-    $stmt->execute();
-    $result = $stmt->get_result();
+    $stmt2 = $conn->prepare("SELECT * FROM students WHERE account_number = ?");
+    $stmt2->bind_param("s", $account_number);
+    $stmt2->execute();
+    $result = $stmt2->get_result();
     $studentToView = $result->fetch_assoc();
-    $stmt->close();
+    $stmt2->close();
 }
+
+// Generate account number and password for the form
+$generated_account = generateStudentAccountNumber($conn);
+$generated_password = generateDefaultPassword();
 ?>
 
 <!DOCTYPE html>
@@ -150,6 +281,7 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <link rel="stylesheet" href="other resources/fontawesome-free-6.5.2-web/css/all.min.css">
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
     <title>Manage Students</title>
     <style>
         * {
@@ -227,7 +359,7 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
         }
 
         .sidebar .menu {
-            margin-top: 40%;
+            margin-top: 10%;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -341,6 +473,48 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
         .sidebar.collapsed hr {
             margin: 0.5rem auto;
             width: 50%;
+        }
+
+        .logout-container {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.8rem 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            letter-spacing: 1px;
+            width: 100%;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .logout-btn i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .sidebar.collapsed .logout-btn span {
+            display: none;
+        }
+
+        .sidebar.collapsed .logout-btn i {
+            margin-right: 0;
+            font-size: 1.5rem;
         }
 
         /* Dashboard content area */
@@ -962,6 +1136,7 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
         }
 
         .search-container {
+            position: relative;
             display: flex;
             margin-bottom: 1.5rem;
             gap: 10px;
@@ -1004,36 +1179,11 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             font-family: 'Fredoka';
             font-size: 1rem;
             transition: background 0.3s;
+            cursor: pointer;
         }
 
         .add-new-btn:hover {
             background-color: #e5941f;
-        }
-
-        .pagination {
-            display: flex;
-            justify-content: center;
-            margin-top: 1.5rem;
-            gap: 5px;
-        }
-
-        .pagination a {
-            color: #f8b500;
-            padding: 0.5rem 1rem;
-            text-decoration: none;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            transition: all 0.3s;
-        }
-
-        .pagination a.active {
-            background-color: #f8b500;
-            color: white;
-            border: 1px solid #f8b500;
-        }
-
-        .pagination a:hover:not(.active) {
-            background-color: #f5f5f5;
         }
 
         .empty-state {
@@ -1231,6 +1381,106 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             background-color: #c82333;
         }
 
+        /* Pagination styles */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1.5rem;
+            padding: 1rem;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .pagination-info {
+            font-family: 'Fredoka';
+            color: #666;
+            font-size: 0.9rem;
+        }
+        
+        .pagination {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .pagination a, .pagination span {
+            padding: 0.5rem 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-decoration: none;
+            color: #333;
+            font-family: 'Fredoka';
+            font-size: 0.9rem;
+            display: inline-block;
+        }
+        
+        .pagination a:hover {
+            background-color: #f8b500;
+            color: white;
+            border-color: #f8b500;
+        }
+        
+        .pagination .active {
+            background-color: #f8b500;
+            color: white;
+            border-color: #f8b500;
+            cursor: default;
+        }
+        
+        .pagination .disabled {
+            color: #999;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        /* Search suggestions autocomplete */
+        .ui-autocomplete {
+            max-height: 200px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .ui-menu-item {
+            padding: 10px;
+            font-family: 'Fredoka';
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        
+        .ui-menu-item:last-child {
+            border-bottom: none;
+        }
+        
+        .ui-menu-item:hover {
+            background-color: #f8b500;
+            color: white;
+        }
+        
+        .ui-state-active, .ui-widget-content .ui-state-active {
+            background-color: #f8b500;
+            color: white;
+            border: none;
+        }
+
+        /* Generated info fields */
+        .generated-info {
+            background-color: #f8f9fa;
+            border: 1px solid #dee2e6;
+            color: #495057;
+            font-family: monospace;
+            font-weight: bold;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 1200px) {
             .data-table {
                 font-size: 0.85rem;
@@ -1283,6 +1533,11 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 justify-content: flex-end;
                 width: 100%;
             }
+            
+            .pagination-container {
+                flex-direction: column;
+                text-align: center;
+            }
         }
 
         @media (max-width: 576px) {
@@ -1292,6 +1547,12 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
             
             .search-container button {
                 padding: 0.75rem;
+                width: 100%;
+            }
+            
+            .pagination a, .pagination span {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.8rem;
             }
         }
     </style>
@@ -1331,6 +1592,13 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                     <span>Item Analysis</span>
                 </a>
             </div>
+
+            <div class="logout-container">
+                <a href="admin_logout.php" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
         </div>
 
         <!-- Content Area -->
@@ -1349,8 +1617,9 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
 
             <!-- Search Container -->
             <div class="search-container">
-                <form method="GET" action="a_Students.php" style="display: flex; width: 100%; gap: 10px;">
-                    <input type="text" name="search" placeholder="Search students by name, ID, grade, or strand..." value="<?php echo htmlspecialchars($search); ?>">
+                <form method="GET" action="a_Students.php" id="searchForm" style="display: flex; width: 100%; gap: 10px;">
+                    <input type="text" id="searchInput" name="search" placeholder="Search students by name, ID, grade, strand..." 
+                           value="<?php echo htmlspecialchars($search); ?>" autocomplete="off">
                     <button type="submit"><i class="fas fa-search"></i> Search</button>
                     <?php if (!empty($search)): ?>
                         <a href="a_Students.php" class="add-new-btn" style="background-color: #dc3545;"><i class="fas fa-times"></i> Clear</a>
@@ -1365,12 +1634,13 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                         <h2>Add New Student</h2>
                         <button class="close-modal">&times;</button>
                     </div>
-                    <form method="POST" action="a_Students.php">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="account_number">Account Number</label>
-                                <input type="text" id="account_number" name="account_number" placeholder="e.g., S001" required>
-                            </div>
+                    <form method="POST" action="a_Students.php" id="addStudentForm">
+                        <input type="hidden" id="generated_account_number" name="account_number" value="<?php echo $generated_account; ?>">
+                        <input type="hidden" id="generated_password" name="password" value="<?php echo $generated_password; ?>">
+                        
+                        <div class="form-group">
+                            <label>Account Number (Auto-generated)</label>
+                            <input type="text" value="<?php echo $generated_account; ?>" readonly class="generated-info">
                         </div>
                         
                         <div class="form-row">
@@ -1384,17 +1654,16 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                             </div>
                         </div>
                         
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="password">Password</label>
-                                <input type="password" id="password" name="password" required>
-                            </div>
+                        <div class="form-group">
+                            <label>Default Password (Auto-generated)</label>
+                            <input type="text" id="display_password" value="<?php echo $generated_password; ?>" readonly class="generated-info">
+                            <small style="color: #666; font-size: 0.9rem;">This password will be hashed before saving</small>
                         </div>
                         
                         <div class="form-group">
-                        <label for="school_id">School ID</label>
-                        <input type="text" id="school_id" name="school_id" placeholder="e.g., IT21">
-                    </div>
+                            <label for="school_id">School ID</label>
+                            <input type="text" id="school_id" name="school_id" placeholder="e.g., IT21">
+                        </div>
 
                         <div class="form-row">
                             <div class="form-group">
@@ -1431,6 +1700,50 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                             <button type="submit" name="add_student" class="btn btn-primary">Add Student</button>
                         </div>
                     </form>
+                </div>
+            </div>
+
+            <!-- Success Modal for displaying credentials -->
+            <div id="successModal" class="modal-overlay">
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">
+                        <h2><i class="fas fa-check-circle" style="color: #4CAF50; margin-right: 10px;"></i> Student Added Successfully!</h2>
+                        <button class="close-modal">&times;</button>
+                    </div>
+                    <div class="modal-body" style="padding: 20px 0;">
+                        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                            <h3 style="color: #333; margin-bottom: 15px;">Student Credentials</h3>
+                            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 10px;">
+                                <strong>Account Number:</strong>
+                                <span id="success_account_number" style="font-family: monospace; background: #e9ecef; padding: 5px; border-radius: 4px;"></span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 10px;">
+                                <strong>Password:</strong>
+                                <span id="success_password" style="font-family: monospace; background: #e9ecef; padding: 5px; border-radius: 4px;"></span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px;">
+                                <strong>Full Name:</strong>
+                                <span id="success_name"></span>
+                            </div>
+                        </div>
+                        
+                        <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin-bottom: 20px;">
+                            <p style="margin: 0; color: #856404;">
+                                <i class="fas fa-exclamation-circle"></i> 
+                                <strong>Important:</strong> Please save these credentials and share them with the student. 
+                                The password should be changed on first login.
+                            </p>
+                        </div>
+                        
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button id="copyCredentialsBtn" class="btn btn-primary" style="flex: 1;">
+                                <i class="fas fa-copy"></i> Copy Credentials
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-primary close-modal">Continue</button>
+                    </div>
                 </div>
             </div>
 
@@ -1520,7 +1833,25 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 </div>
             <?php endif; ?>
 
-            <!-- Updated table without table-responsive wrapper -->
+            <?php if (isset($_GET['success']) && $_GET['success'] == 1 && isset($_SESSION['new_student_credentials'])): ?>
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        // Show success modal with credentials from session
+                        const credentials = <?php echo json_encode($_SESSION['new_student_credentials']); ?>;
+                        
+                        document.getElementById('success_account_number').textContent = credentials.account_number;
+                        document.getElementById('success_password').textContent = credentials.password;
+                        document.getElementById('success_name').textContent = credentials.full_name;
+                        
+                        document.getElementById('successModal').classList.add('active');
+                        
+                        // Clear the session data
+                        <?php unset($_SESSION['new_student_credentials']); ?>
+                    });
+                </script>
+            <?php endif; ?>
+
+            <!-- Students Table -->
             <table class="data-table">
                 <thead>
                     <tr>
@@ -1536,7 +1867,7 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 <tbody>
                     <?php if ($studentsResult->num_rows > 0): ?>
                         <?php 
-                        $counter = 1;
+                        $counter = ($page - 1) * $records_per_page + 1;
                         while ($student = $studentsResult->fetch_assoc()): 
                         ?>
                             <tr>
@@ -1604,11 +1935,141 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                     <?php endif; ?>
                 </tbody>
             </table>
+
+            <!-- Pagination -->
+            <?php if ($total_records > 0): ?>
+                <div class="pagination-container">
+                    <div class="pagination-info">
+                        Showing <?php echo (($page - 1) * $records_per_page + 1); ?> to 
+                        <?php echo min($page * $records_per_page, $total_records); ?> of 
+                        <?php echo $total_records; ?> students
+                    </div>
+                    
+                    <div class="pagination">
+                        <!-- First page -->
+                        <?php if ($page > 1): ?>
+                            <a href="?page=1<?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" title="First Page">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="disabled" title="First Page"><i class="fas fa-angle-double-left"></i></span>
+                        <?php endif; ?>
+                        
+                        <!-- Previous page -->
+                        <?php if ($page > 1): ?>
+                            <a href="?page=<?php echo $page - 1; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" title="Previous Page">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="disabled" title="Previous Page"><i class="fas fa-angle-left"></i></span>
+                        <?php endif; ?>
+                        
+                        <!-- Page numbers -->
+                        <?php 
+                        $start_page = max(1, $page - 2);
+                        $end_page = min($total_pages, $page + 2);
+                        
+                        for ($i = $start_page; $i <= $end_page; $i++):
+                        ?>
+                            <a href="?page=<?php echo $i; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" 
+                               class="<?php echo $i == $page ? 'active' : ''; ?>"
+                               title="Page <?php echo $i; ?>">
+                                <?php echo $i; ?>
+                            </a>
+                        <?php endfor; ?>
+                        
+                        <!-- Next page -->
+                        <?php if ($page < $total_pages): ?>
+                            <a href="?page=<?php echo $page + 1; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" title="Next Page">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="disabled" title="Next Page"><i class="fas fa-angle-right"></i></span>
+                        <?php endif; ?>
+                        
+                        <!-- Last page -->
+                        <?php if ($page < $total_pages): ?>
+                            <a href="?page=<?php echo $total_pages; ?><?php echo !empty($search) ? '&search=' . urlencode($search) : ''; ?>" title="Last Page">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        <?php else: ?>
+                            <span class="disabled" title="Last Page"><i class="fas fa-angle-double-right"></i></span>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 
+    <!-- Add jQuery and jQuery UI -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+    
     <script>
-        // JavaScript for sidebar and profile dropdown remains the same
+        // JavaScript for search suggestions
+        $(function() {
+            $("#searchInput").autocomplete({
+                source: function(request, response) {
+                    $.ajax({
+                        url: "a_Students.php?ajax=search_suggestions",
+                        dataType: "json",
+                        data: {
+                            term: request.term
+                        },
+                        success: function(data) {
+                            response(data);
+                        }
+                    });
+                },
+                minLength: 2,
+                select: function(event, ui) {
+                    // When a suggestion is selected, update the search input
+                    $("#searchInput").val(ui.item.label);
+                    
+                    // Submit the form
+                    setTimeout(function() {
+                        $("#searchForm").submit();
+                    }, 100);
+                }
+            }).autocomplete("instance")._renderItem = function(ul, item) {
+                return $("<li>")
+                    .append("<div>" + item.label + "</div>")
+                    .appendTo(ul);
+            };
+            
+            // Debounce function to prevent too many requests
+            var delay = (function() {
+                var timer = 0;
+                return function(callback, ms) {
+                    clearTimeout(timer);
+                    timer = setTimeout(callback, ms);
+                };
+            })();
+            
+            // Real-time search suggestions as you type
+            $("#searchInput").on('input', function() {
+                var searchTerm = $(this).val();
+                if (searchTerm.length >= 2) {
+                    delay(function() {
+                        $.getJSON("a_Students.php?ajax=search_suggestions", { term: searchTerm }, function(data) {
+                            if (data.length > 0) {
+                                // Trigger autocomplete to show suggestions
+                                $("#searchInput").autocomplete("search", searchTerm);
+                            }
+                        });
+                    }, 300);
+                }
+            });
+            
+            // Clear search suggestions when clicking elsewhere
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('.ui-autocomplete').length) {
+                    $(".ui-autocomplete").hide();
+                }
+            });
+        });
+        
+        // JavaScript for sidebar and profile dropdown
         document.addEventListener('DOMContentLoaded', function() {
             const sidebar = document.querySelector('.sidebar');
             const content = document.querySelector('.content');
@@ -1628,6 +2089,150 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                     localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
                 });
             }
+            
+            // Modal functionality
+            const addStudentBtn = document.getElementById('addStudentBtn');
+            const addFirstStudentBtn = document.getElementById('addFirstStudentBtn');
+            const addStudentModal = document.getElementById('addStudentModal');
+            const successModal = document.getElementById('successModal');
+            const closeModalBtns = document.querySelectorAll('.close-modal');
+            
+            if (addStudentBtn) {
+                addStudentBtn.addEventListener('click', function() {
+                    // Refresh the generated account number and password
+                    fetch('a_Students.php?ajax=generate_credentials')
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.account_number && data.password) {
+                                document.getElementById('generated_account_number').value = data.account_number;
+                                document.getElementById('display_password').value = data.password;
+                                document.getElementById('generated_password').value = data.password;
+                                document.querySelector('input[value="' + data.account_number + '"]').value = data.account_number;
+                            }
+                            addStudentModal.classList.add('active');
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            addStudentModal.classList.add('active');
+                        });
+                });
+            }
+            
+            if (addFirstStudentBtn) {
+                addFirstStudentBtn.addEventListener('click', function() {
+                    addStudentModal.classList.add('active');
+                });
+            }
+            
+            closeModalBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.modal-overlay').forEach(modal => {
+                        modal.classList.remove('active');
+                    });
+                });
+            });
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target.classList.contains('modal-overlay')) {
+                    event.target.classList.remove('active');
+                }
+            });
+
+            // Copy credentials button
+            const copyCredentialsBtn = document.getElementById('copyCredentialsBtn');
+            if (copyCredentialsBtn) {
+                copyCredentialsBtn.addEventListener('click', function() {
+                    const accountNumber = document.getElementById('success_account_number').textContent;
+                    const password = document.getElementById('success_password').textContent;
+                    const name = document.getElementById('success_name').textContent;
+                    
+                    const credentials = `Student Credentials:\nAccount Number: ${accountNumber}\nPassword: ${password}\nName: ${name}\n\nPlease save these credentials and share with the student.`;
+                    
+                    navigator.clipboard.writeText(credentials)
+                        .then(() => {
+                            // Show copied message
+                            const originalText = this.innerHTML;
+                            this.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                            this.style.backgroundColor = '#28a745';
+                            
+                            setTimeout(() => {
+                                this.innerHTML = originalText;
+                                this.style.backgroundColor = '';
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Failed to copy: ', err);
+                            alert('Failed to copy credentials. Please copy manually.');
+                        });
+                });
+            }
+            
+            // Print credentials button
+            const printCredentialsBtn = document.getElementById('printCredentialsBtn');
+            if (printCredentialsBtn) {
+                printCredentialsBtn.addEventListener('click', function() {
+                    const accountNumber = document.getElementById('success_account_number').textContent;
+                    const password = document.getElementById('success_password').textContent;
+                    const name = document.getElementById('success_name').textContent;
+                    
+                    const printWindow = window.open('', '_blank');
+                    printWindow.document.write(`
+                        <html>
+                        <head>
+                            <title>Student Credentials</title>
+                            <style>
+                                body { font-family: Arial, sans-serif; padding: 20px; }
+                                h1 { color: #333; }
+                                .credentials { 
+                                    background: #f8f9fa; 
+                                    padding: 20px; 
+                                    border-radius: 8px; 
+                                    margin: 20px 0; 
+                                }
+                                .field { margin-bottom: 10px; }
+                                .label { font-weight: bold; }
+                                .note { 
+                                    background: #fff3cd; 
+                                    padding: 15px; 
+                                    border-left: 4px solid #ffc107; 
+                                    margin: 20px 0; 
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>Student Credentials</h1>
+                            <div class="credentials">
+                                <div class="field">
+                                    <span class="label">Account Number:</span>
+                                    <br>
+                                    <span style="font-family: monospace; font-size: 18px;">${accountNumber}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="label">Password:</span>
+                                    <br>
+                                    <span style="font-family: monospace; font-size: 18px;">${password}</span>
+                                </div>
+                                <div class="field">
+                                    <span class="label">Full Name:</span>
+                                    <br>
+                                    <span>${name}</span>
+                                </div>
+                            </div>
+                            <div class="note">
+                                <strong>Important:</strong> Please save these credentials and share them with the student. 
+                                The password should be changed on first login.
+                            </div>
+                            <p style="color: #666; font-size: 12px; text-align: center; margin-top: 30px;">
+                                Generated on: ${new Date().toLocaleString()}
+                            </p>
+                        </body>
+                        </html>
+                    `);
+                    printWindow.document.close();
+                    printWindow.print();
+                });
+            }
         });
 
         function profileDropdown() {
@@ -1645,44 +2250,17 @@ if (isset($_GET['view']) || isset($_GET['edit'])) {
                 }
             }
         }
-        
-        // New JavaScript for modal functionality
-        const addStudentBtn = document.getElementById('addStudentBtn');
-        const addFirstStudentBtn = document.getElementById('addFirstStudentBtn');
-        const addStudentModal = document.getElementById('addStudentModal');
-        const closeModalBtns = document.querySelectorAll('.close-modal');
-        
-        if (addStudentBtn) {
-            addStudentBtn.addEventListener('click', function() {
-                addStudentModal.classList.add('active');
-            });
-        }
-        
-        if (addFirstStudentBtn) {
-            addFirstStudentBtn.addEventListener('click', function() {
-                addStudentModal.classList.add('active');
-            });
-        }
-        
-        closeModalBtns.forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.modal-overlay').forEach(modal => {
-                    modal.classList.remove('active');
-                });
-            });
-        });
-        
-        // Close modal when clicking outside
-        window.addEventListener('click', function(event) {
-            if (event.target.classList.contains('modal-overlay')) {
-                event.target.classList.remove('active');
-            }
-        });
     </script>
 </body>
 </html>
 <?php
-$studentsQuery->close();
+// Close statements
+if (isset($stmt)) {
+    $stmt->close();
+}
+if (isset($countStmt)) {
+    $countStmt->close();
+}
 $studentCountQuery->close();
 $conn->close();
 ?>

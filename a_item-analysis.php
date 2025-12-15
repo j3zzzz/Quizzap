@@ -18,21 +18,6 @@ if ($conn->connect_error) {
 
 $loggedInUser = $_SESSION['account_number'];
 
-// Fetch admin's profile pic
-$sql = "SELECT profile_pic FROM admins WHERE account_number = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $loggedInUser);
-$stmt->execute();
-$result = $stmt->get_result();
-
-if ($result->num_rows > 0) {
-    $row = $result->fetch_assoc();
-    $profile_pic = $row['profile_pic'] ? $row['profile_pic'] : 'default-profile.png';
-} else {
-    $profile_pic = 'default-profile.png';
-}
-$stmt->close();
-
 // Fetch teachers for dropdown
 $teachers_sql = "SELECT t.account_number, t.fname, t.lname, COUNT(s.subject_id) as subject_count 
                  FROM teachers t 
@@ -268,7 +253,7 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
         }
 
         .sidebar .menu {
-            margin-top: 40%;
+            margin-top: 10%;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -366,6 +351,49 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
             width: 50%;
         }
 
+        /* Logout button in sidebar */
+        .logout-container {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.8rem 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            letter-spacing: 1px;
+            width: 100%;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .logout-btn i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .sidebar.collapsed .logout-btn span {
+            display: none;
+        }
+
+        .sidebar.collapsed .logout-btn i {
+            margin-right: 0;
+            font-size: 1.5rem;
+        }
+
         /* Dashboard content area */
         .content {
             flex: 1;
@@ -402,114 +430,6 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
             font-family: 'Fredoka';
             font-weight: 500;
             width: 100%;
-        }
-
-        .content-header .actions {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .content-header .actions a {
-            background-color: #F8B500;
-            color: #ffffff;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            font-size: 1rem;
-            text-decoration: none;
-            cursor: pointer;
-            font-family: 'Fredoka';
-            white-space: nowrap;
-        }
-
-        .content-header .actions a:hover {
-            background-color: #e5941f;
-        }
-
-        .content-header .actions .profile {
-            width: 40px;
-            height: 40px;
-            background-color: #ffffff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #f5a623;
-            font-size: 1.5rem;
-            cursor: pointer;
-            position: relative;
-        }
-
-        /* Dropdown styling - COPIED FROM a_Home.php */
-        .dropdown-content {
-            width: 300px;
-            right: 1%;
-            display: none;
-            position: absolute;
-            background-color: #F8B500;
-            border-radius: 15px;
-            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-            z-index: 1;
-            padding: 10px 0;
-            top: 15%;
-        }
-
-        .dropdown-content:before {
-            content: " ";
-            position: absolute;
-            background: #F8B500;
-            width: 30px;
-            height: 30px;
-            top: 1px;
-            right: 23px;
-            transform: rotate(135deg);
-            z-index: -1 !important;
-        }
-
-        .dropdown-content button {
-            background-color: white;     
-            justify-content: center;
-            align-items: center;
-            align-self: center;
-            font-family: 'Fredoka';
-            color: white;
-            font-size: 18px;
-            font-weight: lighter;
-            border: 2px solid white !important;
-            width: 86% !important;
-            padding: 13px 20px !important;
-            margin: 8px 20px !important;
-            text-decoration: none;
-            display: block;
-            float: none;
-            text-align: center;
-            background-color: transparent;
-            transition: background-color 0.3s, color 0.3s;
-            border-radius: 10px;
-            cursor: pointer;
-            letter-spacing: 1px;
-            box-sizing: border-box;
-            z-index: 1 !important;  
-            cursor: pointer;
-        }
-
-        .dropdown-content a:hover, .dropdown-content button:hover {
-            background-color: white !important;
-            color: #F8B500;
-        }
-
-        .show {
-            display: block;
-        }
-
-        .profile {
-            position: relative;
-            cursor: pointer;
-        }
-
-        .profile-pic {
-            border: 2px solid #f8b500;
         }
 
         /* Filter Section */
@@ -727,17 +647,6 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
                 align-items: flex-start;
             }
             
-            .content-header .actions {
-                width: 100%;
-                justify-content: space-between;
-                margin-top: 1rem;
-            }
-            
-            .dropdown-content {
-                right: 10px;
-                width: 200px;
-            }
-            
             .filter-row {
                 flex-direction: column;
             }
@@ -761,11 +670,6 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
                 font-size: 1.5rem;
             }
             
-            .content-header .actions a {
-                padding: 0.5rem;
-                font-size: 0.9rem;
-            }
-            
             .chart-container {
                 height: 250px;
             }
@@ -773,22 +677,11 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
             .quiz-list {
                 grid-template-columns: 1fr;
             }
-            
-            .dropdown-content {
-                width: 180px;
-                right: 5px;
-            }
-            
-            .dropdown-content button {
-                font-size: 14px;
-                padding: 8px 10px !important;
-            }
         }   
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Sidebar - UPDATED WITH a_Home.php STRUCTURE -->
         <div class="sidebar" id="sidebar">
             <header>
                 <button id="toggleSidebar" class="toggle-btn">
@@ -822,6 +715,14 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
                     <span>Item Analysis</span>
                 </a>
             </div>
+            
+            <!-- Logout Button at the bottom of sidebar -->
+            <div class="logout-container">
+                <a href="admin_logout.php" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
         </div>
 
         <!-- Content Area -->
@@ -830,16 +731,6 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
                 <div>
                     <h1>Item Analysis Dashboard</h1>
                     <p>Track teacher performance and quiz analytics</p>
-                </div>
-                <div class="actions">
-                    <div class="profile" onclick="profileDropdown()">
-                        <img src="profile_pics/<?php echo $profile_pic; ?>" width="40" height="40" style="border-radius: 50%;" class="profile-pic">
-                    </div>
-                </div>
-                
-                <!-- Dropdown Menu -->
-                <div id="dropdown" class="dropdown-content">
-                    <button onclick="window.location.href='admin_logout.php'">Logout</button>
                 </div>
             </div>
 
@@ -1000,24 +891,6 @@ if (isset($_GET['teacher_id']) && !empty($_GET['teacher_id'])) {
                 });
             }
         });
-
-        // Profile dropdown script - COPIED FROM a_Home.php
-        function profileDropdown() {
-            document.getElementById("dropdown").classList.toggle("show");
-        }
-
-        // Close the dropdown if clicked outside
-        window.onclick = function(event) {
-            if (!event.target.matches('.profile') && !event.target.matches('.profile-pic') && !event.target.matches('.dropdwn-btn')) {
-                var dropdowns = document.getElementsByClassName("dropdown-content");
-                for (var i = 0; i < dropdowns.length; i++) {
-                    var openDropdown = dropdowns[i];
-                    if (openDropdown.classList.contains('show')) {
-                        openDropdown.classList.remove('show');
-                    }
-                }
-            }
-        }
 
         // Google Charts
         google.charts.load('current', {'packages':['corechart']});

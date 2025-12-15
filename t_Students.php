@@ -511,6 +511,233 @@ if (isset($_SESSION['enroll_message'])) {
             width: 100%;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1100;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: #fff;
+            padding: clamp(1.5rem, 3vw, 2rem);
+            border-radius: 12px;
+            width: min(90%, 400px);
+            max-width: 400px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+            position: relative;
+        }
+
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        body.dark-mode .modal-header {
+            border-bottom-color: #444;
+        }
+
+        .modal-icon {
+            font-size: 1.8rem;
+            color: #f8b500;
+        }
+
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        body.dark-mode .modal-title {
+            color: #e0e0e0;
+        }
+
+        .modal-body {
+            margin-bottom: 25px;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #555;
+        }
+
+        body.dark-mode .modal-body {
+            color: #b0b0b0;
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-family: 'Fredoka';
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+            min-height: 44px;
+            min-width: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .modal-btn-primary {
+            background-color: #f8b500;
+            color: white;
+        }
+
+        .modal-btn-primary:hover {
+            background-color: #e5941f;
+        }
+
+        .modal-btn-secondary {
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .modal-btn-secondary:hover {
+            background-color: #5a6268;
+        }
+
+        .modal-btn-danger {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        .modal-btn-danger:hover {
+            background-color: #c82333;
+        }
+
+        .modal-btn-confirm {
+            background-color: #28a745;
+            color: white;
+        }
+
+        .modal-btn-confirm:hover {
+            background-color: #218838;
+        }
+
+        .modal-btn:focus {
+            outline: 2px solid #f8b500;
+            outline-offset: 2px;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #999;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background-color 0.3s;
+        }
+
+        .close-modal:hover {
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        body.dark-mode .close-modal {
+            color: #b0b0b0;
+        }
+
+        body.dark-mode .close-modal:hover {
+            background-color: #444;
+            color: #e0e0e0;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-50px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* Confirmation Modal Specific */
+        .confirmation-modal .modal-content {
+            width: min(90%, 450px);
+            max-width: 450px;
+        }
+
+        .confirmation-modal .modal-body {
+            text-align: center;
+            padding: 10px 0;
+        }
+
+        /* Warning Modal Specific */
+        .warning-modal .modal-icon {
+            color: #ff9800;
+        }
+
+        /* Error Modal Specific */
+        .error-modal .modal-icon {
+            color: #f44336;
+        }
+
+        /* Success Modal Specific */
+        .success-modal .modal-icon {
+            color: #4caf50;
+        }
+
+        /* Responsive Modal */
+        @media (max-width: 576px) {
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem 1rem;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+            
+            .modal-btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* Rest of the existing styles... */
         /* Top Navigation - Hidden on desktop, shown on mobile */
         .top-nav {
             display: none;
@@ -894,7 +1121,7 @@ if (isset($_SESSION['enroll_message'])) {
         }
 
         .toggle-bulk-btn {
-            background-color: #f8b500;
+            background-color: #106d1cff;
             color: white;
             border: none;
             padding: 12px 20px;
@@ -912,7 +1139,7 @@ if (isset($_SESSION['enroll_message'])) {
         }
 
         .toggle-bulk-btn:hover {
-            background-color: #e5941f;
+            background-color: #439655ff;
         }
 
         .toggle-bulk-btn i:first-child {
@@ -1181,7 +1408,7 @@ if (isset($_SESSION['enroll_message'])) {
         /* Enroll New Button */
         .enroll-new-btn {
             background-color: #f8b500;
-            color: white;
+            color: black;
             border: none;
             padding: 12px 20px;
             border-radius: 5px;
@@ -1849,6 +2076,47 @@ if (isset($_SESSION['enroll_message'])) {
 </head>
 <body>
 
+    <!-- Modal Structure -->
+    <div id="alertModal" class="modal">
+        <div class="modal-content">
+            <button class="close-modal" onclick="closeAlertModal()">&times;</button>
+            <div class="modal-header">
+                <i class="fas fa-exclamation-circle modal-icon"></i>
+                <h3 class="modal-title" id="modalTitle">Alert</h3>
+            </div>
+            <div class="modal-body" id="modalMessage">
+                <!-- Message will be inserted here -->
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-primary" onclick="closeAlertModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmationModal" class="modal confirmation-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <i class="fas fa-question-circle modal-icon"></i>
+                <h3 class="modal-title" id="confirmationTitle">Confirm Action</h3>
+            </div>
+            <div class="modal-body" id="confirmationMessage">
+                <!-- Confirmation message will be inserted here -->
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn modal-btn-secondary" onclick="closeConfirmationModal()">Cancel</button>
+                <button class="modal-btn modal-btn-confirm" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden form for student removal -->
+    <form id="hiddenRemoveForm" method="POST" style="display: none;">
+        <input type="hidden" name="student_account" id="hiddenStudentAccount">
+        <input type="hidden" name="subject_id" id="hiddenSubjectId">
+        <input type="hidden" name="remove_student" value="1">
+    </form>
+
     <!-- Top Navigation for Mobile -->
     <nav class="top-nav" id="topNav">
         <div class="logo">
@@ -2149,14 +2417,10 @@ if (isset($_SESSION['enroll_message'])) {
                                         <?php endif; ?>
                                         <?php if ($selected_subject): ?>
                                             <td>
-                                                <form method="POST" style="display: inline;">
-                                                    <input type="hidden" name="student_account" value="<?php echo htmlspecialchars($student['account_number']); ?>">
-                                                    <input type="hidden" name="subject_id" value="<?php echo $selected_subject; ?>">
-                                                    <button type="submit" name="remove_student" class="remove-btn" 
-                                                        onclick="return confirm('Are you sure you want to remove this student from the subject?')">
-                                                        <i class="fas fa-user-minus"></i> Remove
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="remove-btn" 
+                                                    onclick="confirmRemoveStudent('<?php echo htmlspecialchars($student['account_number']); ?>', '<?php echo htmlspecialchars($student['lname'] . ', ' . $student['fname']); ?>')">
+                                                    <i class="fas fa-user-minus"></i> Remove
+                                                </button>
                                             </td>
                                         <?php endif; ?>
                                     </tr>
@@ -2351,11 +2615,11 @@ if (isset($_SESSION['enroll_message'])) {
             }
         }
 
-        // Add download event listener
+        // Add download event listener - CHANGED FROM ALERT TO MODAL
         document.getElementById('downloadButton').addEventListener('click', function() {
             const selectedSubject = document.getElementById('subject-filter').value;
             if (!selectedSubject) {
-                alert('Please select a subject first');
+                showAlertModal('Warning', 'Please select a subject first');
                 return;
             }
             window.location.href = `t_Students.php?download_template=1&subject=${selectedSubject}`;
@@ -2373,6 +2637,93 @@ if (isset($_SESSION['enroll_message'])) {
             }
         });
     });
+
+    // Modal Functions
+    function showAlertModal(title, message, type = 'info') {
+        const modal = document.getElementById('alertModal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalMessage = document.getElementById('modalMessage');
+        const modalIcon = modal.querySelector('.modal-icon');
+        
+        // Set modal content
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        
+        // Set icon based on type
+        modalIcon.className = 'fas modal-icon';
+        if (type === 'warning') {
+            modalIcon.classList.add('fa-exclamation-triangle');
+            modal.classList.add('warning-modal');
+        } else if (type === 'error') {
+            modalIcon.classList.add('fa-times-circle');
+            modal.classList.add('error-modal');
+        } else if (type === 'success') {
+            modalIcon.classList.add('fa-check-circle');
+            modal.classList.add('success-modal');
+        } else {
+            modalIcon.classList.add('fa-info-circle');
+        }
+        
+        // Show modal
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    function closeAlertModal() {
+        const modal = document.getElementById('alertModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restore scrolling
+        
+        // Remove type classes
+        modal.classList.remove('warning-modal', 'error-modal', 'success-modal');
+    }
+
+    function showConfirmationModal(title, message, confirmCallback) {
+        const modal = document.getElementById('confirmationModal');
+        const modalTitle = document.getElementById('confirmationTitle');
+        const modalMessage = document.getElementById('confirmationMessage');
+        const confirmBtn = document.getElementById('confirmActionBtn');
+        
+        // Set modal content
+        modalTitle.textContent = title;
+        modalMessage.textContent = message;
+        
+        // Clear previous event listener and add new one
+        confirmBtn.replaceWith(confirmBtn.cloneNode(true));
+        const newConfirmBtn = document.getElementById('confirmActionBtn');
+        
+        newConfirmBtn.addEventListener('click', function() {
+            if (typeof confirmCallback === 'function') {
+                confirmCallback();
+            }
+            closeConfirmationModal();
+        });
+        
+        // Show modal
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden'; // Prevent scrolling
+    }
+
+    function closeConfirmationModal() {
+        const modal = document.getElementById('confirmationModal');
+        modal.style.display = 'none';
+        document.body.style.overflow = ''; // Restore scrolling
+    }
+
+    // Student removal confirmation
+    function confirmRemoveStudent(studentAccount, studentName) {
+        showConfirmationModal(
+            'Remove Student',
+            `Are you sure you want to remove "${studentName}" from this subject?`,
+            function() {
+                // Submit the hidden form
+                const form = document.getElementById('hiddenRemoveForm');
+                document.getElementById('hiddenStudentAccount').value = studentAccount;
+                document.getElementById('hiddenSubjectId').value = <?php echo $selected_subject ?: 'null'; ?>;
+                form.submit();
+            }
+        );
+    }
 
     function profileDropdown() {
         // Close all dropdowns first
@@ -2399,6 +2750,17 @@ if (isset($_SESSION['enroll_message'])) {
                 }
             }
         }
+        
+        // Close modals if clicked outside
+        const alertModal = document.getElementById('alertModal');
+        const confirmationModal = document.getElementById('confirmationModal');
+        
+        if (event.target === alertModal) {
+            closeAlertModal();
+        }
+        if (event.target === confirmationModal) {
+            closeConfirmationModal();
+        }
     }
 
     // Subject filter function
@@ -2416,6 +2778,14 @@ if (isset($_SESSION['enroll_message'])) {
             if (sidebar && sidebar.style.display === 'none') {
                 sidebar.style.display = 'flex';
             }
+        }
+    });
+    
+    // Close modals with Escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeAlertModal();
+            closeConfirmationModal();
         }
     });
     </script>

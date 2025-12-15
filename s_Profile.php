@@ -25,6 +25,11 @@ $glevel = "Unknown";
 $strand = "Unknown";
 $section = "Unknown";
 $profile_pic = 'default-profile.jpg';
+$password_error = '';
+$password_success = '';
+$profile_updated = false;
+$password_changed = false;
+$form_error = false;
 
 // Fetch student data
 $sql = "SELECT fname, lname, account_number, glevel, strand, section, profile_pic FROM students WHERE account_number = ?";
@@ -47,7 +52,6 @@ if ($result->num_rows > 0) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $new_fname = $_POST['fname'];
     $new_lname = $_POST['lname'];
-    // Note: glevel, strand, and section are no longer editable, so we don't update them
     
     // Handle profile picture upload
     if ($_FILES['profile_pic']['error'] === UPLOAD_ERR_OK) {
@@ -68,18 +72,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
     
-    // Update database - only update editable fields
-    $update_sql = "UPDATE students SET fname = ?, lname = ?, profile_pic = ? WHERE account_number = ?";
-    $update_stmt = $conn->prepare($update_sql);
-    $update_stmt->bind_param("ssss", $new_fname, $new_lname, $profile_pic, $account_number);
-    $update_stmt->execute();
+    // Check if password change is attempted
+    $password_change_attempted = !empty($_POST['current_password']) || !empty($_POST['new_password']) || !empty($_POST['confirm_password']);
     
-    // Update session variables
-    $_SESSION['fname'] = $new_fname;
-    $name = $new_fname;
-    $lname = $new_lname;
+    // If password change is attempted, validate it first
+    if ($password_change_attempted) {
+        $current_password = $_POST['current_password'];
+        $new_password = $_POST['new_password'];
+        $confirm_password = $_POST['confirm_password'];
+        
+        // Validate password change
+        if (empty($current_password) || empty($new_password) || empty($confirm_password)) {
+            $password_error = "Please fill all password fields to change your password.";
+            $form_error = true;
+        } elseif ($new_password !== $confirm_password) {
+            $password_error = "New passwords do not match!";
+            $form_error = true;
+        } elseif (strlen($new_password) < 6) {
+            $password_error = "New password must be at least 6 characters long!";
+            $form_error = true;
+        } else {
+            // Get current password from database
+            $password_sql = "SELECT password FROM students WHERE account_number = ?";
+            $password_stmt = $conn->prepare($password_sql);
+            $password_stmt->bind_param("s", $account_number);
+            $password_stmt->execute();
+            $password_result = $password_stmt->get_result();
+            
+            if ($password_result->num_rows > 0) {
+                $password_row = $password_result->fetch_assoc();
+                $hashed_password = $password_row['password'];
+                
+                // Verify current password
+                if (password_verify($current_password, $hashed_password)) {
+                    // Hash new password
+                    $new_hashed_password = password_hash($new_password, PASSWORD_DEFAULT);
+                    
+                    // Update password in database
+                    $update_password_sql = "UPDATE students SET password = ? WHERE account_number = ?";
+                    $update_password_stmt = $conn->prepare($update_password_sql);
+                    $update_password_stmt->bind_param("ss", $new_hashed_password, $account_number);
+                    
+                    if ($update_password_stmt->execute()) {
+                        $password_changed = true;
+                        $password_success = "Password changed successfully!";
+                    } else {
+                        $password_error = "Failed to update password. Please try again.";
+                        $form_error = true;
+                    }
+                    
+                    $update_password_stmt->close();
+                } else {
+                    $password_error = "Current password is incorrect!";
+                    $form_error = true;
+                }
+            }
+            
+            $password_stmt->close();
+        }
+    }
     
-    $update_stmt->close();
+    // Only update profile if no password error or if password change was successful
+    if (!$form_error) {
+        // Update database - only update editable fields
+        $update_sql = "UPDATE students SET fname = ?, lname = ?, profile_pic = ? WHERE account_number = ?";
+        $update_stmt = $conn->prepare($update_sql);
+        $update_stmt->bind_param("ssss", $new_fname, $new_lname, $profile_pic, $account_number);
+        
+        if ($update_stmt->execute()) {
+            $profile_updated = true;
+            
+            // Update session variables
+            $_SESSION['fname'] = $new_fname;
+            $name = $new_fname;
+            $lname = $new_lname;
+        }
+        
+        $update_stmt->close();
+    }
 }
 
 $conn->close();
@@ -94,7 +164,6 @@ $conn->close();
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <title>Student Profile | RAWRIT</title>
     <style>
-        /* Original styles kept exactly as they were */
         :root {
             --primary: #f8b500;
             --primary-light: #ffc740;
@@ -123,6 +192,165 @@ $conn->close();
             color: var(--text);
             line-height: 1.6;
             transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background-color: white;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+            overflow: hidden;
+            transform: translateY(-50px);
+            animation: slideDown 0.3s ease forwards;
+        }
+        
+        @keyframes slideDown {
+            to {
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header.success {
+            background: linear-gradient(135deg, var(--success) 0%, #4cd964 100%);
+        }
+        
+        .modal-header.error {
+            background: linear-gradient(135deg, var(--error) 0%, #ff6b6b 100%);
+        }
+        
+        .modal-title {
+            color: white;
+            font-size: 22px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .modal-close:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: rotate(90deg);
+        }
+        
+        .modal-body {
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .modal-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+        
+        .modal-icon.success {
+            color: var(--success);
+        }
+        
+        .modal-icon.error {
+            color: var(--error);
+        }
+        
+        .modal-message {
+            font-size: 18px;
+            margin-bottom: 25px;
+            line-height: 1.6;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .modal-btn {
+            padding: 12px 30px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            font-size: 16px;
+            min-width: 120px;
+        }
+        
+        .modal-btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            color: #000;
+        }
+        
+        .modal-btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(248, 181, 0, 0.3);
+        }
+        
+        .modal-btn-secondary {
+            background-color: #f1f1f1;
+            color: var(--text);
+            border: 1px solid #ddd;
+        }
+        
+        .modal-btn-secondary:hover {
+            background-color: #e1e1e1;
+            transform: translateY(-2px);
+        }
+        
+        /* Inline error message for password fields */
+        .field-error {
+            color: var(--error);
+            font-size: 14px;
+            margin-top: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .field-error i {
+            font-size: 16px;
         }
 
         /* Dark Mode Styles */
@@ -196,6 +424,22 @@ $conn->close();
             background-color: rgba(255, 255, 255, 0.2);
         }
 
+        /* Dark mode modal */
+        body.dark-mode .modal-content {
+            background-color: #2d2d2d;
+            color: #e0e0e0;
+        }
+        
+        body.dark-mode .modal-btn-secondary {
+            background-color: #444;
+            color: #e0e0e0;
+            border-color: #555;
+        }
+        
+        body.dark-mode .modal-btn-secondary:hover {
+            background-color: #555;
+        }
+
         /* Scrollbar Styles */
         ::-webkit-scrollbar {
           width: 10px;
@@ -210,13 +454,13 @@ $conn->close();
          
         /* Handle */
         ::-webkit-scrollbar-thumb {
-          background: #f8b500; 
+          background: #898981ff; 
           border-radius: 10px;
         }
 
         /* Handle on hover */
         ::-webkit-scrollbar-thumb:hover {
-          background: #f8b500; 
+          background: #898981ff; 
         }
 
         header {
@@ -573,28 +817,6 @@ $conn->close();
             display: none;
         }
         
-        /* Success message */
-        .success-message {
-            position: fixed;
-            top: 100px;
-            right: 30px;
-            background-color: var(--success);
-            color: white;
-            padding: 15px 25px;
-            border-radius: 8px;
-            box-shadow: var(--shadow-lg);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            z-index: 1000;
-            transform: translateX(150%);
-            transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-        }
-        
-        .success-message.show {
-            transform: translateX(0);
-        }
-        
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
@@ -615,7 +837,89 @@ $conn->close();
             animation: float 4s ease-in-out infinite;
         }
 
-        /* NEW: Enhanced Responsive Styles */
+        /* Password Section Styles */
+        .password-section {
+            margin-top: 30px;
+            padding-top: 25px;
+            border-top: 2px solid #eee;
+        }
+        
+        .password-section h3 {
+            color: var(--primary);
+            font-size: 18px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .password-section h3 i {
+            font-size: 20px;
+        }
+        
+        .password-input-container {
+            position: relative;
+        }
+        
+        .toggle-password {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #666;
+            cursor: pointer;
+            font-size: 16px;
+            transition: var(--transition);
+        }
+        
+        .toggle-password:hover {
+            color: var(--primary);
+        }
+        
+        .password-strength {
+            height: 4px;
+            margin-top: 5px;
+            border-radius: 2px;
+            background-color: #eee;
+            overflow: hidden;
+        }
+        
+        .password-strength-meter {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+        
+        .strength-weak { background-color: #e74c3c; }
+        .strength-medium { background-color: #f39c12; }
+        .strength-strong { background-color: #2ecc71; }
+        
+        .password-hint {
+            font-size: 13px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        .error-message {
+            color: var(--error);
+            background-color: rgba(231, 76, 60, 0.1);
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .error-message i {
+            font-size: 16px;
+        }
+        
+        /* Enhanced Responsive Styles */
         
         /* Dark Mode Toggle Button */
         .dark-mode-toggle {
@@ -716,6 +1020,10 @@ $conn->close();
             .btn {
                 padding: 12px 20px;
                 font-size: 14px;
+            }
+            
+            .modal-content {
+                width: 95%;
             }
         }
         
@@ -822,6 +1130,18 @@ $conn->close();
                 width: 50px;
                 height: 50px;
             }
+            
+            .modal-body {
+                padding: 20px;
+            }
+            
+            .modal-actions {
+                flex-direction: column;
+            }
+            
+            .modal-btn {
+                width: 100%;
+            }
         }
 
         /* 480px Responsive Styles */
@@ -897,19 +1217,6 @@ $conn->close();
             
             .detail-value {
                 font-size: 15px;
-            }
-            
-            .form-group {
-                gap: 8px;
-            }
-            
-            .form-label {
-                font-size: 14px;
-            }
-            
-            .form-input {
-                padding: 12px 15px;
-                font-size: 14px;
             }
             
             .dark-mode-toggle {
@@ -1117,25 +1424,125 @@ $conn->close();
                         <input type="text" id="section" name="section" class="form-input" value="<?php echo htmlspecialchars($section); ?>" disabled>
                     </div>
                     
+                    <!-- Password Change Section -->
+                    <div class="password-section">
+                        <h3><i class="fas fa-lock"></i> Change Password</h3>
+                        
+                        <div class="form-group">
+                            <label for="current_password" class="form-label">Current Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="current_password" name="current_password" class="form-input" placeholder="Enter current password">
+                                <button type="button" class="toggle-password" data-target="current_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <?php if ($password_error && strpos($password_error, 'Current password') !== false): ?>
+                            <div class="field-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span><?php echo htmlspecialchars($password_error); ?></span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="new_password" name="new_password" class="form-input" placeholder="Enter new password (min. 6 characters)">
+                                <button type="button" class="toggle-password" data-target="new_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <div class="password-strength">
+                                <div id="passwordStrengthMeter" class="password-strength-meter"></div>
+                            </div>
+                            <div class="password-hint">Password strength: <span id="passwordStrengthText">None</span></div>
+                            <?php if ($password_error && (strpos($password_error, '6 characters') !== false || strpos($password_error, 'fill all password fields') !== false)): ?>
+                            <div class="field-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span><?php echo htmlspecialchars($password_error); ?></span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <div class="password-input-container">
+                                <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="Re-enter new password">
+                                <button type="button" class="toggle-password" data-target="confirm_password">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                            <?php if ($password_error && strpos($password_error, 'do not match') !== false): ?>
+                            <div class="field-error">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span><?php echo htmlspecialchars($password_error); ?></span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    
                     <div class="form-actions">
                         <button type="button" id="cancelEdit" class="btn btn-secondary">
                             <i class="fas fa-times"></i> Cancel
                         </button>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save"></i> Save Changes
+                            <i class="fas fa-save"></i> Save All Changes
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-        
-        <?php if ($_SERVER['REQUEST_METHOD'] === 'POST'): ?>
-        <div id="successMessage" class="success-message">
-            <i class="fas fa-check-circle"></i>
-            <span>Profile updated successfully!</span>
-        </div>
-        <?php endif; ?>
     </main>
+    
+    <!-- Success Modal -->
+    <div id="successModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header success">
+                <h3 class="modal-title">
+                    <i class="fas fa-check-circle"></i> Success!
+                </h3>
+                <button type="button" class="modal-close" id="closeSuccessModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="modal-message" id="successMessageText">
+                    Profile updated successfully!
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn modal-btn-primary" id="okSuccessBtn">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header error">
+                <h3 class="modal-title">
+                    <i class="fas fa-exclamation-circle"></i> Error!
+                </h3>
+                <button type="button" class="modal-close" id="closeErrorModal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-icon error">
+                    <i class="fas fa-exclamation-circle"></i>
+                </div>
+                <div class="modal-message" id="errorMessageText">
+                    <?php echo htmlspecialchars($password_error); ?>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-btn modal-btn-primary" id="okErrorBtn">OK</button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -1146,7 +1553,16 @@ $conn->close();
             const changeProfilePic = document.getElementById('changeProfilePic');
             const profilePicInput = document.getElementById('profile_pic');
             const profilePicPreview = document.getElementById('profilePicPreview');
-            const successMessage = document.getElementById('successMessage');
+            
+            // Modal elements
+            const successModal = document.getElementById('successModal');
+            const errorModal = document.getElementById('errorModal');
+            const closeSuccessModal = document.getElementById('closeSuccessModal');
+            const closeErrorModal = document.getElementById('closeErrorModal');
+            const okSuccessBtn = document.getElementById('okSuccessBtn');
+            const okErrorBtn = document.getElementById('okErrorBtn');
+            const successMessageText = document.getElementById('successMessageText');
+            const errorMessageText = document.getElementById('errorMessageText');
             
             // Dark Mode Toggle Functionality
             const darkModeToggle = document.getElementById('darkModeToggle');
@@ -1177,7 +1593,22 @@ $conn->close();
             
             // Event listeners
             startEdit.addEventListener('click', toggleEditMode);
-            cancelEdit.addEventListener('click', toggleEditMode);
+            cancelEdit.addEventListener('click', function() {
+                // Clear password fields
+                document.getElementById('current_password').value = '';
+                document.getElementById('new_password').value = '';
+                document.getElementById('confirm_password').value = '';
+                
+                // Reset strength meter
+                if (strengthMeter) {
+                    strengthMeter.style.width = '0%';
+                }
+                if (strengthText) {
+                    strengthText.textContent = 'None';
+                }
+                
+                toggleEditMode();
+            });
             
             // Profile picture change handler
             changeProfilePic.addEventListener('click', function() {
@@ -1194,20 +1625,8 @@ $conn->close();
                 }
             });
             
-            // Show success message if form was submitted
-            if (successMessage) {
-                setTimeout(() => {
-                    successMessage.classList.add('show');
-                    
-                    // Hide after 5 seconds
-                    setTimeout(() => {
-                        successMessage.classList.remove('show');
-                    }, 5000);
-                }, 300);
-            }
-            
             // If form was submitted with errors, show edit mode
-            if (window.location.search.includes('error')) {
+            if (window.location.search.includes('error') || '<?php echo $form_error ? 'true' : 'false'; ?>' === 'true') {
                 toggleEditMode();
             }
             
@@ -1236,6 +1655,173 @@ $conn->close();
                     localStorage.setItem('darkMode', 'false');
                 }
             });
+
+            // Password toggle functionality
+            const toggleButtons = document.querySelectorAll('.toggle-password');
+            toggleButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const targetId = this.getAttribute('data-target');
+                    const input = document.getElementById(targetId);
+                    const icon = this.querySelector('i');
+                    
+                    if (input.type === 'password') {
+                        input.type = 'text';
+                        icon.classList.remove('fa-eye');
+                        icon.classList.add('fa-eye-slash');
+                    } else {
+                        input.type = 'password';
+                        icon.classList.remove('fa-eye-slash');
+                        icon.classList.add('fa-eye');
+                    }
+                });
+            });
+            
+            // Password strength checker
+            const newPasswordInput = document.getElementById('new_password');
+            const strengthMeter = document.getElementById('passwordStrengthMeter');
+            const strengthText = document.getElementById('passwordStrengthText');
+            
+            if (newPasswordInput && strengthMeter && strengthText) {
+                newPasswordInput.addEventListener('input', function() {
+                    const password = this.value;
+                    let strength = 0;
+                    
+                    // Length check
+                    if (password.length >= 6) strength += 25;
+                    if (password.length >= 8) strength += 25;
+                    
+                    // Character variety checks
+                    if (/[a-z]/.test(password)) strength += 15;
+                    if (/[A-Z]/.test(password)) strength += 15;
+                    if (/[0-9]/.test(password)) strength += 10;
+                    if (/[^a-zA-Z0-9]/.test(password)) strength += 10;
+                    
+                    // Cap at 100
+                    strength = Math.min(strength, 100);
+                    
+                    // Update meter
+                    strengthMeter.style.width = strength + '%';
+                    
+                    // Update text and color
+                    if (strength < 30) {
+                        strengthMeter.className = 'password-strength-meter strength-weak';
+                        strengthText.textContent = 'Weak';
+                    } else if (strength < 70) {
+                        strengthMeter.className = 'password-strength-meter strength-medium';
+                        strengthText.textContent = 'Medium';
+                    } else {
+                        strengthMeter.className = 'password-strength-meter strength-strong';
+                        strengthText.textContent = 'Strong';
+                    }
+                    
+                    // Reset if empty
+                    if (password.length === 0) {
+                        strengthMeter.style.width = '0%';
+                        strengthText.textContent = 'None';
+                    }
+                });
+            }
+            
+            // Modal functionality
+            function showSuccessModal(message) {
+                if (message) {
+                    successMessageText.textContent = message;
+                }
+                successModal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function showErrorModal(message) {
+                if (message) {
+                    errorMessageText.textContent = message;
+                }
+                errorModal.classList.add('show');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function hideModals() {
+                successModal.classList.remove('show');
+                errorModal.classList.remove('show');
+                document.body.style.overflow = 'auto';
+            }
+            
+            // Event listeners for modals
+            closeSuccessModal.addEventListener('click', hideModals);
+            closeErrorModal.addEventListener('click', hideModals);
+            okSuccessBtn.addEventListener('click', hideModals);
+            okErrorBtn.addEventListener('click', hideModals);
+            
+            // Close modal when clicking outside
+            window.addEventListener('click', function(event) {
+                if (event.target === successModal) {
+                    hideModals();
+                }
+                if (event.target === errorModal) {
+                    hideModals();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', function(event) {
+                if (event.key === 'Escape') {
+                    hideModals();
+                }
+            });
+            
+            // Show modals based on PHP response
+            <?php if ($profile_updated || $password_changed): ?>
+                <?php
+                $message = "Profile updated successfully!";
+                if ($password_changed) {
+                    $message = "Profile and password updated successfully!";
+                } elseif ($profile_updated) {
+                    $message = "Profile updated successfully!";
+                }
+                ?>
+                setTimeout(function() {
+                    showSuccessModal("<?php echo $message; ?>");
+                }, 300);
+            <?php endif; ?>
+            
+            <?php if ($form_error && $password_error): ?>
+                setTimeout(function() {
+                    showErrorModal("<?php echo htmlspecialchars($password_error); ?>");
+                }, 300);
+            <?php endif; ?>
+            
+            // Form validation for password change
+            const editForm = document.getElementById('editMode');
+            if (editForm) {
+                editForm.addEventListener('submit', function(e) {
+                    const currentPassword = document.getElementById('current_password').value;
+                    const newPassword = document.getElementById('new_password').value;
+                    const confirmPassword = document.getElementById('confirm_password').value;
+                    
+                    // Check if any password field is filled
+                    if (currentPassword || newPassword || confirmPassword) {
+                        // All three fields must be filled
+                        if (!currentPassword || !newPassword || !confirmPassword) {
+                            showErrorModal('Please fill all password fields to change your password.');
+                            e.preventDefault();
+                            return;
+                        }
+                        
+                        // Check minimum length
+                        if (newPassword.length < 6) {
+                            showErrorModal('New password must be at least 6 characters long.');
+                            e.preventDefault();
+                            return;
+                        }
+                        
+                        // Check if passwords match
+                        if (newPassword !== confirmPassword) {
+                            showErrorModal('New passwords do not match.');
+                            e.preventDefault();
+                            return;
+                        }
+                    }
+                });
+            }
         });
     </script>
 </body>

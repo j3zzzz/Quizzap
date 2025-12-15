@@ -60,7 +60,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
     $school_id = $_POST['school_id'];
 
-
     $sql = "INSERT INTO teachers (account_number, school_id, fname, lname, password) VALUES (?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
@@ -82,18 +81,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($stmt->execute()) {
             // Store success message in session to show modal
             $_SESSION['success_message'] = "Registration successful!";
-            // Store account info to display
-            $_SESSION['account_info'] = [
-                'account_number' => $account_number,
-                'school_id' => $school_id
-            ];
             header("Location: t_Signup.php?success=1");
             exit();
         } else {
-            $_SESSION['error_message'] = "Error: " . $sql . "<br>" . $conn->error;
+            $_SESSION['error_message'] = "Error: " . $stmt->error;
             header("Location: t_Signup.php");
             exit();
         }
+    } else {
+        $_SESSION['error_message'] = "Error preparing statement: " . $conn->error;
+        header("Location: t_Signup.php");
+        exit();
     }
 }
 $conn->close();

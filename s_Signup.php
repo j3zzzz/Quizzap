@@ -147,8 +147,37 @@ $conn->close();
             width: 100%;
         }
 
-        .password-inputs input {
+        .password-field-container {
+            position: relative;
             width: 49.5%;
+        }
+
+        .password-field-container input {
+            width: 100%;
+            padding-right: 40px; /* Space for eye icon */
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #888;
+            font-size: 16px;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password svg {
+            width: 18px;
+            height: 18px;
+            fill: #666;
         }
 
         select {
@@ -216,6 +245,25 @@ $conn->close();
             margin-bottom: 10px;
         }
 
+        .school-id-status {
+            font-family: Fredoka;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .school-id-status.valid {
+            color: green;
+        }
+
+        .school-id-status.invalid {
+            color: red;
+        }
+
+        .school-id-status.checking {
+            color: #F8B500;
+        }
+
         /* Modal Styles */
         .modal {
             display: none;
@@ -254,8 +302,15 @@ $conn->close();
 
         .modal-icon {
             font-size: 4rem;
-            color: #4CAF50;
             margin-bottom: 1rem;
+        }
+
+        .error-modal .modal-icon {
+            color: #f44336;
+        }
+
+        .success-modal .modal-icon {
+            color: #4CAF50;
         }
 
         .modal-title {
@@ -344,7 +399,7 @@ $conn->close();
                 unset($_SESSION['error_message']);
             }
             ?>
-                    <form method="POST" action="s_Signup_process.php" onsubmit="return validateForm()">
+                    <form method="POST" action="s_Signup_process.php" onsubmit="return validateForm()" id="signupForm">
                     <input type="text" name="account_number" value="<?php echo $student_account_number; ?>" readonly>
                     
                     <div class="name-inputs">
@@ -375,16 +430,32 @@ $conn->close();
 
                     <div class="name-inputs">
                         <input type="text" id="section" name="section" placeholder="Section" required>
-                        <input type="text" id="school_id" name="school_id" placeholder="School ID" required>
+                        <input type="text" id="school_id" name="school_id" placeholder="School ID" required 
+                               oninput="checkSchoolId()">
                     </div>
+                    <div id="schoolIdStatus" class="school-id-status"></div>
                     
                     <div class="password-inputs">
-                        <input type="password" id="password" name="password" placeholder="Password" required>
-                        <input type="password" id="password2" name="password2" placeholder="Confirm password" required>
+                        <div class="password-field-container">
+                            <input type="password" id="password" name="password" placeholder="Password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('password')">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <div class="password-field-container">
+                            <input type="password" id="password2" name="password2" placeholder="Confirm password" required>
+                            <button type="button" class="toggle-password" onclick="togglePassword('password2')">
+                                <svg viewBox="0 0 24 24">
+                                    <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
                     
                     <center>
-                        <input class="btn" type="submit" value="Register Account">
+                        <input class="btn" type="submit" value="Register Account" id="submitBtn">
                         <p class="login-link">Already have an account? <a href="login.php">Login!</a></p>
                     </center>
                 </form>
@@ -398,7 +469,7 @@ $conn->close();
     </div>
 
     <!-- Success Modal -->
-    <div id="successModal" class="modal">
+    <div id="successModal" class="modal success-modal">
         <div class="modal-content">
             <div class="modal-icon">✓</div>
             <h2 class="modal-title">Registration Successful!</h2>
@@ -407,7 +478,20 @@ $conn->close();
         </div>
     </div>
 
+    <!-- Error Modal -->
+    <div id="errorModal" class="modal error-modal">
+        <div class="modal-content">
+            <div class="modal-icon">✗</div>
+            <h2 class="modal-title">Validation Error</h2>
+            <p id="errorModalMessage" class="modal-message"></p>
+            <button class="modal-button" onclick="closeErrorModal()">OK</button>
+        </div>
+    </div>
+
     <script>
+        let schoolIdValid = false;
+        let schoolIdCheckTimeout = null;
+
         function toggleStrandInput() {
             var gradeLevel = document.getElementById("glevel").value;
             var strandContainer = document.getElementById("strand-container");
@@ -423,12 +507,136 @@ $conn->close();
             }
         }
 
+        function togglePassword(fieldId) {
+            const passwordInput = document.getElementById(fieldId);
+            const toggleButton = passwordInput.nextElementSibling.querySelector('svg');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                // Change to eye-slash icon
+                toggleButton.innerHTML = '<path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92c1.51-1.26 2.7-2.89 3.43-4.75-1.73-4.39-6-7.5-11-7.5-1.4 0-2.74.25-3.98.7l2.16 2.16C10.74 7.13 11.35 7 12 7zM2 4.27l2.28 2.28.46.46C3.08 8.3 1.78 10.02 1 12c1.73 4.39 6 7.5 11 7.5 1.55 0 3.03-.3 4.38-.84l.42.42L19.73 22 21 20.73 3.27 3 2 4.27zM7.53 9.8l1.55 1.55c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3 .22 0 .44-.03.65-.08l1.55 1.55c-.67.33-1.41.53-2.2.53-2.76 0-5-2.24-5-5 0-.79.2-1.53.53-2.2zm4.31-.78l3.15 3.15.02-.16c0-1.66-1.34-3-3-3l-.17.01z"/>';
+            } else {
+                passwordInput.type = 'password';
+                // Change back to eye icon
+                toggleButton.innerHTML = '<path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z"/>';
+            }
+        }
+
+        function checkSchoolId() {
+            const schoolIdInput = document.getElementById('school_id');
+            const statusDiv = document.getElementById('schoolIdStatus');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            const schoolId = schoolIdInput.value.trim();
+            
+            // Clear previous timeout
+            if (schoolIdCheckTimeout) {
+                clearTimeout(schoolIdCheckTimeout);
+            }
+            
+            // Hide status if empty
+            if (!schoolId) {
+                statusDiv.style.display = 'none';
+                schoolIdValid = false;
+                submitBtn.disabled = false;
+                return;
+            }
+            
+            // Show checking status
+            statusDiv.textContent = 'Checking School ID...';
+            statusDiv.className = 'school-id-status checking';
+            statusDiv.style.display = 'block';
+            
+            // Debounce the API call
+            schoolIdCheckTimeout = setTimeout(() => {
+                // Create AJAX request
+                const xhr = new XMLHttpRequest();
+                xhr.open('POST', 'check_school_id.php', true);
+                xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        try {
+                            const response = JSON.parse(xhr.responseText);
+                            
+                            if (response.valid) {
+                                statusDiv.textContent = '✓ Valid School ID (matches a registered teacher)';
+                                statusDiv.className = 'school-id-status valid';
+                                schoolIdValid = true;
+                                submitBtn.disabled = false;
+                            } else {
+                                statusDiv.textContent = '✗ ' + (response.message || 'Invalid School ID');
+                                statusDiv.className = 'school-id-status invalid';
+                                schoolIdValid = false;
+                            }
+                        } catch (e) {
+                            statusDiv.textContent = '✗ Error checking School ID';
+                            statusDiv.className = 'school-id-status invalid';
+                            schoolIdValid = false;
+                        }
+                    } else {
+                        statusDiv.textContent = '✗ Error checking School ID';
+                        statusDiv.className = 'school-id-status invalid';
+                        schoolIdValid = false;
+                    }
+                };
+                
+                xhr.onerror = function() {
+                    statusDiv.textContent = '✗ Network error. Please try again.';
+                    statusDiv.className = 'school-id-status invalid';
+                    schoolIdValid = false;
+                };
+                
+                // Send school ID for validation
+                xhr.send('school_id=' + encodeURIComponent(schoolId));
+            }, 500); // 500ms debounce delay
+        }
+
+        function showErrorModal(message) {
+            const modal = document.getElementById('errorModal');
+            const messageElement = document.getElementById('errorModalMessage');
+            messageElement.textContent = message;
+            modal.style.display = 'flex';
+        }
+
+        function closeErrorModal() {
+            const modal = document.getElementById('errorModal');
+            modal.style.display = 'none';
+        }
+
         function validateForm() {
             var gradeLevel = document.getElementById("glevel").value;
             var strand = document.getElementById("strand").value;
+            var schoolId = document.getElementById("school_id").value.trim();
+
+            // Basic validation
+            if (!schoolId) {
+                showErrorModal("Please enter your School ID!");
+                return false;
+            }
 
             if ((gradeLevel === "11" || gradeLevel === "12") && !strand) {
-                alert("Please select a strand for Grade 11 or 12!");
+                showErrorModal("Please select a strand for Grade 11 or 12!");
+                return false;
+            }
+
+            // Check if school ID was validated
+            if (!schoolIdValid) {
+                showErrorModal("Please enter a valid School ID that matches a registered teacher. The School ID you entered was not found in our system.");
+                return false;
+            }
+
+            // Password validation
+            var password = document.getElementById("password").value;
+            var password2 = document.getElementById("password2").value;
+
+            if (password !== password2) {
+                showErrorModal("Passwords do not match!");
+                return false;
+            }
+
+            if (password.length < 8) {
+                showErrorModal("Password must be at least 8 characters long!");
                 return false;
             }
 
@@ -456,6 +664,19 @@ $conn->close();
 
         function redirectToLogin() {
             window.location.href = "login.php";
+        }
+
+        // Close modal when clicking outside of it
+        window.onclick = function(event) {
+            const errorModal = document.getElementById('errorModal');
+            const successModal = document.getElementById('successModal');
+            
+            if (event.target === errorModal) {
+                closeErrorModal();
+            }
+            if (event.target === successModal) {
+                successModal.style.display = 'none';
+            }
         }
     </script>
 </body>

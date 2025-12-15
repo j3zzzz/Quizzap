@@ -27,6 +27,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         exit();
     }
 
+    // Check if school ID exists in teachers table
+    $school_id = mysqli_real_escape_string($conn, $_POST['school_id']);
+    $check_school_id_sql = "SELECT school_id FROM teachers WHERE school_id = ?";
+    $check_stmt = $conn->prepare($check_school_id_sql);
+    $check_stmt->bind_param("s", $school_id);
+    $check_stmt->execute();
+    $check_stmt->store_result();
+    
+    if ($check_stmt->num_rows == 0) {
+        $_SESSION['error_message'] = "Invalid School ID. Please enter a valid School ID that matches a registered teacher.";
+        header("Location: s_Signup.php");
+        exit();
+    }
+    $check_stmt->close();
+
     // Find the last account number and increment it
     $last_account_sql = "SELECT account_number FROM students ORDER BY account_number DESC LIMIT 1";
     $last_account_result = $conn->query($last_account_sql);
@@ -51,7 +66,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $lname = mysqli_real_escape_string($conn, $_POST['lname']);
     $glevel = mysqli_real_escape_string($conn, $_POST['glevel']);
     $section = mysqli_real_escape_string($conn, $_POST['section']);
-    $school_id = mysqli_real_escape_string($conn, $_POST['school_id']);
     $strand = isset($_POST['strand']) ? mysqli_real_escape_string($conn, $_POST['strand']) : '';
     $password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Hash the password
 

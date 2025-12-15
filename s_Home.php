@@ -884,35 +884,6 @@ $conn->close();
         color: #e0e0e0;
     }
 
-    .performance-indicator {
-        font-size: 0.7rem;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .performance-indicator.excellent {
-        background-color: #4CAF50;
-        color: white;
-    }
-
-    .performance-indicator.good {
-        background-color: #2196F3;
-        color: white;
-    }
-
-    .performance-indicator.average {
-        background-color: #FF9800;
-        color: white;
-    }
-
-    .performance-indicator.needs-improvement {
-        background-color: #F44336;
-        color: white;
-    }
-
     .no-scores-message {
         text-align: center;
         padding: 2rem 1rem;
@@ -1434,10 +1405,6 @@ $conn->close();
     
     .quiz-subject {
         font-size: 0.8rem;
-    }
-    
-    .performance-indicator {
-        font-size: 0.65rem;
     }
             
         .content-header {
@@ -2093,16 +2060,6 @@ $conn->close();
                                         <div class="score-circle" data-percent="<?php echo $scorePercent; ?>">
                                             <div class="score-value"><?php echo htmlspecialchars($row['highest_score']); ?></div>
                                         </div>
-                                        <div class="performance-indicator <?php echo $performanceLevel; ?>">
-                                            <?php 
-                                            switch($performanceLevel) {
-                                                case 'excellent': echo 'Excellent!'; break;
-                                                case 'good': echo 'Good Job'; break;
-                                                case 'average': echo 'Not Bad'; break;
-                                                default: echo 'Keep Trying'; break;
-                                            }
-                                            ?>
-                                        </div>
                                     </div>
                                 </div>   
                             <?php
@@ -2118,7 +2075,7 @@ $conn->close();
                         </div>
                     </div>
                     <br>
-                                        <div class="difficult-question-card">
+                    <div class="difficult-question-card">
                         <div class="difficult-question-header">    
                             <i class="fa-solid fa-question question"></i>
                             <h3>Difficult Questions</h3>
@@ -2157,6 +2114,7 @@ $conn->close();
                             <?php } ?>
                         </div>
                     </div>
+                </div>
             </div>
         </div>
     </div>
@@ -2387,24 +2345,24 @@ $conn->close();
         }, {passive: true});
 
         // Animate score circles
-function animateScoreCircles() {
-    const scoreCircles = document.querySelectorAll('.score-circle');
-    
-    scoreCircles.forEach(circle => {
-        const percent = circle.getAttribute('data-percent');
-        circle.style.setProperty('--score-percent', `${percent}%`);
-        
-        // Add animation
-        setTimeout(() => {
-            circle.style.transition = 'all 0.8s ease-out';
-        }, 100);
-    });
-}
+        function animateScoreCircles() {
+            const scoreCircles = document.querySelectorAll('.score-circle');
+            
+            scoreCircles.forEach(circle => {
+                const percent = circle.getAttribute('data-percent');
+                circle.style.setProperty('--score-percent', `${percent}%`);
+                
+                // Add animation
+                setTimeout(() => {
+                    circle.style.transition = 'all 0.8s ease-out';
+                }, 100);
+            });
+        }
 
-// Call this function after the DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    animateScoreCircles();
-});
+        // Call this function after the DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            animateScoreCircles();
+        });
     </script>
 </body>
 </html>

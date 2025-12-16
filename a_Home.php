@@ -903,7 +903,6 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
                                 No teachers found
                             </div>        
                         <?php } 
-                        $recentTeachersQuery->close();
                         ?>
                     </div>
                 </div>

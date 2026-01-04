@@ -60,12 +60,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $password = password_hash($_POST['password'], PASSWORD_BCRYPT);
     $school_id = $_POST['school_id'];
 
-    $sql = "INSERT INTO teachers (account_number, school_id, fname, lname, password) VALUES (?, ?, ?, ?, ?)";
+    $sql = "INSERT INTO teachers (account_number, school_id, fname, lname, password, status) VALUES (?, ?, ?, ?, ?, ?)";
 
     $stmt = $conn->prepare($sql);
 
     if ($stmt) {
-        $stmt->bind_param("sssss", $account_number, $school_id, $fname, $lname, $password);
+        $default_status = 'pending';
+        $stmt->bind_param("ssssss", $account_number, $school_id, $fname, $lname, $password, $default_status);
 
         $check_user_sql = $conn->prepare ("SELECT * FROM teachers WHERE fname = ? and lname = ?");
         $check_user_sql->bind_param("ss", $fname, $lname);

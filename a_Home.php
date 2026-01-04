@@ -53,6 +53,12 @@ $recentStudentsQuery = $conn->prepare("SELECT fname, lname, account_number, glev
 $recentStudentsQuery->execute();
 $recentStudentsResult = $recentStudentsQuery->get_result();
 
+// Query to count pending teacher approvals
+$pendingCountQuery = $conn->prepare("SELECT COUNT(*) as count FROM teachers WHERE status = 'pending'");
+$pendingCountQuery->execute();
+$pendingCountResult = $pendingCountQuery->get_result();
+$pendingCount = $pendingCountResult->fetch_assoc()['count'];
+
 // Query to get recently added teachers (last 5)
 $recentTeachersQuery = $conn->prepare("SELECT fname, lname, account_number FROM teachers ORDER BY teacher_id DESC LIMIT 5");
 $recentTeachersQuery->execute();
@@ -143,7 +149,7 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
         }
 
         .sidebar .menu {
-            margin-top: 40%;
+            margin-top: 15%;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -257,6 +263,49 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
         .sidebar.collapsed hr {
             margin: 0.5rem auto;
             width: 50%;
+        }
+
+        /* Logout button in sidebar */
+        .logout-container {
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            padding: 0.8rem 1rem;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-family: 'Fredoka';
+            letter-spacing: 1px;
+            width: 100%;
+            transition: background-color 0.3s;
+            text-decoration: none;
+        }
+
+        .logout-btn:hover {
+            background-color: #c0392b;
+        }
+
+        .logout-btn i {
+            margin-right: 0.5rem;
+            font-size: 1.2rem;
+        }
+
+        .sidebar.collapsed .logout-btn span {
+            display: none;
+        }
+
+        .sidebar.collapsed .logout-btn i {
+            margin-right: 0;
+            font-size: 1.5rem;
         }
 
         /* Dashboard content area */
@@ -545,74 +594,74 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
         }
 
         .dropdown-content {
-    width: 300px;
-    right: 1%; /* Changed from -1% */
-    display: none;
-    position: absolute;
-    background-color: #F8B500;
-    border-radius: 15px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1;
-    padding: 10px 0;
-    top: 15%; /* Changed from 135% */
-}
+            width: 300px;
+            right: 1%; /* Changed from -1% */
+            display: none;
+            position: absolute;
+            background-color: #F8B500;
+            border-radius: 15px;
+            box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+            z-index: 1;
+            padding: 10px 0;
+            top: 15%; /* Changed from 135% */
+        }
 
-.dropdown-content:before {
-    content: " ";
-    position: absolute;
-    background: #F8B500;
-    width: 30px;
-    height: 30px;
-    top: 1px;
-    right: 23px;
-    transform: rotate(135deg);
-    z-index: -1 !important;
-}
+        .dropdown-content:before {
+            content: " ";
+            position: absolute;
+            background: #F8B500;
+            width: 30px;
+            height: 30px;
+            top: 1px;
+            right: 23px;
+            transform: rotate(135deg);
+            z-index: -1 !important;
+        }
 
-.dropdown-content button {
-    background-color: white;     
-    justify-content: center;
-    align-items: center;
-    align-self: center;
-    font-family: 'Fredoka';
-    color: white;
-    font-size: 18px;
-    font-weight: lighter;
-    border: 2px solid white !important;
-    width: 86% !important;
-    padding: 13px 20px !important;
-    margin: 8px 20px !important;
-    text-decoration: none;
-    display: block;
-    float: none;
-    text-align: center;
-    background-color: transparent;
-    transition: background-color 0.3s, color 0.3s;
-    border-radius: 10px;
-    cursor: pointer;
-    letter-spacing: 1px;
-    box-sizing: border-box;
-    z-index: 1 !important;  
-    cursor: pointer;
-}
+        .dropdown-content button {
+            background-color: white;     
+            justify-content: center;
+            align-items: center;
+            align-self: center;
+            font-family: 'Fredoka';
+            color: white;
+            font-size: 18px;
+            font-weight: lighter;
+            border: 2px solid white !important;
+            width: 86% !important;
+            padding: 13px 20px !important;
+            margin: 8px 20px !important;
+            text-decoration: none;
+            display: block;
+            float: none;
+            text-align: center;
+            background-color: transparent;
+            transition: background-color 0.3s, color 0.3s;
+            border-radius: 10px;
+            cursor: pointer;
+            letter-spacing: 1px;
+            box-sizing: border-box;
+            z-index: 1 !important;  
+            cursor: pointer;
+        }
 
-.dropdown-content a:hover, .dropdown-content button:hover {
-    background-color: white !important;
-    color: #F8B500;
-}
+        .dropdown-content a:hover, .dropdown-content button:hover {
+            background-color: white !important;
+            color: #F8B500;
+        }
 
-.show {
-    display: block;
-}
+        .show {
+            display: block;
+        }
 
-.profile {
-    position: relative;
-    cursor: pointer;
-}
+        .profile {
+            position: relative;
+            cursor: pointer;
+        }
 
-.profile-pic {
-    border: 2px solid #f8b500;
-}
+        .profile-pic {
+            border: 2px solid #f8b500;
+        }
 
         /* Mobile menu toggle */
         .menu-toggle {
@@ -790,6 +839,10 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>Teachers</span>
                 </a>
+                <a href="a_TeacherApproval.php" title="Teacher Approvals">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span>Teacher Approvals</span>
+                </a>
                 <a href="a_Classes.php" title="Classes">
                     <i class="fa-solid fa-list"></i>
                     <span>Classes</span>
@@ -799,18 +852,34 @@ $recentTeachersResult = $recentTeachersQuery->get_result();
                     <span>Item Analysis</span>
                 </a>
             </div>
+
+            <div class="logout-container">
+                <a href="admin_logout.php" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Logout</span>
+                </a>
+            </div>
         </div>
 
         <!-- Content Area -->
         <div class="content">
             <div class="content-header">
-    <div>
-        <h1>Welcome, <?php echo htmlspecialchars($_SESSION['fname']); ?>!</h1>
-        <p>Manage student and teacher accounts with ease.</p>
-    </div>
+            <div>
+                <h1>Welcome, <?php echo htmlspecialchars($_SESSION['fname']); ?>!</h1>
+                <p>Manage student and teacher accounts with ease.</p>
+            </div>
             </div>
             <br>        
             <div class="cards">
+                <div class="enroll-card">
+                    <div class="header">
+                        <i class="fa-solid fa-user-clock icon"></i> <h3>Pending Approvals: </h3>
+                    </div>
+                    <p><?php echo $pendingCount; ?></p>  
+                    <br>
+                    <hr style="border-color: #cccc; margin-bottom: 2%; margin-top: 1%;">
+                    <a href="a_TeacherApproval.php">Review Requests <i class="fa-solid fa-angles-right"></i></a>
+                </div>
                 <div class="enroll-card">
                     <div class="header">
                         <i class="fa-solid fa-graduation-cap icon"></i> <h3>Total Students: </h3>
@@ -963,5 +1032,6 @@ $studentCountQuery->close();
 $teacherCountQuery->close();
 $recentStudentsQuery->close();
 $recentTeachersQuery->close();
+$pendingCountQuery->close();
 $conn->close();
 ?>

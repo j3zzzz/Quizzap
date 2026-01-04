@@ -27,12 +27,31 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     $user = $result->fetch_assoc();
     if (password_verify($password, $user['password'])) {
-        $_SESSION['account_type'] = $account_type;
-        $_SESSION['account_number'] = $account_number;
-        $_SESSION['fname'] = $user['fname'];
-        setcookie("account_number", $user["account_number"], time() + (86400 * 30), "/");
-        header("Location: dashboard_process.php");
-        exit;
+        if ($account_type == 'teacher') {
+            if ($user['status'] == 'pending') {
+                header("Location: login.php?error=" . urlencode("Your account is pending approval. Please wait for administrator approval."));
+                exit();
+            } elseif ($user['status'] == 'rejected') {
+                header("Location: login.php?error=" . urlencode("Your account has been rejected. Please contact the administrator."));
+                exit();
+            } elseif ($user['status'] == 'approved') {
+                // Proceed with login
+                $_SESSION['account_type'] = $account_type;
+                $_SESSION['account_number'] = $account_number;
+                $_SESSION['fname'] = $user['fname'];
+                setcookie("account_number", $user["account_number"], time() + (86400 * 30), "/");
+                header("Location: dashboard_process.php");
+                exit();
+            }
+        } else {
+            // For students, proceed normally
+            $_SESSION['account_type'] = $account_type;
+            $_SESSION['account_number'] = $account_number;
+            $_SESSION['fname'] = $user['fname'];
+            setcookie("account_number", $user["account_number"], time() + (86400 * 30), "/");
+            header("Location: dashboard_process.php");
+            exit();
+        }
     } else {
         // Redirect with error message
         header("Location: login.php?error=" . urlencode("Invalid password. Please try again."));

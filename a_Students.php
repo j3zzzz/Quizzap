@@ -359,7 +359,7 @@ $generated_password = generateDefaultPassword();
         }
 
         .sidebar .menu {
-            margin-top: 10%;
+            margin-top: 15%;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -1582,6 +1582,10 @@ $generated_password = generateDefaultPassword();
                 <a href="a_Teachers.php" title="Teachers">
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>Teachers</span>
+                </a>
+                <a href="a_TeacherApproval.php" title="Teacher Approvals">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span>Teacher Approvals</span>
                 </a>
                 <a href="a_Classes.php" title="Classes">
                     <i class="fa-solid fa-list"></i>

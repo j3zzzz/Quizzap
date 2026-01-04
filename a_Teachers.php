@@ -228,6 +228,16 @@ if (isset($_GET['search']) && !empty($_GET['search'])) {
     if (!empty($conditions)) {
         $whereClause = "WHERE " . implode(' AND ', $conditions);
     }
+
+$status_filter = isset($_GET['status']) ? $_GET['status'] : '';
+if (!empty($status_filter) && $status_filter != 'all') {
+    if (!empty($whereClause)) {
+        $whereClause .= " AND status = ?";
+    } else {
+        $whereClause = "WHERE status = ?";
+    }
+    $searchParams[] = $status_filter;
+}
 }
 
 // Pagination setup
@@ -260,7 +270,14 @@ $offset = ($page - 1) * $records_per_page;
 
 // Fetch teachers with pagination
 if (!empty($whereClause)) {
-    $teachersQuery = "SELECT * FROM teachers $whereClause ORDER BY teacher_id DESC LIMIT ? OFFSET ?";
+    $teachersQuery = "SELECT *, 
+        CASE status 
+            WHEN 'pending' THEN 'Pending Approval'
+            WHEN 'approved' THEN 'Active'
+            WHEN 'rejected' THEN 'Rejected'
+            ELSE 'Unknown'
+        END as status_text 
+        FROM teachers $whereClause ORDER BY teacher_id DESC LIMIT ? OFFSET ?";
     $stmt = $conn->prepare($teachersQuery);
     $searchParams[] = $records_per_page;
     $searchParams[] = $offset;
@@ -380,7 +397,7 @@ $generated_school_id = generateSchoolId();
         }
 
         .sidebar .menu {
-            margin-top: 10%;
+            margin-top: 15%;
             display: flex;
             flex-direction: column;
             flex-grow: 1;
@@ -852,6 +869,30 @@ $generated_school_id = generateSchoolId();
                 padding: 8px 10px !important;
             }
         }   
+
+        .status-pending {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .status-approved {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .status-rejected {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
 
         /* Updated table styles */
         .data-table {
@@ -1357,6 +1398,10 @@ $generated_school_id = generateSchoolId();
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span>Teachers</span>
                 </a>
+                <a href="a_TeacherApproval.php" title="Teacher Approvals">
+                    <i class="fa-solid fa-user-check"></i>
+                    <span>Teacher Approvals</span>
+                </a>
                 <a href="a_Classes.php" title="Classes">
                     <i class="fa-solid fa-list"></i>
                     <span>Classes</span>
@@ -1497,6 +1542,28 @@ $generated_school_id = generateSchoolId();
                 </form>
             </div>
 
+            <!-- Status Filter -->
+            <div style="margin-bottom: 1.5rem; display: flex; gap: 10px; align-items: center;">
+                <label for="status_filter" style="font-weight: bold;">Filter by Status:</label>
+                <select id="status_filter" onchange="filterByStatus()" style="padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+                    <option value="all">All Teachers</option>
+                    <option value="pending" <?php echo isset($_GET['status']) && $_GET['status'] == 'pending' ? 'selected' : ''; ?>>Pending Approval</option>
+                    <option value="approved" <?php echo isset($_GET['status']) && $_GET['status'] == 'approved' ? 'selected' : ''; ?>>Active</option>
+                    <option value="rejected" <?php echo isset($_GET['status']) && $_GET['status'] == 'rejected' ? 'selected' : ''; ?>>Rejected</option>
+                </select>
+            </div>
+
+            <script>
+            function filterByStatus() {
+                var status = document.getElementById('status_filter').value;
+                var url = 'a_Teachers.php';
+                if (status !== 'all') {
+                    url += '?status=' + status;
+                }
+                window.location.href = url;
+            }
+            </script>
+
             <!-- View/Edit Modal -->
             <?php if (isset($_GET['view']) || isset($_GET['edit'])): ?>
                 <div class="modal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
@@ -1583,6 +1650,7 @@ $generated_school_id = generateSchoolId();
                         <th>Teacher</th>
                         <th>Account Number</th>
                         <th>School ID</th>
+                        <th>Status</th>
                         <th>Actions</th>
                     </tr>
                 </thead>
@@ -1614,6 +1682,37 @@ $generated_school_id = generateSchoolId();
                                     <?php else: ?>
                                         <span class="badge">N/A</span>
                                     <?php endif; ?>
+                                </td>
+                                <td data-label="Status">
+                                    <?php 
+                                    $status_class = '';
+                                    switch($teacher['status']) {
+                                        case 'pending':
+                                            $status_class = 'status-pending';
+                                            break;
+                                        case 'approved':
+                                            $status_class = 'status-approved';
+                                            break;
+                                        case 'rejected':
+                                            $status_class = 'status-rejected';
+                                            break;
+                                        default:
+                                            $status_class = '';
+                                    }
+                                    ?>
+                                    <span class="<?php echo $status_class; ?>">
+                                        <?php 
+                                        if ($teacher['status'] == 'pending') {
+                                            echo 'Pending Approval';
+                                        } elseif ($teacher['status'] == 'approved') {
+                                            echo 'Active';
+                                        } elseif ($teacher['status'] == 'rejected') {
+                                            echo 'Rejected';
+                                        } else {
+                                            echo 'Unknown';
+                                        }
+                                        ?>
+                                    </span>
                                 </td>
                                 <td data-label="Actions" class="action-btns">
                                     <div class="action-buttons">

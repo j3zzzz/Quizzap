@@ -25,6 +25,8 @@ if ($max_account_number) {
     $teacher_account_number = 'T001';
 }
 
+$default_status = 'pending';
+$status_message = "Your account is pending approval from the administrator.";
 // Generate school ID (2 uppercase letters + 2 digits)
 $letters = substr(str_shuffle("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), 0, 2);
 $numbers = str_pad(rand(0, 99), 2, '0', STR_PAD_LEFT);
@@ -375,6 +377,10 @@ $conn->close();
             }
             ?>
                 <form method="POST" action="t_Signup_process.php" onsubmit="return validateForm()">
+                    <div style="background-color: #fff3cd; border: 1px solid #ffeaa7; border-radius: 5px; padding: 10px; margin: 10px 0; text-align: center; font-family: Fredoka;">
+                        <i class="fas fa-clock" style="color: #ffc107; margin-right: 5px;"></i>
+                        <strong>Note:</strong> Your account will need administrator approval before you can log in.
+                    </div>
                     <input type="text" name="account_number" value="<?php echo $teacher_account_number; ?>" readonly>
 
                     <input type="text" name="school_id" value="<?php echo $school_id; ?>" readonly>
@@ -424,7 +430,7 @@ $conn->close();
         <div class="modal-content">
             <div class="modal-icon">✓</div>
             <h2 class="modal-title">Registration Successful!</h2>
-            <p class="modal-message">Your teacher account has been created successfully. You can now log in to create and manage quizzes.</p>
+            <p class="modal-message">Your teacher account has been created and is pending administrator approval. You will be able to log in once your account is approved.</p>
             <button class="modal-button" onclick="redirectToLogin()">Go to Login</button>
         </div>
     </div>

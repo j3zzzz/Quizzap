@@ -295,6 +295,42 @@ $stmt->close();
             right: 20px;
             z-index: 1000;
             box-shadow: 5px 5px 0 0 #eae9e4ff;
+            transition: background-color 0.3s, box-shadow 0.3s, border-color 0.3s;
+        }
+
+        .timer.low-time-warning {
+            border-color: #ff3333;
+            background-color: #ffe6e6;
+            color: #ff3333;
+            box-shadow: 0 0 15px 5px rgba(255, 51, 51, 0.7),
+                        0 5px 0 0 #ff6666;
+            animation: pulse-glow 1s infinite alternate;
+        }
+
+        /* For dark mode */
+        body.dark-mode .timer.low-time-warning {
+            border-color: #ff6666;
+            background-color: #332222;
+            color: #ff9999;
+            box-shadow: 0 0 20px 8px rgba(255, 102, 102, 0.8),
+                        0 5px 0 0 #ff4444;
+            animation: pulse-glow-dark 1s infinite alternate;
+        }
+
+        body.dark-mode .timer.low-time-warning.critical-time {
+            animation: pulse-glow-dark 0.5s infinite alternate;
+        }
+
+        /* Pulse animation for the glowing effect */
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 10px 3px rgba(255, 51, 51, 0.5),
+                            0 5px 0 0 #ff6666;
+            }
+            100% {
+                box-shadow: 0 0 20px 8px rgba(255, 51, 51, 0.9),
+                            0 5px 0 0 #ff4444;
+            }
         }
 
         body.dark-mode .timer {
@@ -656,6 +692,29 @@ $stmt->close();
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulse-glow {
+            0% {
+                box-shadow: 0 0 10px 3px rgba(255, 51, 51, 0.5),
+                            0 5px 0 0 #ff6666;
+            }
+            100% {
+                box-shadow: 0 0 20px 8px rgba(255, 51, 51, 0.9),
+                            0 5px 0 0 #ff4444;
+            }
+        }
+
+        /* Dark mode specific animation */
+        @keyframes pulse-glow-dark {
+            0% {
+                box-shadow: 0 0 15px 5px rgba(255, 102, 102, 0.6),
+                            0 5px 0 0 #ff6666;
+            }
+            100% {
+                box-shadow: 0 0 25px 10px rgba(255, 102, 102, 0.95),
+                            0 5px 0 0 #ff3333;
+            }
         }
 
         /* Check icon styles */
@@ -2788,6 +2847,9 @@ $stmt->close();
     function startTimer(duration) {
         let timer = duration;
         const timerElement = document.getElementById('timer');
+
+        // Remove any existing warning class
+        timerElement.classList.remove('low-time-warning');
         
         if (window.timerInterval) {
             clearInterval(window.timerInterval);
@@ -2802,6 +2864,19 @@ $stmt->close();
 
             timerElement.textContent = `${minutes}:${seconds}`;
 
+            if (timer <= 10) {
+                timerElement.classList.add('low-time-warning');
+                
+                if (timer === 10 || timer === 5 || timer === 3 || timer === 2 || timer === 1) {
+                    playTimeWarningSound();
+                }
+                
+                // Optional: Make it flash faster as time runs out
+                if (timer <= 5) {
+                    timerElement.style.animationDuration = "0.5s";
+                }
+            }
+
             if (timer <= 0) {
                 clearInterval(window.timerInterval);
                 clearInterval(autoSaveInterval);
@@ -2813,6 +2888,15 @@ $stmt->close();
             
             timer--;
         }, 1000);
+    }
+
+    function playTimeWarningSound() {
+        if (typeof Audio !== 'undefined') {
+            // Create a beep sound
+            const beepSound = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+            beepSound.volume = 0.3;
+            beepSound.play().catch(e => console.log("Audio play failed:", e));
+        }
     }
 
     function submitQuiz(isForced = false) {

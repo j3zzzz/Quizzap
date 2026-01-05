@@ -512,6 +512,42 @@
                 right: 20px;
                 z-index: 1000;
                 box-shadow: 5px 5px 0 0 #eae9e4ff;
+                transition: background-color 0.3s, box-shadow 0.3s, border-color 0.3s;
+            }
+
+            .timer.low-time-warning {
+                border-color: #ff3333;
+                background-color: #ffe6e6;
+                color: #ff3333;
+                box-shadow: 0 0 15px 5px rgba(255, 51, 51, 0.7),
+                            0 5px 0 0 #ff6666;
+                animation: pulse-glow 1s infinite alternate;
+            }
+
+            /* For dark mode */
+            body.dark-mode .timer.low-time-warning {
+                border-color: #ff6666;
+                background-color: #332222;
+                color: #ff9999;
+                box-shadow: 0 0 20px 8px rgba(255, 102, 102, 0.8),
+                            0 5px 0 0 #ff4444;
+                animation: pulse-glow-dark 1s infinite alternate;
+            }
+
+            body.dark-mode .timer.low-time-warning.critical-time {
+                animation: pulse-glow-dark 0.5s infinite alternate;
+            }
+
+            /* Pulse animation for the glowing effect */
+            @keyframes pulse-glow {
+                0% {
+                    box-shadow: 0 0 10px 3px rgba(255, 51, 51, 0.5),
+                                0 5px 0 0 #ff6666;
+                }
+                100% {
+                    box-shadow: 0 0 20px 8px rgba(255, 51, 51, 0.9),
+                                0 5px 0 0 #ff4444;
+                }
             }
 
             body.dark-mode .timer {
@@ -803,7 +839,31 @@
             @keyframes spin {
                 0% { transform: rotate(0deg); }
                 100% { transform: rotate(360deg); }
-            }   
+            } 
+            
+            @keyframes pulse-glow {
+                0% {
+                    box-shadow: 0 0 10px 3px rgba(255, 51, 51, 0.5),
+                                0 5px 0 0 #ff6666;
+                }
+                100% {
+                    box-shadow: 0 0 20px 8px rgba(255, 51, 51, 0.9),
+                                0 5px 0 0 #ff4444;
+                }
+            }
+
+            /* Dark mode specific animation */
+            @keyframes pulse-glow-dark {
+                0% {
+                    box-shadow: 0 0 15px 5px rgba(255, 102, 102, 0.6),
+                                0 5px 0 0 #ff6666;
+                }
+                100% {
+                    box-shadow: 0 0 25px 10px rgba(255, 102, 102, 0.95),
+                                0 5px 0 0 #ff3333;
+                }
+            }
+
 
             /* Check icon styles */
             .check-icon {
@@ -860,6 +920,24 @@
     <div id="loadingMessage" class="loading-message" style="display: none;">
         <div class="loading-spinner"></div>
         <span id="loadingText">Loading your saved answers...</span>
+    </div>
+
+    <!-- Time Up Modal -->
+    <div id="timeUpModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2 style="color: #f8b500; margin-bottom: 15px;">
+                <i class="fa-solid fa-clock" style="margin-right: 10px;"></i>Time's Up!
+            </h2>
+            <p style="font-size: 18px; margin-bottom: 20px;">
+                Your time has expired. Your quiz will be submitted automatically.
+            </p>
+            <div class="modal-buttons">
+                <button onclick="confirmTimeUp()" class="modal-confirm-btn" 
+                        style="background-color: #f8b500; width: 100%;">
+                    View Results
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Auto-save message styles -->
@@ -1876,22 +1954,70 @@
             });   
         }
 
+        function showTimeUpModal() {
+            const modal = document.getElementById('timeUpModal');
+            modal.style.display = 'flex';
+        }
+
+        function confirmTimeUp() {
+            document.getElementById('timeUpModal').style.display = 'none';
+            submitQuiz(true);
+        }
+
         function startTimer(duration) {
-            let timer = duration, minutes, seconds;
-            const timerInterval = setInterval(function () {
-                minutes = parseInt(timer / 60, 10);
-                seconds = parseInt(timer % 60, 10);
+            let timer = duration;
+            const timerElement = document.getElementById('timer');
+            
+            // Remove any existing warning class
+            timerElement.classList.remove('low-time-warning');
+            
+            if (window.timerInterval) {
+                clearInterval(window.timerInterval);
+            }
+
+            window.timerInterval = setInterval(function () {
+                let minutes = parseInt(timer / 60, 10);
+                let seconds = parseInt(timer % 60, 10);
 
                 minutes = minutes < 10 ? "0" + minutes : minutes;
                 seconds = seconds < 10 ? "0" + seconds : seconds;
 
-                document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+                timerElement.textContent = `${minutes}:${seconds}`;
 
-                if (--timer < 0) {
-                    clearInterval(timerInterval);
-                    submitQuiz(true);
+                // Add glowing red effect when timer is 10 seconds or less
+                if (timer <= 10) {
+                    timerElement.classList.add('low-time-warning');
+                    
+                    if (timer === 10 || timer === 5 || timer === 3 || timer === 2 || timer === 1) {
+                        playTimeWarningSound();
+                    }
+                    
+                    // Optional: Make it flash faster as time runs out
+                    if (timer <= 5) {
+                        timerElement.style.animationDuration = "0.5s";
+                    }
                 }
+
+                if (timer <= 0) {
+                    clearInterval(window.timerInterval);
+                    clearInterval(autoSaveInterval);
+                    
+                    isSubmitting = true;
+                    showTimeUpModal();
+                    return;
+                }
+                
+                timer--;
             }, 1000);
+        }
+
+        function playTimeWarningSound() {
+            if (typeof Audio !== 'undefined') {
+                // Create a beep sound
+                const beepSound = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+                beepSound.volume = 0.3;
+                beepSound.play().catch(e => console.log("Audio play failed:", e));
+            }
         }
 
         // Clear saved progress on successful submission

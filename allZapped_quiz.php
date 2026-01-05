@@ -489,20 +489,34 @@
             }
 
             .timer {
-                background-color: white;
+                background-color: #ffffffff;
+                border: 2px solid #f8b500;
                 font-family: Fredoka;
-                font-size: 20px;
-                color: #707070;
+                font-size: 22px;
+                font-weight: bold;
+                color: black;
+                letter-spacing: 1px;
                 display: flex;
                 padding: 10px;
-                width: 7%;
-                margin-top: -4%;
-                float: right;
-                border-radius: 5px;
+                width: auto;
+                min-width: 100px;
+                border-radius: 7px;
                 text-align: center;
                 vertical-align: middle;
-                align-content: center;
-                border: 2px solid #f8b500;
+                align-items: center;
+                justify-content: center;
+                transition: background-color 0.3s;
+                /* Make it fixed/sticky */
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                z-index: 1000;
+                box-shadow: 5px 5px 0 0 #eae9e4ff;
+            }
+
+            body.dark-mode .timer {
+                background-color: #2d2d2d;
+                color: #e0e0e0;
             }
 
             #tts {
@@ -861,15 +875,12 @@
     <?php if (!$error):?>
     <header>
         <div class="logo"><img src="img/logo1.png" onclick="window.location.href='s_Home.php';" style="cursor: pointer;" width="200px" height="80px"></div>
-        <div class="actions">
-            <div class="profile"><img src="uploads/profiles/default-profile.jpg" width="50px" height="50px"></div>
-        </div>
+        <div id="timer" class="timer"></div> 
     </header>
 
     <div class="quiz-container">
         <div id="quiz-header">
             <h1><?php echo htmlspecialchars($quiz['title']); ?></h1> 
-            <div id="timer" class="timer"><?php echo $quiz['timer']; ?></div>
         </div><br><br>
 
 

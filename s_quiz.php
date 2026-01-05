@@ -272,21 +272,29 @@ $stmt->close();
         }
 
         .timer {
-            background-color: white;
+            background-color: #ffffffff;
+            border: 2px solid #f8b500;
             font-family: Fredoka;
-            font-size: 20px;
-            color: #707070;
+            font-size: 22px;
+            font-weight: bold;
+            color: black;
+            letter-spacing: 1px;
             display: flex;
             padding: 10px;
-            width: 7%;
-            margin-top: -4%;
-            float: right;
-            border-radius: 5px;
+            width: auto;
+            min-width: 100px;
+            border-radius: 7px;
             text-align: center;
             vertical-align: middle;
-            align-content: center;
-            border: 2px solid #f8b500;
+            align-items: center;
+            justify-content: center;
             transition: background-color 0.3s;
+            /* Make it fixed/sticky */
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            box-shadow: 5px 5px 0 0 #eae9e4ff;
         }
 
         body.dark-mode .timer {
@@ -1054,14 +1062,13 @@ $stmt->close();
             }
             
             .timer {
-                width: auto;
-                min-width: 80px;
-                margin-top: -3%;
+                position: fixed;
+                top: 15px;
+                right: 15px;
                 font-size: 18px;
                 padding: 8px 15px;
-                position: relative;
-                float: none;
-                display: inline-block;
+                min-width: 80px;
+                z-index: 1000;
             }
             
             #tts {
@@ -1191,9 +1198,14 @@ $stmt->close();
             }
             
             .timer {
-                margin-top: 10px;
-                order: 2;
-                align-self: center;
+                position: fixed;
+                top: 70px; /* Below the header on mobile */
+                right: 50%;
+                transform: translateX(50%);
+                font-size: 16px;
+                padding: 6px 12px;
+                min-width: 70px;
+                margin-top: 0;
             }
             
             .question-text {
@@ -1455,6 +1467,7 @@ $stmt->close();
             }
             
             .timer {
+                top: 65px;
                 font-size: 14px;
                 padding: 5px 10px;
                 min-width: 60px;
@@ -1850,15 +1863,12 @@ $stmt->close();
 <?php if (!$showModal): ?>
 <header>
     <div class="logo"><img src="img/logo1.png" onclick="window.location.href='s_Home.php';" style="cursor: pointer;" width="200px" height="80px"></div>
-    <div class="actions">
-        <div class="profile"><img src="uploads/profiles/default-profile.jpg" width="50px" height="50px"></div>
-    </div>
+    <div id="timer" class="timer"></div>
 </header>
 
 <div class="quiz-container">
     <div id="quiz-header">
         <h1><?php echo htmlspecialchars($quiz['title']); ?></h1> 
-        <div id="timer" class="timer"></div>
     </div><br><br>
 
     <div id="quiz-questions">

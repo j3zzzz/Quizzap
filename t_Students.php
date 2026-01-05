@@ -145,6 +145,7 @@ if (isset($_POST['import_csv'])) {
         if ($account_number_index === false || $fname_index === false || 
             $lname_index === false || $glevel_index === false) {
             $message = "Error: CSV file must contain 'Account Number', 'First Name', 'Last Name', and 'Grade Level' columns.";
+            $message_type = 'error';
         } else {
             $imported_count = 0;
             $updated_count = 0;
@@ -160,6 +161,7 @@ if (isset($_POST['import_csv'])) {
             
             if ($verify_result->num_rows == 0) {
                 $message = "You should select a subject first in the subject filters.";
+                $message_type = 'warning';
                 $conn->rollback();
             } else {
                 try {
@@ -264,10 +266,14 @@ if (isset($_POST['import_csv'])) {
                     $total_students = $count_result->fetch_assoc()['count'];
                     $count_stmt->close();
 
-                    $_SESSION['enroll_message'] = "Import completed for subject: {$subject_name}.
+                    $message = "Import completed for subject: {$subject_name}.
                         Total students imported: $imported_count.
                         Skipped students (already enrolled or invalid): $skipped_count.
                         Total students in subject: $total_students.";
+                    $message_type = 'success';
+
+                    $_SESSION['enroll_message'] = $message;
+                    $_SESSION['enroll_message_type'] = $message_type;
 
                     header("Location: t_Students.php?subject=$subject_id");
                     exit();
@@ -275,12 +281,14 @@ if (isset($_POST['import_csv'])) {
                 } catch (Exception $e) {
                     $conn->rollback();
                     $message = "Error: " . $e->getMessage();
+                    $message_type = 'error';
                 }
             }
             $verify_stmt->close();
         }    
     } else {
         $message = "Invalid file format. Please upload a CSV file.";
+        $message_type = 'error';
     }
 }
 
@@ -322,17 +330,24 @@ if (isset($_POST['remove_student'])) {
                 $subject_name_result = $subject_name_stmt->get_result();
                 $subject_name = $subject_name_result->fetch_assoc()['subject_name'] ?? 'the subject';
                 
-                $_SESSION['enroll_message'] = "Student successfully removed from $subject_name.";
+                $message = "Student successfully removed from $subject_name.";
+                $message_type = 'success';
+                
+                $_SESSION['enroll_message'] = $message;
+                $_SESSION['enroll_message_type'] = $message_type;
                 header("Location: t_Students.php?subject=$subject_id");
                 exit();
             } else {
                 $message = "Error removing student: " . $conn->error;
+                $message_type = 'error';
             }
         } else {
             $message = "Student not found.";
+            $message_type = 'error';
         }
     } else {
         $message = "Invalid subject selection.";
+        $message_type = 'error';
     }
 }
 
@@ -401,18 +416,25 @@ if (isset($_POST['enroll_students'])) {
                 $subject_name_result = $subject_name_stmt->get_result();
                 $subject_name = $subject_name_result->fetch_assoc()['subject_name'] ?? 'the subject';
                 
-                $_SESSION['enroll_message'] = "Successfully enrolled $enrolled_count students to $subject_name.";
+                $message = "Successfully enrolled $enrolled_count students to $subject_name.";
+                $message_type = 'success';
+                
+                $_SESSION['enroll_message'] = $message;
+                $_SESSION['enroll_message_type'] = $message_type;
                 header("Location: t_Students.php?subject=$selected_subject");
                 exit();
             } catch (Exception $e) {
                 $conn->rollback();
                 $message = "Error enrolling students: " . $e->getMessage();
+                $message_type = 'error';
             }
         } else {
             $message = "Invalid subject selection.";
+            $message_type = 'error';
         }
     } else {
         $message = "Please select a subject first.";
+        $message_type = 'warning';
     }
 }
 
@@ -474,7 +496,9 @@ $enrolled_students_result = $enrolled_students_stmt->get_result();
 // Display success message if exists
 if (isset($_SESSION['enroll_message'])) {
     $message = $_SESSION['enroll_message'];
+    $message_type = $_SESSION['enroll_message_type'] ?? 'info';
     unset($_SESSION['enroll_message']);
+    unset($_SESSION['enroll_message_type']);
 }
 ?>
 <!DOCTYPE html>
@@ -1046,6 +1070,108 @@ if (isset($_SESSION['enroll_message'])) {
             color: #e0e0e0;
         }
 
+        /* Message Styling - Enhanced for better visibility */
+        .message {
+            font-family: Fredoka;
+            font-weight: 500;
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+            background-color: #fff9e6;
+            border: 2px solid #f8b500;
+            width: 100%;
+            color: #5d3c00;
+            box-shadow: 0 3px 10px rgba(248, 181, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .message:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 6px;
+            height: 100%;
+            background-color: #f8b500;
+        }
+
+        body.dark-mode .message {
+            background-color: #2d2c22;
+            border-color: #f8b500;
+            color: #fff3cd;
+            box-shadow: 0 3px 10px rgba(248, 181, 0, 0.2);
+        }
+
+        body.dark-mode .message:before {
+            background-color: #f8b500;
+        }
+
+        /* Message types */
+        .message.success {
+            background-color: #e8f7ef;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .message.success:before {
+            background-color: #28a745;
+        }
+
+        body.dark-mode .message.success {
+            background-color: #1a3025;
+            border-color: #28a745;
+            color: #d4edda;
+        }
+
+        .message.error {
+            background-color: #fdeded;
+            border-color: #dc3545;
+            color: #721c24;
+        }
+
+        .message.error:before {
+            background-color: #dc3545;
+        }
+
+        body.dark-mode .message.error {
+            background-color: #3a2325;
+            border-color: #dc3545;
+            color: #f8d7da;
+        }
+
+        .message.info {
+            background-color: #e8f4fc;
+            border-color: #17a2b8;
+            color: #0c5460;
+        }
+
+        .message.info:before {
+            background-color: #17a2b8;
+        }
+
+        body.dark-mode .message.info {
+            background-color: #1a2d33;
+            border-color: #17a2b8;
+            color: #d1ecf1;
+        }
+
+        .message.warning {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .message.warning:before {
+            background-color: #ffc107;
+        }
+
+        body.dark-mode .message.warning {
+            background-color: #3a3728;
+            border-color: #ffc107;
+            color: #fff3cd;
+        }
+
         /* Profile in content header for larger screens */
         .content-header .actions {
             display: flex;
@@ -1071,22 +1197,6 @@ if (isset($_SESSION['enroll_message'])) {
 
         body.dark-mode .content-header .actions .profile {
             background-color: #333;
-        }
-
-        .message {
-            font-family: Fredoka;
-            font-weight: 500;
-            padding: 15px;
-            margin: 15px 0;
-            border-radius: 5px;
-            background-color: #f8f8f8;
-            border-left: 4px solid #f8b500;
-            width: 100%;
-        }
-
-        body.dark-mode .message {
-            background-color: #2d2d2d;
-            color: #e0e0e0;
         }
 
         /* Subject Filter Styles */
@@ -2202,7 +2312,32 @@ if (isset($_SESSION['enroll_message'])) {
             </div>
 
             <?php if (!empty($message)): ?>
-                <div class="message">
+                <?php 
+                // Use the stored message type if available, otherwise detect from content
+                $message_class = 'message';
+                if (isset($message_type)) {
+                    $message_class .= ' ' . $message_type;
+                } else {
+                    // Auto-detect message type based on content
+                    $lower_message = strtolower($message);
+                    if (strpos($lower_message, 'success') !== false || 
+                        strpos($lower_message, 'imported') !== false || 
+                        strpos($lower_message, 'enrolled') !== false ||
+                        strpos($lower_message, 'removed') !== false) {
+                        $message_class .= ' success';
+                    } elseif (strpos($lower_message, 'error') !== false || 
+                              strpos($lower_message, 'invalid') !== false || 
+                              strpos($lower_message, 'failed') !== false) {
+                        $message_class .= ' error';
+                    } elseif (strpos($lower_message, 'warning') !== false) {
+                        $message_class .= ' warning';
+                    } elseif (strpos($lower_message, 'info') !== false || 
+                              strpos($lower_message, 'note') !== false) {
+                        $message_class .= ' info';
+                    }
+                }
+                ?>
+                <div class="<?php echo $message_class; ?>">
                     <?php echo htmlspecialchars($message); ?>
                 </div>
             <?php endif; ?>
